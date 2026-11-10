@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+coverage/
+package-lock.json
+# Documentación en Markdown: se redacta a mano y no se reformatea automáticamente.
+*.md
+docs/

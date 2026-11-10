@@ -1,0 +1,66 @@
+# CI base (M0): formato, lint, tipos, tests y validación de los servicios locales.
+# Las acciones están fijadas a un commit exacto (con la versión en el comentario).
+# Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Formato, lint, tipos y tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+      - name: Validación de variables de entorno con los valores de ejemplo
+        run: |
+          cp .env.example .env
+          npm run env:check
+
+  services:
+    name: Servicios locales (Docker Compose)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Levantar PostgreSQL y Mailpit
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120
+
+      - name: Comprobar PostgreSQL 17
+        run: docker compose exec -T postgres psql -U marea -d marea_baja -tAc "SHOW server_version" | grep -E '^17\.'
+
+      - name: Comprobar Mailpit
+        run: curl --fail --silent http://127.0.0.1:8025/api/v1/info > /dev/null
+
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes

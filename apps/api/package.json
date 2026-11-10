@@ -1,0 +1,14 @@
+{
+  "name": "@marea-baja/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API de Marea Baja. En M0 solo contiene la validación de variables de entorno.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "env:check": "node src/config/check-env.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}
