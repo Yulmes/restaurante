@@ -2,7 +2,7 @@
 
 Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia** de demostración (San José, Costa Rica; dirección ficticia). Proyecto 1 de 4 del portafolio.
 
-**Estado:** hito **M0 · Fundaciones**. Todavía no hay frontend, API funcional ni base de datos con esquema: esos llegan en los hitos siguientes.
+**Estado:** hito **M1 · Sistema de diseño**. Ya existen el sistema visual, los componentes base y la infraestructura de idiomas (es-CR y en), visibles en la página interna `/_design`. Todavía no hay carta real, API funcional ni base de datos con esquema: llegan en los hitos siguientes.
 
 - Planificación aprobada: [docs/planificacion/Propuesta Restaurante · Fase 1.md](docs/planificacion/Propuesta%20Restaurante%20·%20Fase%201.md)
 - Auditoría de planificación: [docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md](docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md)
@@ -16,13 +16,24 @@ Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia*
 ## Estructura actual
 
 ```
-apps/api/         API (en M0: solo la validación de variables de entorno)
-packages/shared/  Constantes y esquemas compartidos (en M0: idiomas es-CR y en)
+apps/web/         React 19 + React Router 7 (modo framework) + Vite + Tailwind 4: sistema de diseño e i18n
+apps/api/         API (por ahora solo la validación de variables de entorno)
+packages/shared/  Idiomas (es-CR, en) y formato de dinero (CRC/USD)
+tools/eslint/     Regla local que prohíbe textos de interfaz literales (D2)
 docker-compose.yml  PostgreSQL 17 y Mailpit para desarrollo local
-.github/workflows/  CI base
+.github/workflows/  CI: calidad, sistema de diseño y accesibilidad, servicios
 ```
 
-`apps/web` y `apps/edge` se crean en los hitos que los necesitan (ver la propuesta, §4.1 y §12).
+`apps/edge` se crea en el hito que lo necesita (ver la propuesta, §4.1 y §12).
+
+## Web en desarrollo
+
+```bash
+npm run dev -w @marea-baja/web
+```
+
+- Sistema de diseño (interno, no indexado): http://127.0.0.1:5173/_design · inglés: http://127.0.0.1:5173/en/_design
+- Pruebas de navegador: ver [TESTING.md](TESTING.md). Internacionalización: [docs/I18N.md](docs/I18N.md).
 
 ## Primeros pasos
 

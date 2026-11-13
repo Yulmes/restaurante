@@ -1,0 +1,40 @@
+{
+  "brand": "Marea Baja",
+  "slogan": "What the sea brought in today",
+  "skipToContent": "Skip to content",
+  "demoBanner": "Demo: no real money is processed and no orders reach a real restaurant. Marea Baja is a fictional restaurant.",
+  "loading": "Loading…",
+  "language": {
+    "label": "Language",
+    "name": { "es-CR": "Español (Costa Rica)", "en": "English" },
+    "short": { "es-CR": "ES", "en": "EN" }
+  },
+  "hanko": { "label": "引潮 seal (hikishio, low tide)" },
+  "actions": { "processing": "Processing…" },
+  "quantity": { "label": "Quantity", "decrease": "Remove one", "increase": "Add one" },
+  "price": { "included": "included", "plus": "+" },
+  "tags": {
+    "catchOfTheDay": "Catch of the day",
+    "spicy": "Spicy",
+    "glutenFreeOnRequest": "Gluten-free on request",
+    "vegetarian": "Vegetarian",
+    "soldOutToday": "Sold out today"
+  },
+  "form": {
+    "errorSummaryTitle_one": "Check one field to continue",
+    "errorSummaryTitle_other": "Check {{count}} fields to continue",
+    "chooseUpTo": "Choose up to {{max}}",
+    "chosen": "{{count}} of {{max}} chosen"
+  },
+  "home": {
+    "metaTitle": "Marea Baja · Under construction",
+    "underConstruction": "The site is under construction. For now you can browse the design system.",
+    "designLink": "See the design system"
+  },
+  "errors": {
+    "notFoundTitle": "We couldn’t find this page",
+    "notFoundBody": "Check the address or go back to the home page.",
+    "genericTitle": "Something went wrong",
+    "genericBody": "Please try again in a few minutes."
+  }
+}
