@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/build/**',
       '**/coverage/**',
       '**/.react-router/**',
+      '**/generated/**',
       '**/playwright-report/**',
       '**/test-results/**',
       'docs/**',

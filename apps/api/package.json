@@ -2,13 +2,28 @@
   "name": "@marea-baja/api",
   "version": "0.0.0",
   "private": true,
-  "description": "API de Marea Baja. En M0 solo contiene la validación de variables de entorno.",
+  "description": "API de Marea Baja. En M2: esquema de datos, migraciones y semilla (Prisma 7).",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
-    "env:check": "node src/config/check-env.ts"
+    "typegen": "prisma generate",
+    "typecheck": "npm run typegen && tsc -p tsconfig.json",
+    "env:check": "node src/config/check-env.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:app-role": "node scripts/db-app-role.ts",
+    "db:seed": "prisma db seed",
+    "db:setup": "npm run typegen && npm run db:migrate && npm run db:app-role && npm run db:seed",
+    "db:drift": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
+    "test:db": "npm run typegen && vitest run --config ../../vitest.db.config.ts"
   },
   "dependencies": {
+    "@marea-baja/shared": "0.0.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "pg": "8.23.1",
     "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "prisma": "7.10.1"
   }
 }

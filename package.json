@@ -18,9 +18,11 @@
     "lint": "npm run typegen --workspaces --if-present && eslint .",
     "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
+    "test:db": "npm run test:db -w @marea-baja/api",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
     "services:up": "docker compose up -d --wait",
     "services:down": "docker compose down",
+    "db:setup": "npm run db:setup -w @marea-baja/api",
     "env:check": "npm run env:check -w @marea-baja/api"
   },
   "devDependencies": {

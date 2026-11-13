@@ -53,7 +53,7 @@
 
 ## 2. Requisitos técnicos y trazabilidad
 
-Estado posible: **Planificado** → **Implementado** → **Verificado**. Hoy todos están en *Planificado*.
+Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cierre de M2, R-AUD-01 y R-MONEY-01 están parcialmente implementados; el resto sigue en *Planificado*.
 
 ### 2.1 Producto
 
@@ -69,7 +69,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Hoy tod
 | R-ADM-01 | Dashboard con datos reales, Pase, carta, clientes, configuración, auditoría | §3.6, §8.6 | E2E escenarios 2 y 3 | Planificado |
 | R-MAIL-01 | Plantillas de marca; outbox; estados SENT, DEMO_ONLY y FAILED | §8.5 | Integración + Mailpit | Planificado |
 | R-SEO-01 | Prerender, meta, OG, JSON-LD, sitemap, robots, URLs legibles | §4.2 | Lighthouse + validador de datos estructurados | Planificado |
-| R-MONEY-01 | CRC/USD, enteros, impuestos en puntos básicos, redondeo una vez por tasa, OrderTaxLine | §6.2 | Tests de tabla | Planificado |
+| R-MONEY-01 | CRC/USD, enteros, impuestos en puntos básicos, redondeo una vez por tasa, OrderTaxLine | §6.2 | Tests de tabla | **Parcial (M2):** enteros, `rateBps`, `OrderTaxLine` y valores semilla de D5 en el esquema, con restricciones verificadas. Motor de precios y redondeo: M5 |
 
 ### 2.2 Seguridad
 
@@ -86,7 +86,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Hoy tod
 | R-SEC-09 | Secreto de origen entre el Worker y la API | §5 | Post-deploy (llamada directa → 403) | Planificado |
 | R-SEC-10 | Logs sin datos sensibles | §8.7 | Test de redacción | Planificado |
 | R-SEC-11 | Secretos validados al arrancar; ninguno en el repo | §8.7 | CI con escaneo de secretos (gitleaks) | Planificado |
-| R-AUD-01 | AuditLog de solo inserción con trigger, grants, lista blanca de campos y escritura transaccional | §8.6 | Integración: UPDATE/DELETE fallan | Planificado |
+| R-AUD-01 | AuditLog de solo inserción con trigger, grants, lista blanca de campos y escritura transaccional | §8.6 | Integración: UPDATE/DELETE fallan | **Parcial (M2):** trigger y grants implementados y verificados (`apps/api/test/auditoria.db.test.ts`). Lista blanca y escritura transaccional: pendientes (M3, M7, M8) |
 
 ### 2.3 Infraestructura y operación
 
