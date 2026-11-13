@@ -17,7 +17,8 @@
     "db:drift": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
     "test:db": "npm run typegen && vitest run --config ../../vitest.db.config.ts",
     "emails:build": "node scripts/build-emails.ts",
-    "users:set-role": "node scripts/users-set-role.ts"
+    "users:set-role": "node scripts/users-set-role.ts",
+    "db:e2e": "node scripts/db-e2e.ts"
   },
   "dependencies": {
     "@marea-baja/shared": "0.0.0",

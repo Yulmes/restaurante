@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "account": "Tu cuenta",
+    "signIn": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "home": "Volver al inicio"
+  },
+  "fields": {
+    "name": "Nombre",
+    "nameHint": "Como querés que te saludemos en los correos.",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "newPassword": "Contraseña nueva",
+    "currentPassword": "Contraseña actual",
+    "passwordHint": "Al menos 12 caracteres. Una frase es más fácil de recordar.",
+    "phone": "Teléfono (opcional)",
+    "phoneHint": "Solo para coordinar la entrega de tus pedidos.",
+    "locale": "Idioma de los correos"
+  },
+  "fieldErrors": {
+    "required": "Completá este dato.",
+    "invalidEmail": "Escribí un correo válido, por ejemplo nombre@dominio.com.",
+    "tooLong": "Es demasiado largo.",
+    "passwordTooShort": "La contraseña necesita al menos 12 caracteres.",
+    "passwordTooLong": "La contraseña puede tener hasta 128 caracteres.",
+    "passwordTooCommon": "Esa contraseña es de las más usadas. Elegí otra.",
+    "currentPasswordIncorrect": "La contraseña actual no es correcta.",
+    "invalidPhone": "Escribí solo números, espacios o guiones, con un + inicial si hace falta.",
+    "invalid": "Revisá este dato."
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "El correo o la contraseña no son correctos.",
+    "RATE_LIMITED_one": "Demasiados intentos. Esperá {{count}} segundo y volvé a intentarlo.",
+    "RATE_LIMITED_other": "Demasiados intentos. Esperá {{count}} segundos y volvé a intentarlo.",
+    "RATE_LIMITED_minutes_one": "Demasiados intentos. Esperá {{count}} minuto y volvé a intentarlo.",
+    "RATE_LIMITED_minutes_other": "Demasiados intentos. Esperá {{count}} minutos y volvé a intentarlo.",
+    "CHALLENGE_REQUIRED": "Por seguridad, completá la verificación de abajo y volvé a intentarlo.",
+    "CHALLENGE_FAILED": "No pudimos confirmar la verificación. Intentalo de nuevo.",
+    "ACCOUNT_BLOCKED": "Esta cuenta está bloqueada y no puede iniciar sesión.",
+    "INVALID_OR_EXPIRED_TOKEN": "El enlace venció o ya se usó.",
+    "EMAIL_ALREADY_VERIFIED": "Tu correo ya está confirmado.",
+    "UNAUTHENTICATED": "Tu sesión terminó. Iniciá sesión de nuevo.",
+    "CSRF_FAILED": "La página estuvo abierta mucho tiempo. Recargala y volvé a intentarlo.",
+    "network": "No pudimos conectar con el servidor. Revisá tu conexión y volvé a intentarlo.",
+    "generic": "Algo salió mal. Volvé a intentarlo en unos minutos."
+  },
+  "turnstile": {
+    "label": "Verificación de seguridad",
+    "unavailable": "La verificación no está disponible en este momento. Podés restablecer tu contraseña mientras tanto."
+  },
+  "signIn": {
+    "metaTitle": "Iniciar sesión · Marea Baja",
+    "title": "Iniciar sesión",
+    "intro": "Con tu cuenta podés pagar tus pedidos y seguirlos.",
+    "submit": "Iniciar sesión",
+    "forgot": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿Todavía no tenés cuenta?",
+    "register": "Creala acá"
+  },
+  "register": {
+    "metaTitle": "Crear cuenta · Marea Baja",
+    "title": "Crear cuenta",
+    "intro": "Podés ver la carta y armar tu pedido sin cuenta. Para pagar, necesitás una cuenta con el correo confirmado.",
+    "submit": "Crear cuenta",
+    "haveAccount": "¿Ya tenés cuenta?",
+    "signIn": "Iniciá sesión",
+    "doneTitle": "Revisá tu correo",
+    "doneBody": "Si {{email}} no tenía una cuenta, te enviamos un enlace para confirmarlo. Vale 24 horas.",
+    "doneNext": "Cuando lo confirmes, iniciá sesión."
+  },
+  "verify": {
+    "metaTitle": "Confirmar correo · Marea Baja",
+    "title": "Confirmar tu correo",
+    "checking": "Confirmando tu correo…",
+    "successTitle": "Correo confirmado",
+    "successBody": "Listo: ya podés pagar tus pedidos.",
+    "failedBody": "Este enlace venció o ya se usó. Pedí uno nuevo desde tu cuenta.",
+    "pendingBody": "Te enviamos un enlace a {{email}}. Abrilo desde ese correo para confirmar que es tuyo.",
+    "noToken": "Abrí el enlace que te enviamos por correo para confirmar tu cuenta.",
+    "resend": "Enviar el enlace de nuevo",
+    "resent": "Te enviamos un enlace nuevo. Los anteriores ya no sirven.",
+    "goToAccount": "Ir a tu cuenta"
+  },
+  "forgot": {
+    "metaTitle": "Recuperar contraseña · Marea Baja",
+    "title": "Recuperar tu contraseña",
+    "intro": "Escribí el correo de tu cuenta y te enviamos un enlace para elegir una contraseña nueva.",
+    "submit": "Enviar el enlace",
+    "doneTitle": "Revisá tu correo",
+    "doneBody": "Si {{email}} tiene una cuenta, te enviamos un enlace. Vale 30 minutos.",
+    "back": "Volver a iniciar sesión"
+  },
+  "reset": {
+    "metaTitle": "Nueva contraseña · Marea Baja",
+    "title": "Elegí una contraseña nueva",
+    "intro": "Al cambiarla se cierran todas tus sesiones abiertas.",
+    "submit": "Guardar la contraseña",
+    "noToken": "Abrí el enlace que te enviamos por correo para elegir una contraseña nueva.",
+    "doneTitle": "Contraseña actualizada",
+    "doneBody": "Ya podés iniciar sesión con tu contraseña nueva.",
+    "requestNew": "Pedir un enlace nuevo"
+  },
+  "profile": {
+    "metaTitle": "Tu cuenta · Marea Baja",
+    "title": "Tu cuenta",
+    "signedInAs": "Sesión iniciada como {{email}}",
+    "verifiedStatus": "Correo confirmado",
+    "unverifiedStatus": "Correo sin confirmar: confirmalo para poder pagar.",
+    "detailsTitle": "Tus datos",
+    "save": "Guardar los cambios",
+    "saved": "Guardamos tus datos.",
+    "passwordTitle": "Cambiar la contraseña",
+    "passwordIntro": "Al cambiarla se cierran tus otras sesiones abiertas.",
+    "passwordSubmit": "Cambiar la contraseña",
+    "passwordSaved": "Cambiamos tu contraseña y cerramos tus otras sesiones.",
+    "sessionsTitle": "Sesiones",
+    "signOut": "Cerrar sesión",
+    "signOutAll": "Cerrar todas las sesiones",
+    "signOutAllHint": "En este y en todos tus dispositivos."
+  }
+}

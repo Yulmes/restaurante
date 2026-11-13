@@ -18,7 +18,7 @@ function flatten(tree: Tree, prefix = ''): Map<string, string> {
 const placeholders = (text: string) => [...text.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort();
 
 // D2: textos completos en los dos idiomas desde la v1.
-describe.each(['common', 'design'] as const)('mensajes del espacio "%s"', (ns) => {
+describe.each(['common', 'design', 'account'] as const)('mensajes del espacio "%s"', (ns) => {
   const es = flatten(resources['es-CR'][ns]);
   const en = flatten(resources.en[ns]);
 

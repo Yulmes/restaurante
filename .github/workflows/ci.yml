@@ -1,4 +1,5 @@
-# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2) y servicios locales.
+# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3) y
+# servicios locales.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -118,8 +119,42 @@ jobs:
       - name: Sin diferencias entre el esquema y las migraciones
         run: npm run db:drift -w @marea-baja/api
 
-      - name: Restricciones, AuditLog, permisos y semilla (PostgreSQL real)
+      - name: Restricciones, AuditLog, permisos, semilla e integración de identidad (PostgreSQL real)
         run: npm run test:db
+
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
+
+  identity:
+    name: Identidad (API, Mailpit y E2E de la cuenta)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Levantar PostgreSQL y Mailpit
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120
+
+      - name: Instalar Chromium para Playwright
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      # La configuración crea su propia base (<base>_e2e) y levanta la API y la web.
+      # Turnstile usa el proveedor falso y el script de Cloudflare se reemplaza: sin llamadas externas.
+      - name: Registro, correo, verificación, login, perfil, recuperación, Turnstile y axe
+        run: npm run test:e2e:auth -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

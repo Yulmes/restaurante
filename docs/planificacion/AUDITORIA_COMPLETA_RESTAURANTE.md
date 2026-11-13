@@ -63,11 +63,11 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-MENU-01 | Catálogo desde la base de datos con búsqueda, filtros, orden, detalle, personalización y cantidades | §3.6, §6 | Integración + E2E | Planificado |
 | R-CART-01 | Carrito con totales recalculados en el servidor; persistencia invitado→usuario | §6.2, §7.3 | Unitarios de pricing + E2E | Planificado |
 | R-CHK-01 | Checkout de 3 pasos optimizado para celular, retiro o delivery, zonas configurables | §3.8 | E2E a 375 px | Planificado |
-| R-AUTH-01 | Registro, verificación, login, logout, recuperación, perfil, direcciones | §8 | Integración + E2E | Planificado |
+| R-AUTH-01 | Registro, verificación, login, logout, recuperación, perfil, direcciones | §8 | Integración + E2E | **Parcial (M3):** registro, verificación, login, logout, recuperación y perfil implementados y probados (integración + E2E). Direcciones: pendiente de decisión (sin asignar en §12; se propone M5, checkout) |
 | R-ORD-01 | Estados validados en el backend, historial con actor y fecha, seguimiento | §7.1 | Matriz de transiciones | Planificado |
 | R-PAY-01 | Mock gateway con escenarios, authorize/capture/void/refund, idempotencia y reconciliación | §7.2–7.4 | Matriz de escenarios + concurrencia | Planificado |
 | R-ADM-01 | Dashboard con datos reales, Pase, carta, clientes, configuración, auditoría | §3.6, §8.6 | E2E escenarios 2 y 3 | Planificado |
-| R-MAIL-01 | Plantillas de marca; outbox; estados SENT, DEMO_ONLY y FAILED | §8.5 | Integración + Mailpit | Planificado |
+| R-MAIL-01 | Plantillas de marca; outbox; estados SENT, DEMO_ONLY y FAILED | §8.5 | Integración + Mailpit | **Parcial (M3):** outbox transaccional, SENT y FAILED, plantillas de marca en es-CR y en, Mailpit. Resend preparado sin prueba real (requiere la cuenta del propietario, D14). DEMO_ONLY y bandeja demo: M7 |
 | R-SEO-01 | Prerender, meta, OG, JSON-LD, sitemap, robots, URLs legibles | §4.2 | Lighthouse + validador de datos estructurados | Planificado |
 | R-MONEY-01 | CRC/USD, enteros, impuestos en puntos básicos, redondeo una vez por tasa, OrderTaxLine | §6.2 | Tests de tabla | **Parcial (M2):** enteros, `rateBps`, `OrderTaxLine` y valores semilla de D5 en el esquema, con restricciones verificadas. Motor de precios y redondeo: M5 |
 
@@ -75,18 +75,18 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 
 | ID | Requisito | Diseño | Verificación prevista | Estado |
 |---|---|---|---|---|
-| R-SEC-01 | Argon2id; política de contraseñas | §8.7 | Unitario | Planificado |
-| R-SEC-02 | Cookie `__Host-`, HttpOnly, Secure, SameSite=Lax | §8.2 | Integración + post-deploy | Planificado |
-| R-SEC-03 | Expiración, rotación y revocación de sesiones | §8.2 | Integración | Planificado |
-| R-SEC-04 | CSRF: Origin + token sincronizador | §8.3 | Integración + post-deploy | Planificado |
-| R-SEC-05 | Rate limiting persistente por IP, cuenta y cuenta+IP; bloqueos temporales no permanentes | §8.4 | Integración con relojes simulados | Planificado |
-| R-SEC-06 | RBAC + propiedad (IDOR → 404) | §8.7 | Matriz de roles | Planificado |
+| R-SEC-01 | Argon2id; política de contraseñas | §8.7 | Unitario | **Cumplido (M3):** Argon2id (OWASP) y lista de 10.000 comunes, con prueba unitaria |
+| R-SEC-02 | Cookie `__Host-`, HttpOnly, Secure, SameSite=Lax | §8.2 | Integración + post-deploy | **Parcial (M3):** banderas verificadas en integración (también `__Host-` y `Secure` con configuración de producción). Post-deploy: M10 |
+| R-SEC-03 | Expiración, rotación y revocación de sesiones | §8.2 | Integración | **Cumplido (M3):** expiración por rol, rotación y revocación con pruebas de integración y reloj simulado |
+| R-SEC-04 | CSRF: Origin + token sincronizador | §8.3 | Integración + post-deploy | **Parcial (M3):** Origin/Sec-Fetch-Site y token sincronizador con pruebas de integración. Post-deploy: M10 |
+| R-SEC-05 | Rate limiting persistente por IP, cuenta y cuenta+IP; bloqueos temporales no permanentes | §8.4 | Integración con relojes simulados | **Cumplido (M3):** límites por IP, cuenta y cuenta+IP; bloqueos temporales y escalados; integración con reloj simulado |
+| R-SEC-06 | RBAC + propiedad (IDOR → 404) | §8.7 | Matriz de roles | **Parcial (M3):** RBAC con matriz de roles. Propiedad e IDOR → 404: con los pedidos (M5) |
 | R-SEC-07 | Montos y estados decididos por el servidor | §7 | E2E escenario 3 | Planificado |
-| R-SEC-08 | CSP, Helmet, sin `dangerouslySetInnerHTML` | §8.7 | Revisión + test de encabezados | Planificado |
+| R-SEC-08 | CSP, Helmet, sin `dangerouslySetInnerHTML` | §8.7 | Revisión + test de encabezados | **Parcial (M3):** Helmet en la API y prueba de encabezados. CSP de la web (con Turnstile en el login): M10 |
 | R-SEC-09 | Secreto de origen entre el Worker y la API | §5 | Post-deploy (llamada directa → 403) | Planificado |
-| R-SEC-10 | Logs sin datos sensibles | §8.7 | Test de redacción | Planificado |
+| R-SEC-10 | Logs sin datos sensibles | §8.7 | Test de redacción | **Cumplido (M3):** redacción probada (unitaria e integración) |
 | R-SEC-11 | Secretos validados al arrancar; ninguno en el repo | §8.7 | CI con escaneo de secretos (gitleaks) | Planificado |
-| R-AUD-01 | AuditLog de solo inserción con trigger, grants, lista blanca de campos y escritura transaccional | §8.6 | Integración: UPDATE/DELETE fallan | **Parcial (M2):** trigger y grants implementados y verificados (`apps/api/test/auditoria.db.test.ts`). Lista blanca y escritura transaccional: pendientes (M3, M7, M8) |
+| R-AUD-01 | AuditLog de solo inserción con trigger, grants, lista blanca de campos y escritura transaccional | §8.6 | Integración: UPDATE/DELETE fallan | **Parcial (M2, M3):** trigger y grants (M2). Escritura transaccional, lista blanca y enmascarado implementados y probados con rollback (M3, cambio de roles). Resto de entidades: M7, M8 |
 
 ### 2.3 Infraestructura y operación
 
