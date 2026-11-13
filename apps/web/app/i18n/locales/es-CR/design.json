@@ -1,0 +1,157 @@
+{
+  "metaTitle": "Sistema de diseño · Marea Baja",
+  "eyebrow": "Página interna · no se indexa",
+  "title": "Sistema de diseño",
+  "intro": "Tokens, tipografía y componentes base de Marea Baja, con cada estado a la vista para las auditorías de accesibilidad.",
+  "brand": {
+    "title": "Marca",
+    "intro": "Isotipo de un solo trazo: la ola se cierra en un bowl. El sello 引潮 es secundario y se usa solo en la pesca del día, la confirmación del pedido y el packaging.",
+    "logoLight": "Logotipo horizontal y apilado sobre Espuma",
+    "logoDark": "Logotipo sobre Tinta e isotipo en su tamaño mínimo (24 px)",
+    "hanko": "Sello 引潮 a 48 y 72 px (gráfico SVG, pendiente de revisión nativa)",
+    "tide": "Línea de marea: único motivo gráfico recurrente"
+  },
+  "colors": {
+    "title": "Color",
+    "intro": "Paleta aprobada y tokens derivados. Los componentes usan tokens semánticos que apuntan a estos colores.",
+    "palette": "Paleta aprobada",
+    "derived": "Tokens derivados",
+    "contrastTitle": "Contraste de las combinaciones del sistema",
+    "names": {
+      "tinta": "Tinta de mar",
+      "espuma": "Espuma",
+      "aji": "Ají amarillo",
+      "coral": "Coral",
+      "lima": "Lima",
+      "roca": "Roca",
+      "coral700": "Coral profundo",
+      "tinta800": "Tinta 800",
+      "sal": "Sal",
+      "linea": "Línea"
+    },
+    "table": {
+      "sample": "Muestra",
+      "pair": "Texto / fondo",
+      "ratio": "Contraste",
+      "use": "Uso permitido",
+      "sampleText": "Corvina"
+    },
+    "level": { "AA": "AA", "AA-large": "AA grande", "fail": "no cumple" },
+    "use": {
+      "text": "Cualquier texto",
+      "large": "Solo texto ≥ 24 px o gráficos",
+      "never": "Nunca como texto (solo se muestra el par de colores)"
+    }
+  },
+  "type": {
+    "title": "Tipografía",
+    "intro": "Shippori Mincho B1 para nombrar, desde 22 px; Zen Kaku Gothic New para leer. El tamaño crece a partir de 1024 px.",
+    "tokens": {
+      "display": "display · 44 / 76 px",
+      "h1": "h1 · 34 / 52 px",
+      "h2": "h2 · 28 / 38 px",
+      "h3": "h3 · 22 / 26 px",
+      "bodyLg": "body-lg · 18 / 19 px",
+      "body": "body · 16 / 17 px",
+      "ui": "ui · 15 px",
+      "meta": "meta · 13 px",
+      "price": "price · 17 / 18 px, cifras tabulares"
+    },
+    "samples": {
+      "display": "Corvina de Puntarenas",
+      "h1": "La carta de hoy",
+      "h2": "Tiraditos",
+      "h3": "Tiradito nikkei de pulpo",
+      "bodyLg": "Cortamos el pescado al momento de tu pedido. Si hoy no entró, no está en la carta.",
+      "body": "Leche de tigre de ají amarillo, camote glaseado en miso, choclo tostado y aceite de cebollín.",
+      "ui": "Agregar al pedido · Editar · Quitar",
+      "meta": "Entró a las 06:40 · Golfo de Nicoya"
+    }
+  },
+  "glyphs": {
+    "title": "Glifos",
+    "intro": "Validación V3: tildes, ñ, ü, signos de apertura, comillas, rayas y cifras se ven con las tipografías aprobadas. El símbolo ₡ no existe en ellas; lo aporta una fuente de respaldo limitada a ese carácter.",
+    "fonts": {
+      "displaySemibold": "Shippori Mincho B1 · 600",
+      "displayExtrabold": "Shippori Mincho B1 · 800",
+      "sansRegular": "Zen Kaku Gothic New · 400",
+      "sansMedium": "Zen Kaku Gothic New · 500",
+      "sansBold": "Zen Kaku Gothic New · 700"
+    }
+  },
+  "buttons": {
+    "title": "Botones y estados",
+    "intro": "Una acción principal por vista. Radio de 2 px, alto mínimo de 48 px y sin sombras. El estado deshabilitado explica el motivo.",
+    "addLabel": "Agregar al pedido",
+    "disabledReason": "Elegí una salsa para continuar.",
+    "seeMenu": "Ver la carta",
+    "editOptions": "Editar opciones",
+    "cancelOrder": "Cancelar pedido",
+    "orderNow": "Pedir ahora",
+    "catchOfTheDay": "Ver la pesca del día",
+    "states": {
+      "rest": "Primario · reposo",
+      "hover": "Primario · hover",
+      "focus": "Primario · foco por teclado",
+      "active": "Primario · presionado",
+      "loading": "Primario · procesando",
+      "disabled": "Primario · deshabilitado, con motivo"
+    },
+    "variants": { "secondary": "Secundario", "text": "Texto", "danger": "Peligro" },
+    "onDark": {
+      "primary": "Sobre Tinta · primario (Ají)",
+      "hover": "Sobre Tinta · hover",
+      "focus": "Sobre Tinta · foco (anillo Ají)",
+      "secondary": "Sobre Tinta · secundario"
+    }
+  },
+  "forms": {
+    "title": "Campos y formularios",
+    "intro": "Etiqueta siempre visible arriba, ayuda debajo y errores con ícono y texto. Al enviar con errores, el foco va al resumen.",
+    "name": "Nombre",
+    "nameHover": "Nombre · hover",
+    "nameFocus": "Nombre · foco",
+    "phone": "Teléfono",
+    "reference": "Referencia para el repartidor",
+    "referenceHint": "Portón, color de la casa, piso.",
+    "disabled": "Provincia · deshabilitado",
+    "errors": {
+      "phone": "Teléfono: faltan dígitos",
+      "reference": "Referencia: contanos cómo llegar",
+      "phoneField": "Escribí los 8 dígitos, por ejemplo 8812-3456."
+    }
+  },
+  "options": {
+    "title": "Opciones y cantidad",
+    "intro": "Opciones de un plato con la diferencia de precio a la derecha. El contador de extras se anuncia a lectores de pantalla.",
+    "spice": {
+      "legend": "Punto del picante",
+      "mild": "Suave",
+      "limo": "Con ají limo",
+      "rocoto": "Rocoto, para valientes"
+    },
+    "extras": {
+      "legend": "Extras",
+      "avocado": "Palta",
+      "sweetPotato": "Camote glaseado",
+      "chalaca": "Salsa chalaca"
+    },
+    "quantityNote": "El selector edita la cantidad total, sin tope de 20 (regla C5). La división interna en líneas de hasta 20 la hace la API."
+  },
+  "menu": {
+    "title": "Línea de carta",
+    "intro": "Nombre, puntos guía y precio alineado como en una carta impresa. Las etiquetas siempre llevan texto; la foto vive en la hoja del plato. Incluye el nombre y el precio más largos previstos.",
+    "category": "Ceviches",
+    "loading": "Cargando la carta",
+    "dishes": {
+      "clasico": "Leche de tigre de limón mesino, ají limo, camote glaseado y choclo tostado.",
+      "nikkei": "Atún, leche de tigre de soya y yuzu, pepino, sésamo negro y nori.",
+      "tiradito": "Láminas finas de pulpo, leche de tigre de ají amarillo, aceite de sésamo tostado y cebollín.",
+      "olivo": "Hoy no entró pulpo suficiente. Vuelve mañana."
+    }
+  },
+  "motion": {
+    "title": "Movimiento",
+    "intro": "150 ms para hover, 250 ms para paneles y 400 ms una sola vez para el trazo del logotipo. Con movimiento reducido no se anima nada."
+  }
+}

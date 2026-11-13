@@ -1,0 +1,449 @@
+# Transcripción de NVDA 2026.3 (log de voz, nivel E/S) · Edge 157 · 12-13/11/2026
+# Cada bloque: paso [teclas enviadas] y lo que NVDA dijo. Recorridos 1 a 4; el 4 es posterior a la corrección del plato agotado.
+
+######## Recorrido 1 ########
+## 1 carga
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 2a Tab desde el inicio del documento (Ctrl+Inicio y Tab) [^{HOME}{TAB}]
+['cliqueable', 'título región', 'Idioma', 'navegación región', 'ES· Español (Costa Rica)', 'visitado', 'misma página', 'enlace', 'actual']
+
+## 3 Enter en Saltar al contenido [{ENTER}]
+
+
+## 4a Encabezados H1 [h]
+['principal región', 'Sistema de diseño', 'encabezado', 'nivel 1']
+
+## 4b [h]
+['Marca', 'región', 'Marca', 'encabezado', 'nivel 2']
+
+## 4c [h]
+['Color', 'región', 'Color', 'encabezado', 'nivel 2']
+
+## 4d [h]
+['Paleta aprobada', 'encabezado', 'nivel 3']
+
+## 4e [h]
+['Tokens derivados', 'encabezado', 'nivel 3']
+
+## 4f [h]
+['Contraste de las combinaciones del sistema', 'encabezado', 'nivel 3']
+
+## 4g [h]
+['Tipografía', 'región', 'Tipografía', 'encabezado', 'nivel 2']
+
+## 4h [h]
+['Glifos', 'región', 'Glifos', 'encabezado', 'nivel 2']
+
+## 4i [h]
+['Botones y estados', 'región', 'Botones y estados', 'encabezado', 'nivel 2']
+
+## 4j [h]
+['Campos y formularios', 'región', 'Campos y formularios', 'encabezado', 'nivel 2']
+
+## 4k [h]
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+
+## 4l [h]
+['Opciones y cantidad', 'región', 'Opciones y cantidad', 'encabezado', 'nivel 2']
+
+## 4m [h]
+['Línea de carta', 'región', 'Línea de carta', 'encabezado', 'nivel 2']
+
+## 4n [h]
+['Ceviches', 'encabezado', 'nivel 3']
+
+## 4o [h]
+['Ceviche clásico de corvina', 'encabezado', 'nivel 4']
+
+## 4p [h]
+['Ceviche nikkei', 'encabezado', 'nivel 4']
+
+## 4q [h]
+['Tiradito nikkei de pulpo del Golfo de Nicoya con leche de tigre de ají amarillo', 'encabezado', 'nivel 4']
+
+## 4r [h]
+['Ceviche de pulpo al olivo', 'encabezado', 'nivel 4']
+
+## 4s [h]
+['Cargando la carta', 'encabezado', 'nivel 3']
+
+## 4t [h]
+['Movimiento', 'región', 'Movimiento', 'encabezado', 'nivel 2']
+
+## 4u [h]
+['sin encabezado siguiente']
+
+## 4v [h]
+['sin encabezado siguiente']
+
+## 5 Regiones (inicio y D) [^{HOME}d]
+['sin siguiente región']
+
+## 5b [d]
+['sin siguiente región']
+
+## 5c [d]
+['sin siguiente región']
+
+## 5d [d]
+['sin siguiente región']
+
+## 5e [d]
+['sin siguiente región']
+
+## 5f [d]
+['sin siguiente región']
+
+## 5g [d]
+['sin siguiente región']
+
+## 5h [d]
+['sin siguiente región']
+
+## 5i [d]
+['sin siguiente región']
+
+## 5j [d]
+['sin siguiente región']
+
+## 5k [d]
+['sin siguiente región']
+
+## 6 Navegación de idioma: Tab al segundo enlace [FOCUS:nav a[lang="en"]]
+['título región', 'Idioma', 'navegación región', 'Inglés (no soportado)', 'EN· English', 'enlace']
+
+## 7a Gráficos (inicio y G) [^{HOME}g]
+['principal región', 'Marca', 'región', 'figura', 'Marea Baja', 'gráfico']
+
+## 7b [g]
+['Marea Baja', 'gráfico']
+
+## 7c [g]
+['figura', 'Marea Baja', 'gráfico']
+
+## 7d [g]
+['figura', 'Sello 引潮 (hikishio, marea baja)', 'gráfico']
+
+## 7e [g]
+['Sello 引潮 (hikishio, marea baja)', 'gráfico']
+
+## 8 Botones (inicio y B) [^{HOME}b]
+['Botones y estados', 'región', 'figura', 'Español (no soportado)', 'Agregar al pedido', 'botón']
+
+## 8b [b]
+['figura', 'Agregar al pedido', 'botón']
+
+## 8c [b]
+['figura', 'Agregar al pedido', 'botón']
+
+## 8d [b]
+['figura', 'Agregar al pedido', 'botón']
+
+## 8e [b]
+['figura', 'Procesando…', 'botón', 'procesando']
+
+## 8f [b]
+['figura', 'Agregar al pedido', 'botón', 'no disponible', 'Elegí una salsa para continuar.']
+
+## 8g [b]
+['figura', 'Ver la carta', 'botón']
+
+## 10 Campo Teléfono (foco) [FOCUS:#f-tel-error]
+['principal región']
+['Campos y formularios', 'región']
+['Teléfono', 'edición', 'entrada inválida', 'Escribí los 8 dígitos, por ejemplo 8812-3456.', '8812-34']
+
+## 10b Campo Referencia (foco) [FOCUS:#f-ref]
+['Referencia para el repartidor', 'edición', 'Portón, color de la casa, piso.', 'en blanco']
+
+## 10c Campo deshabilitado (F desde Referencia) [f]
+[CharacterModeCommand(True), 'f', EndUtteranceCommand(), CharacterModeCommand(False)]
+
+## 12 Enlace del resumen: foco [FOCUS:a[href="#f-tel-error"]]
+['lista', 'con 2 elementos', 'Teléfono: faltan dígitos', 'misma página', 'enlace']
+
+## 12b Enter en el enlace [{ENTER}]
+['Teléfono', 'edición', 'entrada inválida', 'Escribí los 8 dígitos, por ejemplo 8812-3456.', '8812-34']
+
+## 13 Grupo picante: foco en Suave [FOCUS:input[type=radio]]
+['Opciones y cantidad', 'región']
+['Punto del picante', 'agrupación']
+['Suave incluido', 'botón de opción', 'marcado', '1 de 3']
+
+## 14 Flecha abajo en el grupo [{DOWN}]
+['en blanco']
+
+## 15 Extras: foco en Camote [FOCUS:fieldset:has(legend:text("Extras")) input >> nth=1]
+['Extras', 'agrupación', 'Camote glaseado + ₡500', 'casilla de verificación', 'sin marcar']
+
+## 15b Espacio para marcar Camote [ ]
+['Elegí hasta 2 · elegiste 2 de 2 ']
+['marcado']
+
+## 16 Tab a Salsa chalaca (debería estar deshabilitada) [{TAB}]
+['Cantidad', 'agrupación', 'Quitar uno', 'botón']
+
+## 17 Foco en Agregar uno [FOCUS:button[aria-label="Agregar uno"]]
+['Agregar uno', 'botón']
+
+## 17b Enter en Agregar uno [{ENTER}]
+['Cantidad:26 ']
+
+## 18 Plato agotado: recargar
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'visitado', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 18b h4 #1 [4]
+['cliqueable', 'principal región', 'Línea de carta', 'región', 'Ceviche clásico de corvina', 'encabezado', 'nivel 4']
+
+## 18c h4 #2 [4]
+['Ceviche nikkei', 'encabezado', 'nivel 4']
+
+## 18d h4 #3 [4]
+['Tiradito nikkei de pulpo del Golfo de Nicoya con leche de tigre de ají amarillo', 'encabezado', 'nivel 4']
+
+## 18e h4 #4 (olivo) [4]
+['Ceviche de pulpo al olivo', 'encabezado', 'nivel 4']
+
+## 18f flecha abajo [{DOWN}]
+[CharacterModeCommand(True), 'C', EndUtteranceCommand(), CharacterModeCommand(False)]
+
+## 18g flecha abajo [{DOWN}]
+[CharacterModeCommand(True), 'C', EndUtteranceCommand(), CharacterModeCommand(False)]
+
+## 18h flecha abajo [{DOWN}]
+[CharacterModeCommand(True), 'C', EndUtteranceCommand(), CharacterModeCommand(False)]
+
+## 20 Página en inglés
+['Cargando página']
+['Nueva notificación, ¿Quieres traducir la página del inglés?. Presiona F6 hasta llegar a la notificación.']
+['Carga completa']
+['http://127.0.0.1:5173/en/_design']
+[]
+['Check 2 fields to continue', 'alerta']
+['Check 2 fields to continue', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Phone: some digits are missing', 'enlace', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Directions: tell us how to get there', 'enlace', 'misma página']
+
+## 20b H [h]
+['cliqueable', 'principal región', 'Inglés (no soportado)', 'Design system', 'encabezado', 'nivel 1']
+
+## 20c H [h]
+['Brand', 'región', 'Brand', 'encabezado', 'nivel 2']
+
+######## Recorrido -2 ########
+## 1 carga
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'visitado', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 0 Bloqueo numérico: estado [FOCUS:body]
+
+
+## 2 Foco en Saltar al contenido [FOCUS:a[href="#contenido"]]
+['cliqueable', 'Español (no soportado)', 'Saltar al contenido', 'misma página', 'enlace']
+
+## 3 Enter en Saltar al contenido [{ENTER}]
+['principal región', 'PÁGINA INTERNA · NO SE INDEXA', 'Sistema de diseño', 'encabezado', 'nivel 1', 'Tokens, tipografía y componentes base de Marea Baja, con cada estado a la vista para las auditorías de accesibilidad.', 'región', 'Marca', 'encabezado', 'nivel 2', 'Isotipo de un solo trazo: la ola se cierra en un bowl. El sello 引潮 es secundario y se usa solo en la pesca del día, la confirmación del pedido y el packaging.', 'figura', 'Marea Baja', 'gráfico', 'Marea Baja', 'gráfico', 'rótulo', 'Logotipo horizontal y apilado sobre Espuma', 'fuera de rótulo', 'fuera de figura', 'figura', 'Marea Baja', 'gráfico', 'rótulo', 'Logotipo sobre Tinta e isotipo en su tamaño mínimo (24\xa0px)', 'fuera de rótulo', 'fuera de figura', 'figura', 'Sello 引潮 (hikishio, marea baja)', 'gráfico', 'Sello 引潮 (hikishio, marea baja)', 'gráfico', 'rótulo', 'Sello 引潮 a 48 y 72\xa0px (gráfico SVG, pendiente de revisión nativa)', 'fuera de rótulo', 'fuera de figura', 'figura', 'rótulo', 'Línea de marea: único motivo gráfico recurrente', 'fuera de rótulo', 'fuera de figura', 'fuera de región', 'región', 'Color', 'encabezado', 'nivel 2', 'Paleta aprobada y tokens derivados. Los componentes usan tokens semánticos que apuntan a estos colores.', 'Paleta aprobada', 'encabezado', 'nivel 3', 'lista', 'Tinta de mar#0F2E35', 'Espuma#EEF2EF', 'Ají amarillo#F4B223', 'Coral#D9573B', 'Lima#C7D63A', 'Roca#5E6B6B', 'fuera de lista', 'Tokens derivados', 'encabezado', 'nivel 3', 'lista', 'Coral profundo#B8432A', 'Tinta 800#173F48', 'Sal#F8FAF8', 'Línea#D5DDD9', 'fuera de lista', 'Contraste de las combinaciones del sistema', 'encabezado', 'nivel 3', 'tabla', 'fila 1', 'columna 1', 'Muestra', 'columna 2', 'Texto / fondo', 'columna 3', 'Contraste', 'columna 4', 'Uso permitido', 'fila 2', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Tinta de mar / Espuma', 'Contraste', 'columna 3', '12,71:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 3', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Roca / Espuma', 'Contraste', 'columna 3', '4,9:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 4', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Coral profundo / Espuma', 'Contraste', 'columna 3', '4,8:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 5', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Tinta de mar / Sal', 'Contraste', 'columna 3', '13,69:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 6', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Espuma / Tinta de mar', 'Contraste', 'columna 3', '12,71:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 7', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Ají amarillo / Tinta de mar', 'Contraste', 'columna 3', '7,68:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 8', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Tinta de mar / Ají amarillo', 'Contraste', 'columna 3', '7,68:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 9', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Tinta de mar / Lima', 'Contraste', 'columna 3', '8,96:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 10', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Espuma / Tinta 800', 'Contraste', 'columna 3', '10,09:1 · AA', 'Uso permitido', 'columna 4', 'Cualquier texto', 'fila 11', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Espuma / Coral', 'Contraste', 'columna 3', '3,46:1 · AA grande', 'Uso permitido', 'columna 4', 'Solo texto ≥ 24\xa0px o gráficos', 'fila 12', 'Muestra', 'columna 1', 'Corvina', 'Texto / fondo', 'columna 2', 'Coral / Espuma', 'Contraste', 'columna 3', '3,46:1 · AA grande', 'Uso permitido', 'columna 4', 'Solo texto ≥ 24\xa0px o gráficos', 'fila 13', 'Muestra', 'columna 1', ' ', 'Texto / fondo', 'columna 2', 'Ají amarillo / Espuma', 'Contraste', 'columna 3', '1,65:1 · no cumple', 'Uso permitido', 'columna 4', 'Nunca como texto (solo se muestra el par de colores)', 'fuera de tabla', 'fuera de región', 'región', 'Tipografía', 'encabezado', 'nivel 2', 'Shippori Mincho B1 para nombrar, desde 22\xa0px; Zen Kaku Gothic New para leer. El tamaño crece a partir de 1024\xa0px.', 'lista', 'display · 44 / 76\xa0px', 'Corvina de Puntarenas', 'h1 · 34 / 52\xa0px', 'La carta de hoy', 'h2 · 28 / 38\xa0px', 'Tiraditos', 'h3 · 22 / 26\xa0px', 'Tiradito nikkei de pulpo', 'body-lg · 18 / 19\xa0px', 'Cortamos el pescado al momento de tu pedido. Si hoy no entró, no está en la carta.', 'body · 16 / 17\xa0px', 'Leche de tigre de ají amarillo, camote glaseado en miso, choclo tostado y aceite de cebollín.', 'ui · 15\xa0px', 'Agregar al pedido · Editar · Quitar', 'meta · 13\xa0px', 'ENTRÓ A LAS 06:40 · GOLFO DE NICOYA', 'price · 17 / 18\xa0px, cifras tabulares', '₡8\xa0900₡125\xa0000$12,50', 'fuera de lista', 'fuera de región', 'región', 'Glifos', 'encabezado', 'nivel 2', 'Validación V3: tildes, ñ, ü, signos de apertura, comillas, rayas y cifras se ven con las tipografías aprobadas. El símbolo ₡ no existe en ellas; lo aporta una fuente de respaldo limitada a ese carácter.', 'figura', 'áéíóú ÁÉÍÓÚ ñÑ üÜ¿ ¡ « » “ ” ‘ ’ — – · …₡ $ 0123456789 , .', 'rótulo', 'Shippori Mincho B1 · 600', 'fuera de rótulo', 'fuera de figura', 'figura', 'áéíóú ÁÉÍÓÚ ñÑ üÜ¿ ¡ « » “ ” ‘ ’ — – · …₡ $ 0123456789 , .', 'rótulo', 'Shippori Mincho B1 · 800', 'fuera de rótulo', 'fuera de figura', 'figura', 'áéíóú ÁÉÍÓÚ ñÑ üÜ¿ ¡ « » “ ” ‘ ’ — – · …₡ $ 0123456789 , .', 'rótulo', 'Zen Kaku Gothic New · 400', 'fuera de rótulo', 'fuera de figura', 'figura', 'áéíóú ÁÉÍÓÚ ñÑ üÜ¿ ¡ « » “ ” ‘ ’ — – · …₡ $ 0123456789 , .', 'rótulo', 'Zen Kaku Gothic New · 500', 'fuera de rótulo', 'fuera de figura', 'figura', 'áéíóú ÁÉÍÓÚ ñÑ üÜ¿ ¡ « » “ ” ‘ ’ — – · …₡ $ 0123456789 , .', 'rótulo', 'Zen Kaku Gothic New · 700', 'fuera de rótulo', 'fuera de figura', 'fuera de región', 'región', 'Botones y estados', 'encabezado', 'nivel 2', 'Una acción principal por vista. Radio de 2\xa0px, alto mínimo de 48\xa0px y sin sombras. El estado deshabilitado explica el motivo.', 'figura', 'Agregar al pedido', 'botón', 'rótulo', 'Primario · reposo', 'fuera de rótulo', 'fuera de figura', 'figura', 'Agregar al pedido', 'botón', 'rótulo', 'Primario · hover', 'fuera de rótulo', 'fuera de figura', 'figura', 'Agregar al pedido', 'botón', 'rótulo', 'Primario · foco por teclado', 'fuera de rótulo', 'fuera de figura', 'figura', 'Agregar al pedido', 'botón', 'rótulo', 'Primario · presionado', 'fuera de rótulo', 'fuera de figura', 'figura', 'Procesando…', 'botón', 'procesando', 'rótulo', 'Primario · procesando', 'fuera de rótulo', 'fuera de figura', 'figura', 'Agregar al pedido', 'botón', 'no disponible', 'Elegí una salsa para continuar.', 'Elegí una salsa para continuar.', 'rótulo', 'Primario · deshabilitado, con motivo', 'fuera de rótulo', 'fuera de figura', 'figura', 'Ver la carta', 'botón', 'rótulo', 'Secundario', 'fuera de rótulo', 'fuera de figura', 'figura', 'Editar opciones', 'botón', 'rótulo', 'Texto', 'fuera de rótulo', 'fuera de figura', 'figura', 'Cancelar pedido', 'botón', 'rótulo', 'Peligro', 'fuera de rótulo', 'fuera de figura', 'figura', 'Pedir ahora', 'botón', 'rótulo', 'Sobre Tinta · primario (Ají)', 'fuera de rótulo', 'fuera de figura', 'figura', 'Pedir ahora', 'botón', 'rótulo', 'Sobre Tinta · hover', 'fuera de rótulo', 'fuera de figura', 'figura', 'Pedir ahora', 'botón', 'rótulo', 'Sobre Tinta · foco (anillo Ají)', 'fuera de rótulo', 'fuera de figura', 'figura', 'Ver la pesca del día', 'botón', 'rótulo', 'Sobre Tinta · secundario', 'fuera de rótulo', 'fuera de figura', 'fuera de región', 'región', 'Campos y formularios', 'encabezado', 'nivel 2', 'Etiqueta siempre visible arriba, ayuda debajo y errores con ícono y texto. Al enviar con errores, el foco va al resumen.', 'Revisá 2 datos para continuar', 'encabezado', 'nivel 3', 'lista', '• ', 'Teléfono: faltan dígitos', 'visitado', 'misma página', 'enlace', '• ', 'Referencia: contanos cómo llegar', 'misma página', 'enlace', 'fuera de lista', 'Nombre', 'Nombre', 'edición', 'Valeria', 'Nombre · hover', 'Nombre · hover', 'edición', 'Valeria', 'Nombre · foco', 'Nombre · foco', 'edición', 'Valeria', 'Teléfono', 'Teléfono', 'edición', 'entrada inválida', 'Escribí los 8 dígitos, por ejemplo 8812-3456.', '8812-34', 'Escribí los 8 dígitos, por ejemplo 8812-3456.', 'Referencia para el repartidor', 'Portón, color de la casa, piso.', 'Referencia para el repartidor', 'edición', 'Portón, color de la casa, piso.', ' ', 'Provincia · deshabilitado', 'Provincia · deshabilitado', 'edición', 'no disponible', 'San José', 'fuera de región', 'región', 'Opciones y cantidad', 'encabezado', 'nivel 2', 'Opciones de un plato con la diferencia de precio a la derecha. El contador de extras se anuncia a lectores de pantalla.', 'agrupación', 'Punto del picante', ' ', 'Suave incluido', 'botón de opción', 'marcado', 'Suaveincluido', ' ', 'Con ají limo incluido', 'botón de opción', 'sin marcar', 'Con ají limoincluido', ' ', 'Rocoto, para valientes + ₡600', 'botón de opción', 'sin marcar', 'Rocoto, para valientes+ ₡600', 'fuera de agrupación', 'agrupación', 'Elegí hasta 2 · elegiste 1 de 2', 'Extras', 'Elegí hasta 2 · elegiste 1 de 2', ' ', 'Palta + ₡900', 'casilla de verificación', 'marcado', 'Palta+ ₡900', ' ', 'Camote glaseado + ₡500', 'casilla de verificación', 'sin marcar', 'Camote glaseado+ ₡500', ' ', 'Salsa chalaca + ₡700', 'casilla de verificación', 'sin marcar', 'Salsa chalaca+ ₡700', 'fuera de agrupación', 'Cantidad', 'Cantidad', 'agrupación', 'Quitar uno', 'botón', 'Cantidad:25', 'Agregar uno', 'botón', 'fuera de agrupación', 'El selector edita la cantidad total, sin tope de 20 (regla C5). La división interna en líneas de hasta 20 la hace la API.', 'fuera de región', 'región', 'Línea de carta', 'encabezado', 'nivel 2', 'Nombre, puntos guía y precio alineado como en una carta impresa. Las etiquetas siempre llevan texto; la foto vive en la hoja del plato. Incluye el nombre y el precio más largos previstos.', 'Ceviches', 'encabezado', 'nivel 3', 'Ceviche clásico de corvina', 'encabezado', 'nivel 4', '₡8\xa0900', 'Leche de tigre de limón mesino, ají limo, camote glaseado y choclo tostado.', 'PESCA DEL DÍAPICANTE', 'Ceviche nikkei', 'encabezado', 'nivel 4', '₡9\xa0600', 'Atún, leche de tigre de soya y yuzu, pepino, sésamo negro y nori.', 'SIN GLUTEN A PEDIDO', 'Tiradito nikkei de pulpo del Golfo de Nicoya con leche de tigre de ají amarillo', 'encabezado', 'nivel 4', '₡125\xa0000', 'Láminas finas de pulpo, leche de tigre de ají amarillo, aceite de sésamo tostado y cebollín.', 'PESCA DEL DÍA', 'Ceviche de pulpo al olivo', 'encabezado', 'nivel 4', '₡10\xa0200Agotado hoy', 'Hoy no entró pulpo suficiente. Vuelve mañana.', 'AGOTADO HOY', 'Cargando la carta', 'encabezado', 'nivel 3', ' ', 'fuera de región', 'región', 'Movimiento', 'encabezado', 'nivel 2', '150 ms para hover, 250 ms para paneles y 400 ms una sola vez para el trazo del logotipo. Con movimiento reducido no se anima nada.']
+
+## 3b Siguiente línea tras saltar [{DOWN}]
+['fuera de región', 'encabezado', 'nivel 1', 'Sistema de diseño']
+
+## 5 Regiones: inicio [^{HOME}]
+['visitado', 'misma página', 'enlace', 'Saltar al contenido']
+
+## 5a D [d]
+['título región', 'Marea Baja', 'gráfico']
+
+## 5b D [d]
+['Idioma', 'navegación región', 'ES· Español (Costa Rica)', 'visitado', 'misma página', 'enlace', 'actual']
+
+## 5c D [d]
+['principal región', 'PÁGINA INTERNA · NO SE INDEXA']
+
+## 5d D [d]
+['Marca', 'región', 'Marca', 'encabezado', 'nivel 2']
+
+## 5e D [d]
+['Color', 'región', 'Color', 'encabezado', 'nivel 2']
+
+## 5f D [d]
+['Tipografía', 'región', 'Tipografía', 'encabezado', 'nivel 2']
+
+## 5g D [d]
+['Glifos', 'región', 'Glifos', 'encabezado', 'nivel 2']
+
+## 5h D [d]
+['Botones y estados', 'región', 'Botones y estados', 'encabezado', 'nivel 2']
+
+## 5i D [d]
+['Campos y formularios', 'región', 'Campos y formularios', 'encabezado', 'nivel 2']
+
+## 5j D [d]
+['Opciones y cantidad', 'región', 'Opciones y cantidad', 'encabezado', 'nivel 2']
+
+## 5k D [d]
+['Línea de carta', 'región', 'Línea de carta', 'encabezado', 'nivel 2']
+
+## 5l D [d]
+['Movimiento', 'región', 'Movimiento', 'encabezado', 'nivel 2']
+
+## 10c Campo deshabilitado: E (siguiente campo de edición) desde Referencia [FOCUS:#f-ref]
+['Campos y formularios', 'región']
+['Referencia para el repartidor', 'edición', 'Portón, color de la casa, piso.', 'en blanco']
+
+## 10d Escape a modo exploración [{ESC}]
+
+
+## 10e E [e]
+['Provincia · deshabilitado', 'edición', 'no disponible', 'San José']
+
+## 10f E [e]
+['sin siguiente campo de edición']
+
+## 14 Tab desde Referencia hacia los radios [FOCUS:#f-disabled]
+
+
+## 14a Tab [{TAB}]
+['Opciones y cantidad', 'región']
+['Punto del picante', 'agrupación']
+['Suave incluido', 'botón de opción', 'marcado', '1 de 3']
+
+## 14b Flecha abajo dentro del grupo [{DOWN}]
+['Con ají limo incluido', 'botón de opción', 'marcado', '2 de 3']
+
+## 16 Salsa chalaca en modo exploración: Escape y X [{ESC}]
+
+
+## 16a X [x]
+['Extras', 'agrupación', 'Palta + ₡900', 'casilla de verificación', 'marcado']
+
+## 16b X [x]
+['Camote glaseado + ₡500', 'casilla de verificación', 'sin marcar']
+
+## 16c X [x]
+['Salsa chalaca + ₡700', 'casilla de verificación', 'sin marcar']
+
+## 18 Plato agotado: recargar
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'visitado', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 18a h4 [4]
+['cliqueable', 'principal región', 'Línea de carta', 'región', 'Ceviche clásico de corvina', 'encabezado', 'nivel 4']
+
+## 18b h4 [4]
+['Ceviche nikkei', 'encabezado', 'nivel 4']
+
+## 18c h4 [4]
+['Tiradito nikkei de pulpo del Golfo de Nicoya con leche de tigre de ají amarillo', 'encabezado', 'nivel 4']
+
+## 18d h4 (olivo) [4]
+['Ceviche de pulpo al olivo', 'encabezado', 'nivel 4']
+
+## 18e flecha abajo [{DOWN}]
+['₡10\xa0200Agotado hoy']
+
+## 18f flecha abajo [{DOWN}]
+['Hoy no entró pulpo suficiente. Vuelve mañana.']
+
+## 18g flecha abajo [{DOWN}]
+['AGOTADO HOY']
+
+######## Recorrido -3 ########
+## 1 carga
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'visitado', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 15 Foco en Camote [FOCUS:fieldset:has(legend:text("Extras")) input >> nth=1]
+['cliqueable', 'principal región', 'Opciones y cantidad', 'región', 'Extras', 'agrupación', 'Camote glaseado + ₡500', 'casilla de verificación', 'sin marcar']
+
+## 15b Espacio [ ]
+['Elegí hasta 2 · elegiste 2 de 2 ']
+['marcado']
+
+## 16 Escape a modo exploración [{ESC}]
+
+
+## 16a flecha abajo [{DOWN}]
+['Camote glaseado+ ₡500']
+
+## 16b flecha abajo [{DOWN}]
+['casilla de verificación', 'no disponible', 'sin marcar']
+
+## 16c flecha abajo [{DOWN}]
+['Salsa chalaca+ ₡700']
+
+######## Recorrido -4 ########
+## 1 carga
+['Cargando página']
+['Carga completa']
+[]
+['Revisá 2 datos para continuar', 'alerta']
+['Revisá 2 datos para continuar', 'encabezado', 'nivel 3']
+['lista']
+['elemento de lista', '1 de 2', 'nivel 1']
+['Teléfono: faltan dígitos', 'enlace', 'visitado', 'misma página']
+['elemento de lista', '2 de 2', 'nivel 1']
+['Referencia: contanos cómo llegar', 'enlace', 'misma página']
+
+## 18 Escape [{ESC}]
+
+
+## 18a h4 [4]
+['cliqueable', 'principal región', 'Línea de carta', 'región', 'Ceviche clásico de corvina', 'encabezado', 'nivel 4']
+
+## 18b h4 [4]
+['Ceviche nikkei', 'encabezado', 'nivel 4']
+
+## 18c h4 [4]
+['Tiradito nikkei de pulpo del Golfo de Nicoya con leche de tigre de ají amarillo', 'encabezado', 'nivel 4']
+
+## 18d h4 (olivo) [4]
+['Ceviche de pulpo al olivo', 'encabezado', 'nivel 4']
+
+## 18e flecha abajo [{DOWN}]
+['₡10\xa0200, Agotado hoy']

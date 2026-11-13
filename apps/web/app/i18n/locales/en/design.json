@@ -1,0 +1,157 @@
+{
+  "metaTitle": "Design system · Marea Baja",
+  "eyebrow": "Internal page · not indexed",
+  "title": "Design system",
+  "intro": "Marea Baja’s tokens, type and base components, with every state visible for accessibility audits.",
+  "brand": {
+    "title": "Brand",
+    "intro": "A single-stroke mark: the wave closes into a bowl. The 引潮 seal is secondary and only appears on the catch of the day, the order confirmation and packaging.",
+    "logoLight": "Horizontal and stacked logo on Espuma",
+    "logoDark": "Logo on Tinta and the mark at its minimum size (24 px)",
+    "hanko": "引潮 seal at 48 and 72 px (SVG graphic, pending native review)",
+    "tide": "Tide line: the only recurring graphic motif"
+  },
+  "colors": {
+    "title": "Color",
+    "intro": "Approved palette and derived tokens. Components use semantic tokens that point to these colors.",
+    "palette": "Approved palette",
+    "derived": "Derived tokens",
+    "contrastTitle": "Contrast of the system’s color pairs",
+    "names": {
+      "tinta": "Tinta de mar",
+      "espuma": "Espuma",
+      "aji": "Ají amarillo",
+      "coral": "Coral",
+      "lima": "Lima",
+      "roca": "Roca",
+      "coral700": "Deep coral",
+      "tinta800": "Tinta 800",
+      "sal": "Sal",
+      "linea": "Línea"
+    },
+    "table": {
+      "sample": "Sample",
+      "pair": "Text / background",
+      "ratio": "Contrast",
+      "use": "Allowed use",
+      "sampleText": "Corvina"
+    },
+    "level": { "AA": "AA", "AA-large": "AA large", "fail": "fails" },
+    "use": {
+      "text": "Any text",
+      "large": "Text ≥ 24 px or graphics only",
+      "never": "Never as text (only the color pair is shown)"
+    }
+  },
+  "type": {
+    "title": "Typography",
+    "intro": "Shippori Mincho B1 for names, from 22 px up; Zen Kaku Gothic New for reading. Sizes step up from 1024 px.",
+    "tokens": {
+      "display": "display · 44 / 76 px",
+      "h1": "h1 · 34 / 52 px",
+      "h2": "h2 · 28 / 38 px",
+      "h3": "h3 · 22 / 26 px",
+      "bodyLg": "body-lg · 18 / 19 px",
+      "body": "body · 16 / 17 px",
+      "ui": "ui · 15 px",
+      "meta": "meta · 13 px",
+      "price": "price · 17 / 18 px, tabular figures"
+    },
+    "samples": {
+      "display": "Corvina from Puntarenas",
+      "h1": "Today’s menu",
+      "h2": "Tiraditos",
+      "h3": "Octopus tiradito nikkei",
+      "bodyLg": "We cut the fish when you order. If it didn’t come in today, it isn’t on the menu.",
+      "body": "Ají amarillo tiger’s milk, miso-glazed sweet potato, toasted corn and chive oil.",
+      "ui": "Add to order · Edit · Remove",
+      "meta": "Came in at 06:40 · Gulf of Nicoya"
+    }
+  },
+  "glyphs": {
+    "title": "Glyphs",
+    "intro": "Check V3: accents, ñ, ü, Spanish opening marks, quotes, dashes and digits render in the approved typefaces. They have no ₡ glyph; a fallback font limited to that one character provides it.",
+    "fonts": {
+      "displaySemibold": "Shippori Mincho B1 · 600",
+      "displayExtrabold": "Shippori Mincho B1 · 800",
+      "sansRegular": "Zen Kaku Gothic New · 400",
+      "sansMedium": "Zen Kaku Gothic New · 500",
+      "sansBold": "Zen Kaku Gothic New · 700"
+    }
+  },
+  "buttons": {
+    "title": "Buttons and states",
+    "intro": "One primary action per view. 2 px radius, 48 px minimum height and no shadows. The disabled state explains why.",
+    "addLabel": "Add to order",
+    "disabledReason": "Choose a sauce to continue.",
+    "seeMenu": "See the menu",
+    "editOptions": "Edit options",
+    "cancelOrder": "Cancel order",
+    "orderNow": "Order now",
+    "catchOfTheDay": "See the catch of the day",
+    "states": {
+      "rest": "Primary · rest",
+      "hover": "Primary · hover",
+      "focus": "Primary · keyboard focus",
+      "active": "Primary · pressed",
+      "loading": "Primary · processing",
+      "disabled": "Primary · disabled, with reason"
+    },
+    "variants": { "secondary": "Secondary", "text": "Text", "danger": "Danger" },
+    "onDark": {
+      "primary": "On Tinta · primary (Ají)",
+      "hover": "On Tinta · hover",
+      "focus": "On Tinta · focus (Ají ring)",
+      "secondary": "On Tinta · secondary"
+    }
+  },
+  "forms": {
+    "title": "Fields and forms",
+    "intro": "The label always sits above, help text below, and errors carry an icon and text. On a failed submit, focus moves to the summary.",
+    "name": "First name",
+    "nameHover": "First name · hover",
+    "nameFocus": "First name · focus",
+    "phone": "Phone",
+    "reference": "Directions for the driver",
+    "referenceHint": "Gate, house color, floor.",
+    "disabled": "Province · disabled",
+    "errors": {
+      "phone": "Phone: some digits are missing",
+      "reference": "Directions: tell us how to get there",
+      "phoneField": "Enter all 8 digits, for example 8812-3456."
+    }
+  },
+  "options": {
+    "title": "Options and quantity",
+    "intro": "Dish options with the price difference on the right. The extras counter is announced to screen readers.",
+    "spice": {
+      "legend": "Spice level",
+      "mild": "Mild",
+      "limo": "With ají limo",
+      "rocoto": "Rocoto, for the brave"
+    },
+    "extras": {
+      "legend": "Extras",
+      "avocado": "Avocado",
+      "sweetPotato": "Glazed sweet potato",
+      "chalaca": "Chalaca sauce"
+    },
+    "quantityNote": "The stepper edits the total quantity, with no cap at 20 (rule C5). The API splits it into internal lines of up to 20."
+  },
+  "menu": {
+    "title": "Menu line",
+    "intro": "Name, dot leaders and price aligned like a printed menu. Tags always carry text; the photo lives on the dish sheet. Includes the longest expected name and price.",
+    "category": "Ceviches",
+    "loading": "Loading the menu",
+    "dishes": {
+      "clasico": "Mesino lime tiger’s milk, ají limo, glazed sweet potato and toasted corn.",
+      "nikkei": "Tuna, soy and yuzu tiger’s milk, cucumber, black sesame and nori.",
+      "tiradito": "Thin slices of octopus, ají amarillo tiger’s milk, toasted sesame oil and chives.",
+      "olivo": "Not enough octopus came in today. Back tomorrow."
+    }
+  },
+  "motion": {
+    "title": "Motion",
+    "intro": "150 ms for hover, 250 ms for panels and 400 ms, once, for the logo stroke. With reduced motion nothing animates."
+  }
+}

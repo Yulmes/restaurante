@@ -11,5 +11,6 @@ Thumbs.db
 coverage/
 playwright-report/
 test-results/
+.react-router/
 .idea/
 .vscode/

@@ -1,0 +1,229 @@
+/*
+ * Sistema de diseño de Marea Baja (propuesta §1–§3, decisiones D1 y D11).
+ * Tema único claro. Los componentes usan SOLO tokens semánticos (--color-surface,
+ * --color-text, …), que apuntan a la paleta de marca: un segundo tema solo
+ * tendría que redefinir los semánticos.
+ */
+@import 'tailwindcss';
+
+/* Fuentes autoalojadas: solo subconjuntos latinos (C3). */
+@import '@fontsource/shippori-mincho-b1/latin-600.css';
+@import '@fontsource/shippori-mincho-b1/latin-ext-600.css';
+@import '@fontsource/shippori-mincho-b1/latin-800.css';
+@import '@fontsource/shippori-mincho-b1/latin-ext-800.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-400.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-ext-400.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-500.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-ext-500.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-700.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-ext-700.css';
+
+@theme {
+  /* Se eliminan los colores por defecto de Tailwind: solo existe la paleta de marca. */
+  --color-*: initial;
+
+  /* Paleta aprobada (§1.2) */
+  --color-tinta: #0f2e35;
+  --color-espuma: #eef2ef;
+  --color-aji: #f4b223;
+  --color-coral: #d9573b;
+  --color-lima: #c7d63a;
+  --color-roca: #5e6b6b;
+  /* Tokens derivados aprobados (D1) */
+  --color-coral-700: #b8432a;
+  --color-tinta-800: #173f48;
+  --color-sal: #f8faf8;
+  --color-linea: #d5ddd9;
+
+  /* Tokens semánticos (D11): lo que usan los componentes */
+  --color-surface: var(--color-espuma);
+  --color-surface-raised: var(--color-sal);
+  --color-surface-inverse: var(--color-tinta);
+  --color-text: var(--color-tinta);
+  --color-text-muted: var(--color-roca);
+  --color-text-inverse: var(--color-espuma);
+  --color-text-inverse-muted: #c9d4d1;
+  --color-border: var(--color-linea);
+  --color-border-strong: var(--color-roca);
+  --color-action: var(--color-tinta);
+  --color-action-hover: var(--color-tinta-800);
+  --color-action-on-dark: var(--color-aji);
+  --color-danger: var(--color-coral-700);
+  --color-highlight: var(--color-lima);
+  --color-focus: var(--color-tinta);
+  --color-focus-on-dark: var(--color-aji);
+
+  /* Tipografía: ₡ no existe en las fuentes aprobadas; "Marea Colon" lo aporta (V3). */
+  --font-display: 'Shippori Mincho B1', 'Marea Colon', 'Hiragino Mincho ProN', 'Times New Roman', serif;
+  --font-sans: 'Zen Kaku Gothic New', 'Marea Colon', 'Hiragino Sans', 'Segoe UI', system-ui, sans-serif;
+
+  --radius-control: 2px;
+  --ease-marea: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-hover: 150ms;
+  --duration-panel: 250ms;
+  --duration-brand: 400ms;
+}
+
+/* Escala tipográfica (§3.1): celular primero, escritorio desde 1024 px. */
+@utility t-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.75rem;
+  line-height: 3rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  @media (width >= 64rem) {
+    font-size: 4.75rem;
+    line-height: 5rem;
+  }
+}
+@utility t-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.125rem;
+  line-height: 2.5rem;
+  text-wrap: balance;
+  @media (width >= 64rem) {
+    font-size: 3.25rem;
+    line-height: 3.625rem;
+  }
+}
+@utility t-h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
+  text-wrap: balance;
+  @media (width >= 64rem) {
+    font-size: 2.375rem;
+    line-height: 2.75rem;
+  }
+}
+@utility t-h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  text-wrap: balance;
+  @media (width >= 64rem) {
+    font-size: 1.625rem;
+    line-height: 2rem;
+  }
+}
+@utility t-body-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  @media (width >= 64rem) {
+    font-size: 1.1875rem;
+    line-height: 1.875rem;
+  }
+}
+@utility t-body {
+  font-size: 1rem;
+  line-height: 1.625rem;
+  @media (width >= 64rem) {
+    font-size: 1.0625rem;
+    line-height: 1.75rem;
+  }
+}
+@utility t-ui {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+@utility t-meta {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@utility t-price {
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  @media (width >= 64rem) {
+    font-size: 1.125rem;
+    line-height: 1.625rem;
+  }
+}
+
+@keyframes marea-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+/* Trazo del logotipo: se dibuja una sola vez al cargar (400 ms, §3.7). */
+@keyframes marea-draw {
+  from {
+    stroke-dashoffset: 240;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@layer components {
+  .marea-draw {
+    stroke-dasharray: 240;
+    stroke-dashoffset: 0;
+    animation: marea-draw var(--duration-brand) var(--ease-marea) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marea-draw {
+      animation: none;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* El foco visible marca la interacción; se quita el destello gris del toque. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  input,
+  label,
+  select,
+  textarea {
+    /* Sin demora de doble toque en móviles (Web Interface Guidelines). */
+    touch-action: manipulation;
+  }
+  body {
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.625;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .on-dark :focus-visible,
+  .on-dark .is-focus {
+    outline-color: var(--color-focus-on-dark);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

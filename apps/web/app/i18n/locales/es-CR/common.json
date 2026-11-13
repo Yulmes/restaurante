@@ -1,0 +1,40 @@
+{
+  "brand": "Marea Baja",
+  "slogan": "Lo que trajo el mar hoy",
+  "skipToContent": "Saltar al contenido",
+  "demoBanner": "Demostración: no se procesa dinero real ni se envían pedidos a un local real. Marea Baja es un restaurante ficticio.",
+  "loading": "Cargando…",
+  "language": {
+    "label": "Idioma",
+    "name": { "es-CR": "Español (Costa Rica)", "en": "English" },
+    "short": { "es-CR": "ES", "en": "EN" }
+  },
+  "hanko": { "label": "Sello 引潮 (hikishio, marea baja)" },
+  "actions": { "processing": "Procesando…" },
+  "quantity": { "label": "Cantidad", "decrease": "Quitar uno", "increase": "Agregar uno" },
+  "price": { "included": "incluido", "plus": "+" },
+  "tags": {
+    "catchOfTheDay": "Pesca del día",
+    "spicy": "Picante",
+    "glutenFreeOnRequest": "Sin gluten a pedido",
+    "vegetarian": "Vegetariano",
+    "soldOutToday": "Agotado hoy"
+  },
+  "form": {
+    "errorSummaryTitle_one": "Revisá un dato para continuar",
+    "errorSummaryTitle_other": "Revisá {{count}} datos para continuar",
+    "chooseUpTo": "Elegí hasta {{max}}",
+    "chosen": "elegiste {{count}} de {{max}}"
+  },
+  "home": {
+    "metaTitle": "Marea Baja · En construcción",
+    "underConstruction": "El sitio está en construcción. Por ahora se puede ver el sistema de diseño.",
+    "designLink": "Ver el sistema de diseño"
+  },
+  "errors": {
+    "notFoundTitle": "No encontramos esta página",
+    "notFoundBody": "Revisá la dirección o volvé al inicio.",
+    "genericTitle": "Algo salió mal",
+    "genericBody": "Volvé a intentarlo en unos minutos."
+  }
+}
