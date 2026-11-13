@@ -1,0 +1,38 @@
+<mjml lang="{{lang}}">
+  <mj-head>
+    <mj-title>{{subject}}</mj-title>
+    <mj-preview>{{preheader}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Georgia, 'Times New Roman', serif" />
+      <mj-text color="#0F2E35" font-size="16px" line-height="24px" padding="0 0 16px 0" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#EEF2EF" width="560px">
+    <mj-section padding="32px 24px 8px 24px">
+      <mj-column>
+        <mj-text font-size="24px" line-height="30px" font-weight="700" letter-spacing="0.5px" padding="0">Marea Baja</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="0 24px">
+      <mj-column>
+        <mj-divider border-color="#0F2E35" border-width="1px" padding="12px 0 24px 0" />
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#F8FAF8" border="1px solid #D5DDD9" padding="28px 24px 12px 24px">
+      <mj-column>
+        <mj-text font-size="22px" line-height="28px" font-weight="700">{{title}}</mj-text>
+        <mj-text>{{greeting}}</mj-text>
+        <mj-text>{{body}}</mj-text>
+        <mj-button href="{{ctaUrl}}" background-color="#0F2E35" color="#EEF2EF" font-size="16px" font-weight="700" border-radius="2px" inner-padding="14px 22px" padding="8px 0 24px 0" align="left">{{ctaLabel}}</mj-button>
+        <mj-text font-size="14px" line-height="20px" color="#5E6B6B">{{expiry}}</mj-text>
+        <mj-text font-size="14px" line-height="20px" color="#5E6B6B">{{fallbackLabel}}<br /><a href="{{ctaUrl}}" style="color:#0F2E35;word-break:break-all;">{{ctaUrl}}</a></mj-text>
+        <mj-text font-size="14px" line-height="20px" color="#5E6B6B">{{ignore}}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="20px 24px 32px 24px">
+      <mj-column>
+        <mj-text font-size="13px" line-height="19px" color="#5E6B6B" padding="0">{{footer}}</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
