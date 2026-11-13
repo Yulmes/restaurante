@@ -4,6 +4,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M2 · Datos
+
+- Prisma 7.10.1 (versión estable) con `@prisma/adapter-pg`, configuración en `apps/api/prisma.config.ts` y cliente generado sin versionar (ADR 0003).
+- Esquema completo de la propuesta §6: 42 modelos y 18 enumeraciones. Incluye identidad, catálogo con tablas de traducción (D2), `User.locale` y `emailVerifiedAt` (D2, D3), configuración, impuestos, zonas, carrito, pedidos con copias históricas, pagos, procesador simulado, idempotencia, correo y AuditLog.
+- Migraciones:
+  - la inicial, generada por Prisma;
+  - una con 33 restricciones CHECK (entre ellas la regla C5 de 20 unidades por línea interna);
+  - el índice único `lower(email)`;
+  - el trigger que hace el AuditLog de solo inserción;
+  - los permisos del rol `marea_app_rw`.
+- Roles separados: la API usa `DATABASE_URL` con un rol sin permisos de esquema ni de edición del AuditLog; la CLI usa `MIGRATION_DATABASE_URL` (propietario). Script `db:app-role`.
+- Semilla idempotente:
+  - carta nikkei bilingüe ajustada a las fotos aprobadas, con 7 categorías, 17 platos y 36 opciones;
+  - valores fiscales de D5 (IVA 13 % incluido, servicio 10 % inactivo);
+  - configuración, horarios, zonas, roles y pesca del día.
+- Pruebas:
+  - 71 contra PostgreSQL real (`npm run test:db`);
+  - 14 unitarias de los datos semilla;
+  - comprobación de diferencias entre esquema y migraciones (`db:drift`);
+  - job **Base de datos** en CI.
+- Documentos: `DATABASE.md`, ADR 0003, `docs/m2/CARTA_SEMILLA.md` y variables de entorno actualizadas.
+- Carta semilla aprobada por el propietario (13/11/2026), después de su revisión:
+  - categorías en inglés `Raw dishes` y `Grilled dishes`;
+  - 7 ajustes de descripciones;
+  - "Sin gluten" retirado de 6 platos sin receta que lo respalde, y "Picante" del pulpo anticuchero.
+
 ### Agregado — M1 · Sistema de diseño
 
 - `apps/web`: React 19.3, React Router 7.18 (modo framework, `ssr: false`), Vite 8, Tailwind CSS 4.

@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 build/
 .env
@@ -12,5 +12,7 @@ coverage/
 playwright-report/
 test-results/
 .react-router/
+# Cliente de Prisma generado (`npm run typegen`)
+apps/api/src/generated/
 .idea/
 .vscode/

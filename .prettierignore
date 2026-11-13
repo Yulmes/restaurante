@@ -3,6 +3,8 @@ dist/
 build/
 coverage/
 package-lock.json
+# Código generado por Prisma
+apps/api/src/generated/
 # Documentación en Markdown: se redacta a mano y no se reformatea automáticamente.
 *.md
 docs/

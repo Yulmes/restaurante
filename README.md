@@ -1,8 +1,8 @@
-﻿# Marea Baja
+# Marea Baja
 
 Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia** de demostración (San José, Costa Rica; dirección ficticia). Proyecto 1 de 4 del portafolio.
 
-**Estado:** hito **M1 · Sistema de diseño**. Ya existen el sistema visual, los componentes base y la infraestructura de idiomas (es-CR y en), visibles en la página interna `/_design`. Todavía no hay carta real, API funcional ni base de datos con esquema: llegan en los hitos siguientes.
+**Estado:** hito **M2 · Datos**. Existen el sistema visual y la infraestructura de idiomas (M1, página interna `/_design`) y el esquema completo de la base de datos con migraciones, permisos, AuditLog de solo inserción y una carta semilla bilingüe (M2, [DATABASE.md](DATABASE.md)). Todavía no hay endpoints de la API ni pantallas que usen los datos: llegan en los hitos siguientes.
 
 - Planificación aprobada: [docs/planificacion/Propuesta Restaurante · Fase 1.md](docs/planificacion/Propuesta%20Restaurante%20·%20Fase%201.md)
 - Auditoría de planificación: [docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md](docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md)
@@ -17,11 +17,11 @@ Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia*
 
 ```
 apps/web/         React 19 + React Router 7 (modo framework) + Vite + Tailwind 4: sistema de diseño e i18n
-apps/api/         API (por ahora solo la validación de variables de entorno)
+apps/api/         API: validación de entorno y, desde M2, esquema Prisma, migraciones, semilla y pruebas de base de datos
 packages/shared/  Idiomas (es-CR, en) y formato de dinero (CRC/USD)
 tools/eslint/     Regla local que prohíbe textos de interfaz literales (D2)
 docker-compose.yml  PostgreSQL 17 y Mailpit para desarrollo local
-.github/workflows/  CI: calidad, sistema de diseño y accesibilidad, servicios
+.github/workflows/  CI: calidad, sistema de diseño y accesibilidad, base de datos, servicios
 ```
 
 `apps/edge` se crea en el hito que lo necesita (ver la propuesta, §4.1 y §12).
@@ -56,6 +56,12 @@ npm run services:up
 npm run env:check
 ```
 
+```bash
+npm run db:setup
+```
+
+`db:setup` aplica las migraciones, crea el usuario de la API y carga la carta semilla. Detalles: [DATABASE.md](DATABASE.md).
+
 ## Comandos
 
 | Comando | Qué hace |
@@ -64,7 +70,9 @@ npm run env:check
 | `npm run format` / `format:check` | Prettier |
 | `npm run lint` | ESLint con reglas estrictas de TypeScript |
 | `npm run typecheck` | TypeScript en modo estricto en todos los paquetes |
-| `npm run test` | Vitest |
+| `npm run test` | Vitest (pruebas unitarias) |
+| `npm run test:db` | Pruebas contra PostgreSQL: restricciones, AuditLog, permisos y semilla |
+| `npm run db:setup` | Migraciones, usuario de la API y semilla |
 | `npm run env:check` | Valida las variables de entorno sin mostrar sus valores |
 | `npm run services:up` / `services:down` | Levanta o baja PostgreSQL y Mailpit |
 
