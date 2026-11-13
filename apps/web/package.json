@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build",
-    "typecheck": "react-router typegen && tsc -p tsconfig.json",
+    "typegen": "react-router typegen",
+    "typecheck": "npm run typegen && tsc -p tsconfig.json",
     "test:e2e": "playwright test",
     "capturas": "playwright test --grep @capturas",
     "glyphs": "node scripts/check-glyphs.ts",

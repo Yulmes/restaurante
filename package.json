@@ -15,7 +15,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint .",
+    "lint": "npm run typegen --workspaces --if-present && eslint .",
     "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
