@@ -21,10 +21,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   - configuración, horarios, zonas, roles y pesca del día.
 - Pruebas:
   - 71 contra PostgreSQL real (`npm run test:db`);
-  - 13 unitarias de los datos semilla;
+  - 14 unitarias de los datos semilla;
   - comprobación de diferencias entre esquema y migraciones (`db:drift`);
   - job **Base de datos** en CI.
-- Documentos: `DATABASE.md`, ADR 0003, `docs/m2/CARTA_SEMILLA.md` (pendiente de revisión del propietario) y variables de entorno actualizadas.
+- Documentos: `DATABASE.md`, ADR 0003, `docs/m2/CARTA_SEMILLA.md` y variables de entorno actualizadas.
+- Carta semilla aprobada por el propietario (13/11/2026), después de su revisión:
+  - categorías en inglés `Raw dishes` y `Grilled dishes`;
+  - 7 ajustes de descripciones;
+  - "Sin gluten" retirado de 6 platos sin receta que lo respalde, y "Picante" del pulpo anticuchero.
 
 ### Agregado — M1 · Sistema de diseño
 

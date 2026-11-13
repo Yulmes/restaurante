@@ -62,6 +62,17 @@ describe('carta semilla', () => {
     }
   });
 
+  it('"Sin gluten" solo donde todos los ingredientes son simples y conocidos (revisión de etiquetas)', () => {
+    // Las preparaciones sin receta en los datos (leches de tigre, glaseados, cremas, purés) no
+    // permiten garantizar la etiqueta: hoy solo la llevan las bebidas (docs/m2/CARTA_SEMILLA.md).
+    const glutenFree = products.filter((p) => p.tags.includes('GLUTEN_FREE')).map((p) => p.slug);
+    expect(glutenFree.sort()).toEqual(['agua-de-pipa', 'chicha-morada', 'limonada-de-hierbabuena']);
+    const withGluten = /soya|shoyu|ponzu|panko|empanizad|chicharr|leche de tigre|crema|glasead|puré/i;
+    for (const product of products.filter((p) => withGluten.test(p.description.es))) {
+      expect(product.tags, product.slug).not.toContain('GLUTEN_FREE');
+    }
+  });
+
   it('los precios son enteros en céntimos, positivos y al colón entero', () => {
     for (const product of products) {
       expect(Number.isSafeInteger(product.basePriceMinor)).toBe(true);

@@ -9,12 +9,22 @@
 | Migraciones sobre una base vacía | `npm run test:db` (recrea `marea_baja_test`) | ✅ 2 migraciones aplicadas |
 | Esquema y migraciones sin diferencias | `npm run db:drift -w @marea-baja/api` | ✅ "No difference detected". Comprobado que falla (código 2) si se agrega un campo al esquema sin migración |
 | Restricciones, AuditLog, permisos y semilla | `npm run test:db` | ✅ 71 / 71 |
-| Datos semilla y enums frente a `shared` | `npm run test` | ✅ 13 / 13 (61 / 61 en total) |
+| Datos semilla y enums frente a `shared` | `npm run test` | ✅ 14 / 14 (62 / 62 en total). Incluye la regla de etiquetas "Sin gluten" de la revisión de la carta |
 | Semilla idempotente | Ejecutada 3 veces sobre la base de desarrollo, y otra vez dentro de `semilla.db.test.ts` | ✅ Los conteos no cambian (7 categorías, 17 platos, 36 opciones) |
 | Configuración desde cero (como en CI) | Borrar el cliente generado y ejecutar `db:setup` y `test:db` | ✅ |
 | Formato, lint, tipos | `npm run check` | ✅ |
 | Sin regresiones en la web | `npm run test:e2e -w @marea-baja/web` y `build` | ✅ 41 pasan y 1 se omite (capturas); build OK |
 | Dependencias | `npm audit --omit=dev` | ✅ 0 vulnerabilidades. Con las de desarrollo, sigue la moderada de `minimatch` aceptada en M0, sin cambios |
+
+## Ajustes de la carta semilla (revisión del propietario, 13/11/2026)
+
+Detalle en [CARTA_SEMILLA.md](CARTA_SEMILLA.md#revisión-del-propietario-13112026).
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Platos, precios, fotos, opciones, configuración, impuestos y zonas sin cambios | Comparación de `seed-data.ts` con el commit `fe3bec7`, excluyendo descripciones, etiquetas y nombres de categoría en inglés | ✅ Idénticos (17 platos, 36 opciones) |
+| La semilla aplica los cambios sobre una base ya cargada | `npm run db:seed -w @marea-baja/api` dos veces sobre `marea_baja` | ✅ Categorías en inglés y etiquetas actualizadas. Conteos, suma de precios (`14240000`), suma de opciones (`1360000`) e impuestos sin cambios |
+| Base de datos | `npm run test:db` y `db:drift` | ✅ 71 / 71. Sin diferencias |
 
 ## Requisitos de M2 y dónde se verifican
 

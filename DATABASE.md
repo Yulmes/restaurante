@@ -85,7 +85,7 @@ Pendiente para hitos posteriores: la escritura del AuditLog en la misma transacc
 
 ## Semilla
 
-- **Carta:** 7 categorías, 17 platos, 36 opciones y 14 fotos de platos. Todo en es-CR y en. Se ajustó a las 19 fotos aprobadas (R7): ver [docs/m2/CARTA_SEMILLA.md](docs/m2/CARTA_SEMILLA.md), que el propietario debe revisar (R18).
+- **Carta:** 7 categorías, 17 platos, 36 opciones y 14 fotos de platos. Todo en es-CR y en. Se ajustó a las 19 fotos aprobadas (R7): ver [docs/m2/CARTA_SEMILLA.md](docs/m2/CARTA_SEMILLA.md), aprobada por el propietario el 13/11/2026 (R18). "Sin gluten" solo aparece donde los ingredientes permiten respaldarlo: hoy, en las bebidas.
 - **Valores fiscales (D5):**
   - IVA 13 % incluido en los precios, sobre productos y envío, para retiro y delivery.
   - Cargo de servicio 10 %, **inactivo**, solo para `DINE_IN` (C10).

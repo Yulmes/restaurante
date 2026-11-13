@@ -112,11 +112,11 @@ export const CATEGORIES: readonly SeedCategory[] = [
         slug: 'ceviche-clasico',
         name: 'Ceviche clásico de corvina',
         description: {
-          es: 'Corvina de Puntarenas en leche de tigre de limón mesino, ají limo, camote glaseado y choclo tostado.',
-          en: 'Puntarenas corvina in Mesino lime leche de tigre, ají limo, glazed sweet potato and toasted corn.',
+          es: 'Corvina de Puntarenas en leche de tigre de limón mesino, con camote glaseado y choclo tostado.',
+          en: 'Puntarenas corvina in Mesino lime leche de tigre, with glazed sweet potato and toasted corn.',
         },
         basePriceMinor: crc(8900),
-        tags: ['GLUTEN_FREE'],
+        tags: [],
         image: {
           storageKey: '02-ceviche-clasico',
           width: 1600,
@@ -153,7 +153,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
         name: 'Ceviche mixto con chicharrón de calamar',
         description: {
           es: 'Pescado del día, pulpo y langostino en leche de tigre clásica, con chicharrón de calamar, cancha y camote.',
-          en: 'Catch of the day, octopus and prawns in classic leche de tigre, with crispy fried squid, cancha corn and sweet potato.',
+          en: 'Catch of the day, octopus and prawns in classic leche de tigre, with crispy fried squid, cancha (toasted corn kernels) and sweet potato.',
         },
         basePriceMinor: crc(10400),
         tags: [],
@@ -176,7 +176,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
           en: 'Red snapper from the Gulf of Nicoya with red onion, cilantro and ají amarillo leche de tigre.',
         },
         basePriceMinor: crc(8400),
-        tags: ['GLUTEN_FREE'],
+        tags: [],
         image: {
           storageKey: '03-ceviche-cebolla-morada',
           width: 2400,
@@ -203,10 +203,10 @@ export const CATEGORIES: readonly SeedCategory[] = [
         name: 'Tiradito de pescado blanco',
         description: {
           es: 'Láminas de corvina con leche de tigre de limón, aceite de oliva, sal de mar y brotes.',
-          en: 'Slices of corvina with lime leche de tigre, olive oil, sea salt and sprouts.',
+          en: 'Thinly sliced corvina with lime leche de tigre, olive oil, sea salt and sprouts.',
         },
         basePriceMinor: crc(8700),
-        tags: ['GLUTEN_FREE'],
+        tags: [],
         image: {
           storageKey: '07-tiradito-pescado-blanco',
           width: 1800,
@@ -246,7 +246,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
           en: 'Catch of the day with rocoto cream, lime and toasted purple corn. Properly spicy.',
         },
         basePriceMinor: crc(9200),
-        tags: ['SPICY', 'GLUTEN_FREE'],
+        tags: ['SPICY'],
         image: {
           storageKey: '09-tiraditos-barra',
           width: 1800,
@@ -262,7 +262,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
   },
   {
     slug: 'crudos',
-    name: { es: 'Crudos', en: 'Raw bar' },
+    name: { es: 'Crudos', en: 'Raw dishes' },
     description: {
       es: 'Mariscos y pescados crudos, cortados y aliñados al momento.',
       en: 'Raw seafood and fish, cut and dressed to order.',
@@ -297,7 +297,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
           en: 'Butterflied prawns with ají amarillo leche de tigre and cilantro oil.',
         },
         basePriceMinor: crc(11500),
-        tags: ['GLUTEN_FREE'],
+        tags: [],
         image: {
           storageKey: '11-langostinos-crudos',
           width: 1600,
@@ -324,7 +324,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
         name: 'Maki acevichado',
         description: {
           es: 'Langostino empanizado y palta por dentro, cubierto de pescado del día y salsa acevichada.',
-          en: 'Breaded prawn and avocado inside, topped with catch of the day and acevichada sauce.',
+          en: 'Breaded prawn and avocado inside, topped with the catch of the day and acevichada, a ceviche-style mayo.',
         },
         basePriceMinor: crc(7900),
         tags: [],
@@ -344,7 +344,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
         name: 'Maki furai de langostino',
         description: {
           es: 'Rollo frito en panko con langostino, queso crema y cebollín, con salsa anticuchera.',
-          en: 'Panko-fried roll with prawn, cream cheese and chives, with anticuchera sauce.',
+          en: 'Panko-crusted fried roll with prawn, cream cheese and chives, served with anticuchera sauce.',
         },
         basePriceMinor: crc(8200),
         tags: [],
@@ -403,7 +403,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
   },
   {
     slug: 'calientes',
-    name: { es: 'Calientes', en: 'From the grill' },
+    name: { es: 'Calientes', en: 'Grilled dishes' },
     description: {
       es: 'De la parrilla, para quien prefiere algo caliente.',
       en: 'Off the grill, for those who prefer something hot.',
@@ -417,7 +417,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
           en: 'Grilled Gulf of Nicoya octopus with sweet potato purée and paprika oil.',
         },
         basePriceMinor: crc(12400),
-        tags: ['GLUTEN_FREE'],
+        tags: [],
         image: {
           storageKey: '16-pulpo-parrilla',
           width: 1600,
@@ -434,10 +434,11 @@ export const CATEGORIES: readonly SeedCategory[] = [
         name: 'Pulpo anticuchero',
         description: {
           es: 'Pulpo glaseado en salsa anticuchera de ají panca, con papas nativas y choclo.',
-          en: 'Octopus glazed in ají panca anticuchera sauce, with native potatoes and corn.',
+          en: 'Octopus glazed with anticuchera sauce made from ají panca, with native potatoes and corn.',
         },
         basePriceMinor: crc(12900),
-        tags: ['SPICY'],
+        // Sin "Picante": el ají panca es un ají suave y ahumado (revisión de etiquetas de M2).
+        tags: [],
         // Muestra el estado "Agotado hoy" (§3.6) con datos reales.
         isAvailable: false,
         image: {
@@ -478,7 +479,7 @@ export const CATEGORIES: readonly SeedCategory[] = [
         nameEn: 'Mint lemonade',
         description: {
           es: 'Limón mesino, hierbabuena fresca y un toque de tapa de dulce.',
-          en: 'Mesino lime, fresh mint and a touch of tapa de dulce.',
+          en: 'Mesino lime, fresh mint and a touch of tapa de dulce (unrefined cane sugar).',
         },
         basePriceMinor: crc(2000),
         tags: ['VEGETARIAN', 'GLUTEN_FREE'],

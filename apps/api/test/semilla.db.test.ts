@@ -73,7 +73,7 @@ describe('carta semilla', () => {
       expect.objectContaining({ locale: 'en', name: 'Raw prawns with ají amarillo' }),
     ]);
     expect(product.images[0]).toMatchObject({ provider: 'STATIC', storageKey: '11-langostinos-crudos' });
-    expect(product.category.translations[0]).toMatchObject({ locale: 'en', name: 'Raw bar' });
+    expect(product.category.translations[0]).toMatchObject({ locale: 'en', name: 'Raw dishes' });
   });
 
   it('los nombres originales no llevan traducción salvo los descriptivos (§4.5)', async () => {
