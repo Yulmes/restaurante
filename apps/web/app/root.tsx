@@ -1,9 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  isRouteErrorResponse,
+  useLocation,
+} from 'react-router';
 import type { Route } from './+types/root';
-import { i18n } from './i18n/config.ts';
+import { i18n, namespacesForPath, useNamespaces } from './i18n/config.ts';
 import { useLocale, useT } from './i18n/use-locale.ts';
 import './styles/app.css';
 import { COLON_FONT_CSS } from './styles/fonts.ts';
@@ -14,6 +22,8 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: ReactNode }) {
   const locale = useLocale();
+  // Los textos del idioma y la sección se cargan por separado: espera los que falten (M4).
+  useNamespaces(locale, namespacesForPath(useLocation().pathname));
   return (
     <html lang={locale}>
       <head>

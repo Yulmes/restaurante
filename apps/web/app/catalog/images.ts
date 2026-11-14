@@ -7,12 +7,17 @@ import type { CatalogImage } from '@marea-baja/shared';
  */
 export type ImageVariant = 'card' | 'hero' | 'thumb' | 'og';
 
-const WIDTHS: Record<ImageVariant, readonly number[]> = {
-  card: [480, 960],
+/**
+ * Anchos generados de cada recorte (los usa también `scripts/build-images.ts`). `card` tiene un
+ * paso de 720 px para el celular: la foto ocupa el ancho de la pantalla menos los márgenes
+ * (unos 380 px CSS), que a densidad 1,75–2 pide entre 665 y 760 px.
+ */
+export const WIDTHS = {
+  card: [480, 720, 960],
   hero: [1000, 2000],
   thumb: [480],
   og: [1200],
-};
+} as const satisfies Record<ImageVariant, readonly number[]>;
 const RATIO: Record<ImageVariant, number> = { card: 4 / 5, hero: 3 / 2, thumb: 1, og: 1200 / 630 };
 
 export interface PictureSources {
@@ -41,6 +46,14 @@ export function staticPicture(key: string, variant: Exclude<ImageVariant, 'og'>)
     height: Math.round(largest / RATIO[variant]),
   };
 }
+
+/**
+ * `sizes` de una foto en media columna de la grilla de página (`max-w-7xl`, 12 columnas, `gap-10`):
+ * 588 px desde 1280; entre 768 y 1280, la mitad del ancho menos márgenes y medianil; en el celular,
+ * el ancho de la pantalla menos los márgenes de 16 px. Con `100vw` el celular pedía la de 960 px.
+ */
+export const HALF_COLUMN_SIZES =
+  '(min-width: 1280px) 588px, (min-width: 768px) calc(50vw - 3.25rem), calc(100vw - 2rem)';
 
 /** Imagen de Open Graph (JPEG 1200×630), como ruta relativa al sitio. */
 export function ogImagePath(key: string): string {

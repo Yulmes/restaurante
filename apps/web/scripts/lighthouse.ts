@@ -123,6 +123,14 @@ async function main(): Promise<void> {
             cls: Number(median(runs.map((r) => r.metrics.cls)).toFixed(3)),
           },
           failing: representative?.failing ?? [],
+          // Cada corrida, para ver la variación (la mediana sola puede esconder una corrida mala).
+          perRun: runs.map((r) => ({
+            performance: r.scores.performance,
+            lcpMs: Math.round(r.metrics.lcpMs),
+            fcpMs: Math.round(r.metrics.fcpMs),
+            tbtMs: Math.round(r.metrics.tbtMs),
+            cls: Number(r.metrics.cls.toFixed(3)),
+          })),
         };
         results.push(row);
         console.log(

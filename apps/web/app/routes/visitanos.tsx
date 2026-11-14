@@ -1,7 +1,7 @@
 import type { Locale, OpeningHoursResponse } from '@marea-baja/shared';
 import { PagePicture } from '../catalog/components.tsx';
 import { loadOpeningHours } from '../catalog/data.ts';
-import { PAGE_PHOTOS } from '../catalog/images.ts';
+import { PAGE_PHOTOS, HALF_COLUMN_SIZES } from '../catalog/images.ts';
 import { i18n } from '../i18n/config.ts';
 import { localeFromPathname } from '../i18n/locale.ts';
 import { useLocale, useT } from '../i18n/use-locale.ts';
@@ -128,7 +128,7 @@ export default function Visitanos({ loaderData }: Route.ComponentProps) {
               photoKey={PAGE_PHOTOS.coast}
               alt={t('photos.coast')}
               variant="card"
-              sizes="(min-width: 768px) 50vw, 100vw"
+              sizes={HALF_COLUMN_SIZES}
               priority
             />
           </div>

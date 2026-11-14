@@ -20,10 +20,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - **Pruebas:** E2E del catálogo sobre el build de producción y job **Catálogo y SEO** en CI.
 - **Documentos:**
   - ADR 0005;
-  - `docs/m4/CONTENIDO_EDITORIAL.md` (borrador pendiente de aprobación);
+  - `docs/m4/CONTENIDO_EDITORIAL.md` (textos y plato de la casa aprobados el 13/11/2026);
   - `docs/m4/VALIDACIONES_M4.md`.
 
 ### Cambiado — M4
+
+- **Textos por idioma y espacio en el navegador:** cada página pide solo `common` y `site` de su idioma (más `account` o `design` en esas secciones), en lugar de los 8 archivos en el paquete inicial. El prerender sigue con todos (ADR 0005, §5).
+- **Imágenes 4:5:** variante `card` de 720 px y `sizes` con las medidas reales de la grilla. En el celular, la foto del plato de la casa pasa de 30 KB a 21 KB.
+- **Textos aprobados:**
+  - "Una cocina nikkei en San José" y "Conocé nuestra propuesta";
+  - la portada y "Ubicación y horario" (antes "Visítanos") ya no prometen pedidos en línea antes de M5;
+  - el local se presenta como punto de retiro, sin servicio de mesa;
+  - "El oficio detrás de cada plato";
+  - en inglés, "Nikkei ceviche restaurant".
+- **Plato de la casa aprobado:** Ceviche clásico de corvina (`FEATURED_PRODUCT_SLUG`).
+- **Lighthouse:** `summary.json` guarda también el resultado de cada corrida.
 
 - `MenuLine` (M1) acepta enlace en el nombre, nombre traducido e idioma de la descripción. `Button` exporta `buttonClassName` para enlaces con aspecto de botón. No hay cambios visuales en lo existente.
 - **Páginas de la cuenta (M3):** usan la barra y el pie del sitio.

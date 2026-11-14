@@ -11,16 +11,17 @@
 import { mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import sharp, { type Sharp } from 'sharp';
+import { WIDTHS } from '../app/catalog/images.ts';
 
 const SOURCE = fileURLToPath(new URL('../photos/source/', import.meta.url));
 const OUTPUT = fileURLToPath(new URL('../public/images/', import.meta.url));
 const SELF = fileURLToPath(import.meta.url);
 
 export const VARIANTS = {
-  card: { ratio: [4, 5], widths: [480, 960] },
-  hero: { ratio: [3, 2], widths: [1000, 2000] },
-  thumb: { ratio: [1, 1], widths: [480] },
-  og: { ratio: [1200, 630], widths: [1200] },
+  card: { ratio: [4, 5], widths: WIDTHS.card },
+  hero: { ratio: [3, 2], widths: WIDTHS.hero },
+  thumb: { ratio: [1, 1], widths: WIDTHS.thumb },
+  og: { ratio: [1200, 630], widths: WIDTHS.og },
 } as const;
 export type Variant = keyof typeof VARIANTS;
 

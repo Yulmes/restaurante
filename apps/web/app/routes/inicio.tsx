@@ -7,7 +7,7 @@ import {
   loadOpeningHours,
   useLiveCatalog,
 } from '../catalog/data.ts';
-import { PAGE_PHOTOS } from '../catalog/images.ts';
+import { PAGE_PHOTOS, HALF_COLUMN_SIZES } from '../catalog/images.ts';
 import { buttonClassName } from '../components/ui/Button.tsx';
 import { Price } from '../components/ui/Price.tsx';
 import { Tag } from '../components/ui/Tag.tsx';
@@ -69,7 +69,7 @@ export default function Inicio({ loaderData }: Route.ComponentProps) {
         {featured && current ? (
           <article className="md:col-span-6 md:col-start-7" aria-labelledby="plato-de-la-casa">
             {featured.product.image ? (
-              <DishPicture image={featured.product.image} sizes="(min-width: 768px) 50vw, 100vw" priority />
+              <DishPicture image={featured.product.image} sizes={HALF_COLUMN_SIZES} priority />
             ) : null}
             <div className="flex flex-col gap-2 border-b border-border py-4">
               <p className="t-ui text-text-muted">{t('home.featuredLabel')}</p>

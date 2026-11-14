@@ -106,7 +106,7 @@ export function findProduct(
 
 /**
  * Plato de la casa en la portada (§2.4: "lo primero que se lee: pesca del día y plato estrella").
- * BORRADOR pendiente de aprobación del propietario (docs/m4/CONTENIDO_EDITORIAL.md): la base no
+ * Aprobado por el propietario el 13/11/2026 (docs/m4/CONTENIDO_EDITORIAL.md): la base no
  * tiene una marca de destacado, así que se elige aquí sin cambiar el esquema.
  */
 export const FEATURED_PRODUCT_SLUG = 'ceviche-clasico';

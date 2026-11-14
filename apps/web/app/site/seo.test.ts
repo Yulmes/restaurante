@@ -133,8 +133,8 @@ describe('datos en vivo e imágenes', () => {
 
   it('arma las variantes AVIF/WebP y la de Open Graph del proveedor estático', () => {
     expect(staticPicture('02-ceviche-clasico', 'card')).toEqual({
-      avif: '/images/02-ceviche-clasico/card-480.avif 480w, /images/02-ceviche-clasico/card-960.avif 960w',
-      webp: '/images/02-ceviche-clasico/card-480.webp 480w, /images/02-ceviche-clasico/card-960.webp 960w',
+      avif: '/images/02-ceviche-clasico/card-480.avif 480w, /images/02-ceviche-clasico/card-720.avif 720w, /images/02-ceviche-clasico/card-960.avif 960w',
+      webp: '/images/02-ceviche-clasico/card-480.webp 480w, /images/02-ceviche-clasico/card-720.webp 720w, /images/02-ceviche-clasico/card-960.webp 960w',
       fallback: '/images/02-ceviche-clasico/card-960.webp',
       width: 960,
       height: 1200,

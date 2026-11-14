@@ -234,9 +234,9 @@ test.describe('navegación, idioma y accesibilidad', () => {
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
     await page.getByRole('button', { name: 'Menú' }).click();
-    await dialog.getByRole('link', { name: 'Visítanos' }).click();
+    await dialog.getByRole('link', { name: 'Ubicación y horario' }).click();
     await expect(page).toHaveURL(/\/visitanos$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Visítanos');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ubicación y horario');
   });
 
   test('enlace "Saltar al contenido" y foco visible con teclado', async ({ page }) => {

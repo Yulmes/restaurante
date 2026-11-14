@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resources } from './config.ts';
+import { resources } from './resources.ts';
 
 interface Tree {
   [key: string]: string | Tree;

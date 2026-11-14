@@ -21,8 +21,9 @@ Detalle en el [ADR 0005](../adr/0005-catalogo-prerender-e-imagenes.md).
 | Formato, lint, tipos y unitarias | `npm run check` | ✅ 116 / 116 (105 anteriores + 11 de M4) |
 | Integración con PostgreSQL real (M2, M3 y M4) | `npm run test:db` | ✅ 134 / 134 (123 anteriores + 11 de la API del catálogo) |
 | Esquema y migraciones | `npm run db:drift -w @marea-baja/api` | ✅ Sin diferencias. **M4 no cambia el esquema** |
-| E2E del catálogo y SEO sobre el **build de producción** | `npm run test:e2e:catalog -w @marea-baja/web` | ✅ 19 / 19 (dos corridas seguidas después de las correcciones) |
-| Lighthouse sobre el build de producción (escritorio y móvil, 8 páginas, 3 corridas) | `npm run lighthouse -w @marea-baja/web` | ✅ Objetivos cumplidos en las 16 combinaciones. ⚠️ LCP móvil de la portada y el plato por encima de 2,5 s (ver abajo) |
+| E2E del catálogo y SEO sobre el **build de producción** | `npm run test:e2e:catalog -w @marea-baja/web` | ✅ 19 / 19 (también después de la optimización final y los textos aprobados) |
+| Lighthouse sobre el build de producción (escritorio y móvil, 8 páginas, 3 corridas) | `npm run lighthouse -w @marea-baja/web` | ✅ Objetivos de categoría cumplidos en las 16 combinaciones. ❌ LCP móvil de la portada (2,94 s) y del plato (2,71 s) todavía por encima de 2,5 s (ver abajo) |
+| Hidratación sin errores y textos del idioma correcto | Script de Playwright sobre el build (14 páginas, escritorio y móvil) | ✅ Sin errores ni avisos en la consola y sin claves sin traducir. Cada página pública pide 2 fragmentos de textos; las de la cuenta, 3 |
 | Build de producción con prerender | `npm run build -w @marea-baja/web` (con la API levantada) | ✅ 56 páginas (28 por idioma), sitemap con 56 URL, robots, `catalog-version.json` |
 | Regresión de M1 | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (capturas), igual que antes |
 | Regresión de M3 | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 |
@@ -78,11 +79,10 @@ Detalle en el [ADR 0005](../adr/0005-catalogo-prerender-e-imagenes.md).
 - **3 corridas** por página y dispositivo. Se informa la **mediana**, con el rango entre paréntesis cuando varía.
 - Páginas: portada, carta, una categoría (Ceviches) y un plato (Ceviche clásico de corvina), en es-CR y en.
 
-**Resultados (mediana de 3 corridas):**
+**Línea base, antes de la optimización final (mediana de 3 corridas):**
 
 | Dispositivo | Página | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT | Auditorías con peso por debajo de 0,9 |
 |---|---|---|---|---|---|---|---|---|---|
-13.6.0 http://127.0.0.1:4173 3 2026-11-14T02:07:13.293Z
 | Escritorio | `/` | 100 | 100 | 100 | 100 | 0.70 s | 0.001 | 0 ms | — |
 | Escritorio | `/en` | 100 | 100 | 100 | 100 | 0.69 s | 0.001 | 0 ms | — |
 | Escritorio | `/carta` | 100 | 100 | 100 | 100 | 0.25 s | 0.006 | 0 ms | — |
@@ -116,6 +116,7 @@ Detalle en el [ADR 0005](../adr/0005-catalogo-prerender-e-imagenes.md).
   - no usa carga diferida;
   - pesa 30 KB en AVIF.
 - **Causa:** en la red simulada compite con unos 180 KB comprimidos de JavaScript que se precargan con prioridad alta. El más pesado es el paquete de i18n con los textos de todos los espacios y de los dos idiomas.
+  - **Corrección posterior:** ese paquete pesaba unos 12 KB comprimidos. Lo más pesado eran React DOM y React Router con i18next, unos 140 KB, y las fuentes, unos 154 KB. Se ve en "Optimización final".
 
 **Problemas encontrados y corregidos:**
 1. **Primera medición sin compresión.** El servidor del build no comprimía. Lighthouse midió unos 600 KB de JavaScript sin comprimir, que en producción no existen, y la portada y el plato daban 78 y 79 en móvil, con LCP de 6 s.
@@ -125,17 +126,89 @@ Detalle en el [ADR 0005](../adr/0005-catalogo-prerender-e-imagenes.md).
 3. **Las E2E del catálogo** ahora esperan la hidratación antes de interactuar.
 4. **`CATALOG_API_URL`:** el servidor de desarrollo evalúa la lista de rutas del prerender y la pedía siempre a la API del puerto 3000. Las E2E de identidad (API en el 3100) pasaban solo si había otra API corriendo en el 3000, así que en CI habrían fallado. Ahora, si `CATALOG_API_URL` falta, se usa `API_PROXY_TARGET`.
 
-**Propuestas para bajar el LCP móvil** (no implementadas; necesitan tu autorización porque tocan la i18n de M1 o el diseño):
-
-| Propuesta | Efecto esperado | Qué toca |
-|---|---|---|
-| Cargar los textos por idioma y por espacio bajo demanda (solo `common` + `site` del idioma de la página en la portada) | Menos JavaScript compitiendo con la foto en la carga inicial | Configuración de i18n de M1 (`app/i18n/config.ts`) |
-| Una variante `card` de 720 px y un `sizes` ajustado para el celular | La foto LCP pasa de unos 30 KB a unos 18 KB | Pipeline de imágenes de M4 (`build-images.ts`, `images.ts`) |
-| `<link rel="preload">` de la foto LCP en la portada y el plato | Bajo: la imagen ya se descubre temprano con prioridad alta | Rutas de M4 |
+**Propuestas de esa medición:** el propietario autorizó las dos primeras (carga de textos por idioma y espacio; variante `card` de 720 px con `sizes` ajustado) y **no** el `preload`. El resultado está en la sección siguiente.
 
 Las cifras de Lighthouse en local con red simulada son una referencia. La medición definitiva es sobre la URL pública con el CDN (M10).
 
 **Riesgo de experiencia detectado:** hasta que React hidrata el HTML prerenderizado, los botones (filtros, menú del celular) todavía no responden. En la medición local la hidratación termina en menos de un segundo. En una red lenta puede notarse. Se registra para la revisión de M9.
+
+## Optimización final (13/11/2026)
+
+El propietario autorizó tres cambios: la carga de textos por idioma y espacio, una variante `card` de 720 px con `sizes` ajustado y los textos editoriales aprobados. **No autorizó el `preload`.**
+
+**Qué cambió:**
+- **i18n:**
+  - el navegador ya no recibe los textos de los dos idiomas en el paquete inicial;
+  - cada idioma y espacio (`common`, `site`, `account`, `design`) es un fragmento propio, de 0,7 a 2,6 KB comprimido;
+  - el prerender sigue usando todos los textos, de forma síncrona (ADR 0005, §6).
+- **Imágenes:**
+  - `card` suma un ancho de 720 px;
+  - la foto 4:5 de media columna usa un `sizes` con las medidas reales de la grilla;
+  - en el celular emulado (412 px, densidad 1,75) el navegador elige `card-720.avif` (20,8 KB) en lugar de `card-960.avif` (30,2 KB).
+
+**Resultado** (mediana de 3 corridas, en las mismas condiciones que la línea base; la flecha compara con ella):
+
+| Dispositivo | Página | Performance | A11y | BP | SEO | LCP | LCP por corrida | CLS | TBT |
+|---|---|---|---|---|---|---|---|---|---|
+| Escritorio | `/` | 100 → **100** | 100 | 100 | 100 | 0,70 s → **0,63 s** | 0,63 / 0,63 / 0,66 | 0,001 | 0 ms |
+| Escritorio | `/en` | 100 → **100** | 100 | 100 | 100 | 0,69 s → **0,63 s** | 0,71 / 0,63 / 0,63 | 0,001 | 0 ms |
+| Escritorio | `/carta` | 100 → **100** | 100 | 100 | 100 | 0,25 s → **0,25 s** | 0,25 / 0,25 / 0,25 | 0,006 | 0 ms |
+| Escritorio | `/en/menu` | 100 → **100** | 100 | 100 | 100 | 0,25 s → **0,25 s** | 0,25 / 0,25 / 0,25 | 0,011 | 0 ms |
+| Escritorio | `/carta/ceviches` | 100 → **100** | 100 | 100 | 100 | 0,25 s → **0,25 s** | 0,25 / 0,25 / 0,25 | 0,005 | 0 ms |
+| Escritorio | `/en/menu/ceviches` | 100 → **100** | 100 | 100 | 100 | 0,25 s → **0,25 s** | 0,25 / 0,25 / 0,25 | 0,010 | 0 ms |
+| Escritorio | `/carta/ceviches/ceviche-clasico` | 100 → **100** | 100 | 100 | 100 | 0,74 s → **0,70 s** | 0,74 / 0,61 / 0,70 | 0,001 | 0 ms |
+| Escritorio | `/en/menu/ceviches/ceviche-clasico` | 100 → **100** | 100 | 100 | 100 | 0,74 s → **0,61 s** | 0,61 / 0,61 / 0,61 | 0,001 | 0 ms |
+| Móvil | `/` | 93 → **95** | 100 | 100 | 100 | 3,25 s → **2,94 s** | 2,94 / 2,94 / 2,94 | 0,000 | 0 ms |
+| Móvil | `/en` | 93 → **95 (95–96)** | 100 | 100 | 100 | 3,25 s → **2,93 s** | 2,71 / 2,93 / 2,94 | 0,000 | 0 ms |
+| Móvil | `/carta` | 100 → **100** | 100 | 100 | 100 | 0,91 s → **0,91 s** | 0,91 / 0,91 / 0,91 | 0,002 | 0 ms |
+| Móvil | `/en/menu` | 100 → **100** | 100 | 100 | 100 | 0,91 s → **0,91 s** | 0,91 / 0,91 / 0,91 | 0,001 | 0 ms |
+| Móvil | `/carta/ceviches` | 100 → **100** | 100 | 100 | 100 | 0,91 s → **0,91 s** | 0,91 / 0,91 / 0,91 | 0,003 | 0 ms |
+| Móvil | `/en/menu/ceviches` | 100 → **100** | 100 | 100 | 100 | 0,91 s → **0,91 s** | 0,91 / 0,91 / 0,91 | 0,001 | 0 ms |
+| Móvil | `/carta/ceviches/ceviche-clasico` | 93 (90–93) → **96 (95–96)** | 100 | 100 | 100 | 3,18 s → **2,71 s** | 2,71 / 2,71 / 3,01 | 0,000 | 0 ms |
+| Móvil | `/en/menu/ceviches/ceviche-clasico` | 93 (90–93) → **96 (96–97)** | 100 | 100 | 100 | 3,18 s → **2,71 s** | 2,71 / 2,71 / 2,56 | 0,000 | 0 ms |
+
+Una primera medición completa con el mismo código dio medianas en móvil muy parecidas: portada 2,94 s; plato 3,01 s en es y 2,71 s en en.
+
+**Contra los objetivos:**
+- **Performance ≥ 90; Accessibility, Best Practices y SEO ≥ 95:** se cumplen en las 16 combinaciones. El mínimo de Performance sube de 93 a 95.
+- **CLS < 0,1:** se cumple en todas las páginas (≤ 0,011).
+- **LCP < 2,5 s en móvil: sigue sin cumplirse** en la portada (2,94 s) ni en el plato (2,71 s).
+  - Bajó 0,31 s en la portada y 0,47 s en el plato.
+  - Ninguna de las 12 corridas de esas páginas quedó por debajo de 2,5 s. La mejor fue 2,56 s.
+
+**Diagnóstico del LCP restante** (corrida mediana de la portada en móvil):
+
+1. **Elemento LCP:** la foto 4:5 del Ceviche clásico (`card-720.avif`, 20,8 KB).
+   - Se descubre en el HTML inicial y tiene `fetchpriority=high`.
+   - Se pide a los 30 ms, junto con el JavaScript.
+2. **Desglose observado** (sin limitación de red): TTFB 5 ms, retraso de carga 10 ms, carga 31 ms y retraso de render 88 ms.
+   - Los 2,94 s del LCP salen de la **simulación** de "slow 4G", de unos 1,6 Mbit/s.
+   - Esa simulación reparte el ancho de banda entre todo lo que se pide antes de la foto.
+3. **Bytes que compiten con la foto** (comprimidos, con prioridad alta o máxima):
+
+   | Recurso | KB | Detalle |
+   |---|---|---|
+   | JavaScript precargado | ≈ 170 | React DOM (`entry.client`, 64 KB) y React Router con i18next (`jsx-runtime`, 79 KB). El resto son rutas y componentes |
+   | Fuentes | ≈ 154 | Noto Sans latin-ext 700: **59 KB solo para el símbolo ₡**. Shippori Mincho 600 y 800: 65 KB. Zen Kaku Gothic 400, 500 y 700: 30 KB |
+   | CSS | 25 | |
+   | Foto LCP | 21 | |
+   | Fotos 19 y 22 (más abajo en la portada) | 54 | Tienen carga diferida, pero quedan dentro de la distancia en la que Chrome ya las pide |
+
+4. **JavaScript antes de la imagen:** ningún script retrasa el descubrimiento de la foto, pero 170 KB se descargan en paralelo con ella. Los textos de i18n ya son solo 3,4 KB y se piden después.
+5. **Diferencias entre corridas:**
+   - La portada repite 2,94 s en casi todas las corridas.
+   - El plato alterna entre 2,71 y 3,01 s, según cómo la simulación reparte las fuentes.
+   - La portada tarda unos 0,2 s más que el plato por las dos fotos de más abajo.
+
+**Propuesta** (no implementada; necesita autorización porque toca M1):
+
+| Propuesta | Efecto estimado | Qué toca |
+|---|---|---|
+| **Recortar la fuente del ₡ a ese único glifo:** unos 2 KB en lugar de 59 KB. M1 ya la registró como mejora pendiente para M9 (`app/styles/fonts.ts`) | 57 KB menos en la ruta crítica, unos 0,3 s menos en la simulación. Por cálculo, el plato quedaría cerca de 2,4 s y la portada cerca de 2,65 s | Fuentes de M1. Sin cambio visual: es el mismo glifo |
+| **Solo en la portada:** una variante `hero` de 720 px con `sizes` ajustado para las fotos 19 y 22, o retrasar su carga hasta que estén cerca de la pantalla | Entre 20 y 54 KB menos que compiten con la foto | Imágenes de M4 y portada |
+| **Revisar los pesos de Shippori Mincho** (600 y 800) | Hasta 32 KB menos | Decisión de diseño de M1 |
+
+Las estimaciones salen del ancho de banda simulado y no están medidas. El `preload` no ayudaría: la foto ya se pide a los 30 ms, con prioridad alta.
 
 ## Verificación manual en el navegador (13/11/2026)
 
@@ -176,10 +249,11 @@ Con la API y la web en desarrollo, y después con el build servido como en produ
 
 | Tema | Motivo |
 |---|---|
-| **LCP móvil de la portada y del plato** (§11: < 2,5 s) | Medido: 3,25 s y 3,18 s. Las propuestas están en la sección Lighthouse y esperan autorización. La medición definitiva es con la URL pública (M10) |
+| **LCP móvil de la portada y del plato** (§11: < 2,5 s) | **No cumplido.** Después de la optimización: 2,94 s y 2,71 s (antes 3,25 s y 3,18 s). La propuesta siguiente (recortar la fuente del ₡) toca M1 y espera autorización. La medición definitiva es con la URL pública (M10) |
 | **Validadores externos** de datos estructurados (Rich Results Test, Schema Markup Validator) | Son servicios externos y requieren una URL pública (M10). Se validó que el JSON-LD se parsea y tiene los tipos y campos de schema.org |
 | **Workflow de rebuild cada 30 min** | Pospuesto a M10 por decisión del propietario: necesita el despliegue en Cloudflare. `catalog-version` y `catalog-version.json` quedan listos |
-| **Textos editoriales y plato de la casa** | Borrador pendiente de aprobación ([CONTENIDO_EDITORIAL.md](CONTENIDO_EDITORIAL.md)) |
+| Textos editoriales y plato de la casa | ✅ Aprobados el 13/11/2026 y aplicados ([CONTENIDO_EDITORIAL.md](CONTENIDO_EDITORIAL.md)). Quedan tres observaciones menores para tu decisión |
+| `lang` en el fallback SPA en inglés | En `/en/account/sign-in`, el `<html>` del fallback conserva `lang="es-CR"` después de hidratar. Es de M3 (páginas de la cuenta, `noindex`), no cambió en M4 y no se comparó contra la línea base. Queda para revisar |
 | Finish gate con capturas a 4 anchos (§2.4) | Se revisaron 1280 y 375 px en el navegador y con axe. Las capturas a 768 y 1024 px quedan para la auditoría de M9 |
 | WebKit móvil | Pendiente desde M1 |
 | CI de GitHub para M4 | Requiere push (no autorizado) |

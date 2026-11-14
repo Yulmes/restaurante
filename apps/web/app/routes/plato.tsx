@@ -1,6 +1,7 @@
 import type { CatalogOptionGroup } from '@marea-baja/shared';
 import { data, Link } from 'react-router';
 import { DietaryTags, DishPicture, Localized } from '../catalog/components.tsx';
+import { HALF_COLUMN_SIZES } from '../catalog/images.ts';
 import { findProduct, liveProduct, loadCatalog, useLiveCatalog } from '../catalog/data.ts';
 import { Price } from '../components/ui/Price.tsx';
 import { Tag } from '../components/ui/Tag.tsx';
@@ -66,7 +67,7 @@ export default function Plato({ loaderData }: Route.ComponentProps) {
         <div className="md:col-span-6">
           {product.image ? (
             <figure className="flex flex-col gap-2">
-              <DishPicture image={product.image} sizes="(min-width: 768px) 50vw, 100vw" priority />
+              <DishPicture image={product.image} sizes={HALF_COLUMN_SIZES} priority />
               <figcaption className="text-sm leading-5 text-text-muted">{t('product.photoNote')}</figcaption>
             </figure>
           ) : null}

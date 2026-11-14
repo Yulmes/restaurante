@@ -12,6 +12,7 @@
 | Página del plato | **Informativa:** opciones con su precio adicional, sin elegirlas ni agregar. La interacción llega con el carrito (M5) |
 | Rebuild cada 30 min (D10) | `catalog-version` ahora. El workflow programado se crea y activa en **M10**, junto con el despliegue en Cloudflare |
 | Búsqueda y filtros | Índice de categorías, filtros por etiqueta en línea y búsqueda por texto. Se conserva el orden de la carta impresa, sin control de orden |
+| Optimización final (13/11/2026) | Autorizadas: textos por idioma y espacio, variante `card` de 720 px con `sizes` ajustado. No autorizado: `preload` de la foto LCP |
 
 ## 1. API pública del catálogo
 
@@ -52,7 +53,7 @@
 ## 3. Imágenes: `StaticProvider` (§2.3, §9.4)
 
 - **Variantes:** `scripts/build-images.ts` (con `sharp`, solo de desarrollo) genera de cada foto aprobada:
-  - `card` 4:5 (480 y 960 px);
+  - `card` 4:5 (480, 720 y 960 px). El paso de 720 px es para el celular: la foto ocupa el ancho de la pantalla menos los márgenes, unos 380 px CSS, que a densidad 1,75 a 2 piden entre 665 y 760 px;
   - `hero` 3:2 (1000 y 2000 px);
   - `thumb` 1:1 (480 px);
   - `og` 1200×630.
@@ -60,6 +61,8 @@
 - **Dónde quedan:** las salidas van a `public/images/`, ignorado por git. Se regeneran solo si cambian la foto o el script. La primera vez tarda unos 80 s.
 - **Un único ajuste de color**, apenas más frío y con las sombras levantadas hacia Tinta (§2.3). Es sutil a propósito: no cambia el contenido de la foto aprobada.
 - **Encuadres:** recorte automático por atención, salvo en las fotos 19 y 21, que se encuadran abajo por las notas de licencia de M1 (tatuajes con texto y residuos en la arena).
+- **Anchos:** están en `WIDTHS` de `app/catalog/images.ts`, que también usa el script; no hay dos listas.
+- **`sizes`:** la foto 4:5 de media columna (portada, plato, "Ubicación y horario") usa `HALF_COLUMN_SIZES`, con las medidas reales de la grilla (588 px desde 1280; `50vw − 3,25rem` entre 768 y 1280; `100vw − 2rem` en el celular). Con `100vw`, el celular pedía la de 960 px.
 - **URLs:** la web las arma con `provider` + `storageKey` (`app/catalog/images.ts`). Cloudinary y R2 (subidas del admin) llegan en M8 y M10.
 - **Fotos de las páginas:** las 18 a 22, reservadas en M1, ilustran la portada, "Nosotros" y "Visítanos" con textos alternativos que describen lo visible.
 
@@ -76,7 +79,19 @@
 - **Botón y enlace:** `buttonClassName` (M1) permite enlaces con aspecto de botón sin anidar un botón dentro de un enlace.
 - **Sin carrito:** no hay botón "Pedido · ₡X" ni "Agregar". Llegan en M5.
 
-## 5. Pruebas y CI
+## 5. Textos por idioma y espacio (optimización final)
+
+- **Antes:** `config.ts` importaba los 8 archivos de textos (2 idiomas × 4 espacios) y viajaban en el paquete inicial de todas las páginas.
+- **Ahora:** se usa la misma instancia de i18next y los mismos diccionarios, sin un segundo sistema:
+  - **Prerender y pruebas** (Node): todos los textos, síncronos (`resources.ts`). El HTML de cada idioma sale completo antes de hidratar.
+  - **Navegador:** cada archivo de `locales/` es un fragmento propio (`import.meta.glob`). `namespacesForPath` decide qué espacios necesita una ruta: `common` y `site` siempre; `account` en `/cuenta`; `design` en `/_design`.
+  - **Al hidratar:** `entry.client.tsx` (la entrada por defecto de React Router más esa carga) pide los textos del idioma y la sección de la URL antes de `hydrateRoot`. El primer render coincide con el HTML prerenderizado.
+  - **Al navegar** a otro idioma o sección: `useNamespaces` en el `Layout` raíz suspende el render con `use()` hasta que llegan. React Router navega dentro de una transición, así que la página anterior queda visible y nunca se ven claves sueltas. Los `meta` también ven los textos cargados.
+- **Comportamiento de M3 sin cambios:** el idioma sigue saliendo de la URL. La precedencia (preferencia de la cuenta al entrar, después la elección manual) decide a qué URL se navega, y la carga de textos sigue a esa URL.
+- **Paridad de claves:** se sigue probando sobre `resources.ts`. Como los dos idiomas tienen las mismas claves, el navegador no necesita cargar es-CR como respaldo de en.
+- **Ahorro medido:** los textos del paquete inicial pasaron de unos 12 KB comprimidos (todos) a unos 3,4 KB (`common` + `site` de un idioma), y ya no se precargan. Es poco frente a los 170 KB de React, React Router e i18next: el diagnóstico de la primera medición sobreestimó su peso (ver `docs/m4/VALIDACIONES_M4.md`).
+
+## 6. Pruebas y CI
 
 - **Servidor del build:** `scripts/serve-build.ts` sirve el build como el hosting estático (archivos, `index.html` por ruta, fallback SPA y `/api` en el mismo origen) y no sale de `build/client`. Comprime HTML, JS, CSS y JSON con Brotli (calidad 5) o gzip, como Cloudflare, para que las pruebas y Lighthouse midan lo que verá un visitante.
 - **Lighthouse 13.6.0** como dependencia de desarrollo (`npm run lighthouse`), con el Chromium de Playwright. Se descartó Lighthouse CI porque agrega un servidor de resultados que no hace falta.

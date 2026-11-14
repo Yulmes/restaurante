@@ -10,7 +10,7 @@ import { useLocale, useT } from '../i18n/use-locale.ts';
 
 /**
  * Marco de las páginas públicas (M4, §3.5): barra superior sobria con el wordmark, Carta ·
- * Pesca del día · Nosotros · Visítanos, Cuenta y el selector ES · EN. En el celular, un botón
+ * Pesca del día · Nosotros · Ubicación y horario, Cuenta y el selector ES · EN. En el celular, un botón
  * abre una hoja a pantalla completa (`<dialog>`: foco atrapado y Escape). El botón
  * "Pedido · 2 · ₡18.500" llega con el carrito (M5).
  */
