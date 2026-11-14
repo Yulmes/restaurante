@@ -4,6 +4,61 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M3 · Identidad
+
+- **API Express 5** (§4.3):
+  - `requestId` y logs Pino con redacción;
+  - Helmet y freno de ráfagas;
+  - errores `{ code, message, requestId }` sin trazas;
+  - `GET /api/health` liviano.
+- **Identidad (§8):**
+  - registro con respuesta idéntica exista o no el correo;
+  - verificación por correo y reenvío;
+  - login, logout y "cerrar todas las sesiones";
+  - recuperación y restablecimiento;
+  - perfil (nombre, teléfono, idioma) y cambio de contraseña.
+- **Sesiones opacas** con hash, cookie `__Host-` en producción, vencimiento por rol, rotación y revocación (§8.2).
+- **CSRF** con `Origin`/`Sec-Fetch-Site` y token sincronizador, también para invitados (§8.3).
+- **Límites persistentes en PostgreSQL** (§8.4): por IP, demora y bloqueo temporal de cuenta+IP, y umbral global.
+- **Turnstile condicional validado en el servidor** (D8): falla cerrada y proveedor falso para desarrollo y CI. Validación V7 documentada en `SECURITY.md`.
+- **Contraseñas** Argon2id (parámetros de OWASP) y rechazo de las 10.000 más comunes (§8.7).
+- **Correo (§8.5, D6):**
+  - outbox en la misma transacción, con reintentos exponenciales y estados SENT/FAILED;
+  - Mailpit en desarrollo y Resend preparado;
+  - plantillas MJML compiladas en es-CR y en (ADR 0004).
+- **RBAC** (`requireRole`, `requireVerifiedEmail`) y cambio de roles con **AuditLog en la misma transacción**, con lista blanca y correo enmascarado (§8.6). Script del propietario `users:set-role`.
+- **Web:**
+  - pantallas de la cuenta en es-CR y en: ingresar, registro, verificar, recuperar, restablecer y perfil;
+  - React Hook Form + Zod con los contratos de `shared` y TanStack Query;
+  - resumen de errores enfocable;
+  - proxy `/api` en desarrollo.
+- **Pruebas:**
+  - unitarias;
+  - integración con Supertest y PostgreSQL real, con reloj simulado;
+  - E2E de identidad con Mailpit y axe;
+  - job **Identidad** en CI.
+- **Documentos:** `SECURITY.md`, ADR 0004, `docs/m3/VALIDACIONES_M3.md`, y actualizaciones de las variables de entorno, README y TESTING.
+
+### Agregado — M3 · Correcciones finales
+
+- El idioma guardado en el perfil se aplica al iniciar sesión, y guardar otro idioma cambia la página en el acto. Regla de prioridad en `docs/I18N.md`.
+- `resolveLocale` en `@marea-baja/shared`: una preferencia ausente o inválida se lee como es-CR.
+- Pruebas de idioma:
+  - unitarias;
+  - integración (registro es y en, persistencia, sin preferencia, valor inválido);
+  - E2E en escritorio y a 375 px.
+- Script solo para E2E `e2e-user.ts`: crea cuentas verificadas en `<base>_e2e`, porque el límite real de 5 registros por hora por IP no deja crear más desde el navegador de pruebas.
+- Documentadas las decisiones del propietario:
+  - direcciones en M5;
+  - prueba real de Resend y de Turnstile en M10;
+  - respuesta genérica para correos ya registrados.
+- También quedaron documentados el riesgo de los límites por ventanas y la revisión de dependencias (ADR 0004).
+
+### Cambiado — M3
+
+- `TextField` (M1) acepta `ref` (React 19) y `hint`/`error` explícitamente indefinidos, sin cambios visuales.
+- La prueba de la semilla "no crea usuarios" ignora las cuentas `@example.com` que crean las pruebas de identidad en la base de prueba compartida.
+
 ### Agregado — M2 · Datos
 
 - Prisma 7.10.1 (versión estable) con `@prisma/adapter-pg`, configuración en `apps/api/prisma.config.ts` y cliente generado sin versionar (ADR 0003).

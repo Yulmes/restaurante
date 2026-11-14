@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "account": "Your account",
+    "signIn": "Sign in",
+    "register": "Create account",
+    "home": "Back to home"
+  },
+  "fields": {
+    "name": "Name",
+    "nameHint": "How you’d like us to greet you in emails.",
+    "email": "Email",
+    "password": "Password",
+    "newPassword": "New password",
+    "currentPassword": "Current password",
+    "passwordHint": "At least 12 characters. A phrase is easier to remember.",
+    "phone": "Phone (optional)",
+    "phoneHint": "Only to coordinate the delivery of your orders.",
+    "locale": "Email language"
+  },
+  "fieldErrors": {
+    "required": "Fill in this field.",
+    "invalidEmail": "Enter a valid email, for example name@domain.com.",
+    "tooLong": "It’s too long.",
+    "passwordTooShort": "The password needs at least 12 characters.",
+    "passwordTooLong": "The password can have up to 128 characters.",
+    "passwordTooCommon": "That password is one of the most used. Choose another one.",
+    "currentPasswordIncorrect": "The current password isn’t correct.",
+    "invalidPhone": "Use only numbers, spaces or hyphens, with a leading + if needed.",
+    "invalid": "Check this field."
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "The email or password isn’t correct.",
+    "RATE_LIMITED_one": "Too many attempts. Wait {{count}} second and try again.",
+    "RATE_LIMITED_other": "Too many attempts. Wait {{count}} seconds and try again.",
+    "RATE_LIMITED_minutes_one": "Too many attempts. Wait {{count}} minute and try again.",
+    "RATE_LIMITED_minutes_other": "Too many attempts. Wait {{count}} minutes and try again.",
+    "CHALLENGE_REQUIRED": "For your security, complete the check below and try again.",
+    "CHALLENGE_FAILED": "We couldn’t confirm the check. Please try again.",
+    "ACCOUNT_BLOCKED": "This account is blocked and can’t sign in.",
+    "INVALID_OR_EXPIRED_TOKEN": "The link expired or was already used.",
+    "EMAIL_ALREADY_VERIFIED": "Your email is already confirmed.",
+    "UNAUTHENTICATED": "Your session ended. Please sign in again.",
+    "CSRF_FAILED": "The page was open for a long time. Reload it and try again.",
+    "network": "We couldn’t reach the server. Check your connection and try again.",
+    "generic": "Something went wrong. Please try again in a few minutes."
+  },
+  "turnstile": {
+    "label": "Security check",
+    "unavailable": "The security check isn’t available right now. You can reset your password in the meantime."
+  },
+  "signIn": {
+    "metaTitle": "Sign in · Marea Baja",
+    "title": "Sign in",
+    "intro": "With an account you can pay for your orders and track them.",
+    "submit": "Sign in",
+    "forgot": "Forgot your password?",
+    "noAccount": "Don’t have an account yet?",
+    "register": "Create one here"
+  },
+  "register": {
+    "metaTitle": "Create account · Marea Baja",
+    "title": "Create an account",
+    "intro": "You can browse the menu and build your order without an account. To pay, you need an account with a confirmed email.",
+    "submit": "Create account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "doneTitle": "Check your email",
+    "doneBody": "If {{email}} didn’t have an account, we sent a link to confirm it. It’s valid for 24 hours.",
+    "doneNext": "Once you confirm it, sign in."
+  },
+  "verify": {
+    "metaTitle": "Confirm email · Marea Baja",
+    "title": "Confirm your email",
+    "checking": "Confirming your email…",
+    "successTitle": "Email confirmed",
+    "successBody": "All set: you can now pay for your orders.",
+    "failedBody": "This link expired or was already used. Request a new one from your account.",
+    "pendingBody": "We sent a link to {{email}}. Open it from that email to confirm it’s yours.",
+    "noToken": "Open the link we emailed you to confirm your account.",
+    "resend": "Send the link again",
+    "resent": "We sent you a new link. The previous ones no longer work.",
+    "goToAccount": "Go to your account"
+  },
+  "forgot": {
+    "metaTitle": "Reset password · Marea Baja",
+    "title": "Reset your password",
+    "intro": "Enter your account email and we’ll send you a link to choose a new password.",
+    "submit": "Send the link",
+    "doneTitle": "Check your email",
+    "doneBody": "If {{email}} has an account, we sent you a link. It’s valid for 30 minutes.",
+    "back": "Back to sign in"
+  },
+  "reset": {
+    "metaTitle": "New password · Marea Baja",
+    "title": "Choose a new password",
+    "intro": "Changing it signs you out of every open session.",
+    "submit": "Save the password",
+    "noToken": "Open the link we emailed you to choose a new password.",
+    "doneTitle": "Password updated",
+    "doneBody": "You can now sign in with your new password.",
+    "requestNew": "Request a new link"
+  },
+  "profile": {
+    "metaTitle": "Your account · Marea Baja",
+    "title": "Your account",
+    "signedInAs": "Signed in as {{email}}",
+    "verifiedStatus": "Email confirmed",
+    "unverifiedStatus": "Email not confirmed: confirm it to be able to pay.",
+    "detailsTitle": "Your details",
+    "save": "Save changes",
+    "saved": "We saved your details.",
+    "passwordTitle": "Change your password",
+    "passwordIntro": "Changing it signs you out of your other open sessions.",
+    "passwordSubmit": "Change password",
+    "passwordSaved": "We changed your password and signed out your other sessions.",
+    "sessionsTitle": "Sessions",
+    "signOut": "Sign out",
+    "signOutAll": "Sign out of all sessions",
+    "signOutAllHint": "On this and all your devices."
+  }
+}

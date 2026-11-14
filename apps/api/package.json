@@ -2,9 +2,11 @@
   "name": "@marea-baja/api",
   "version": "0.0.0",
   "private": true,
-  "description": "API de Marea Baja. En M2: esquema de datos, migraciones y semilla (Prisma 7).",
+  "description": "API de Marea Baja: identidad (M3) sobre el esquema de datos de M2 (Prisma 7, Express 5).",
   "type": "module",
   "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
     "typegen": "prisma generate",
     "typecheck": "npm run typegen && tsc -p tsconfig.json",
     "env:check": "node src/config/check-env.ts",
@@ -13,17 +15,32 @@
     "db:seed": "prisma db seed",
     "db:setup": "npm run typegen && npm run db:migrate && npm run db:app-role && npm run db:seed",
     "db:drift": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
-    "test:db": "npm run typegen && vitest run --config ../../vitest.db.config.ts"
+    "test:db": "npm run typegen && vitest run --config ../../vitest.db.config.ts",
+    "emails:build": "node scripts/build-emails.ts",
+    "users:set-role": "node scripts/users-set-role.ts",
+    "db:e2e": "npm run typegen && node scripts/db-e2e.ts"
   },
   "dependencies": {
     "@marea-baja/shared": "0.0.0",
+    "@node-rs/argon2": "2.2.2",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@zxcvbn-ts/language-common": "4.1.3",
+    "express": "5.3.0",
+    "express-rate-limit": "8.7.4",
+    "helmet": "8.3.0",
     "pg": "8.23.1",
+    "pino": "10.4.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/mjml": "5.4.2",
     "@types/pg": "8.23.1",
-    "prisma": "7.10.1"
+    "@types/supertest": "7.2.1",
+    "mjml": "5.4.1",
+    "pino-pretty": "13.2.0",
+    "prisma": "7.10.1",
+    "supertest": "7.3.2"
   }
 }

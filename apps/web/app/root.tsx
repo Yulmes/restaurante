@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
 import type { Route } from './+types/root';
@@ -34,7 +35,13 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  // Datos remotos con TanStack Query (§4.4): un cliente por pestaña.
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

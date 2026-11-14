@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, Ref } from 'react';
 import { ErrorIcon } from './ErrorIcon.tsx';
 
 type ForcedFieldState = 'hover' | 'focus';
@@ -6,9 +6,11 @@ type ForcedFieldState = 'hover' | 'focus';
 interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'className'> {
   id: string;
   label: string;
-  hint?: string;
-  error?: string;
+  hint?: string | undefined;
+  error?: string | undefined;
   forceState?: ForcedFieldState;
+  /** React 19: `ref` llega como prop y se pasa al input (React Hook Form, M3). */
+  ref?: Ref<HTMLInputElement>;
 }
 
 export function TextField({ id, label, hint, error, forceState, disabled, ...rest }: TextFieldProps) {

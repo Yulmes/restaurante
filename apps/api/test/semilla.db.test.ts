@@ -146,8 +146,9 @@ describe('configuración semilla', () => {
     expect(board.items.map((item) => item.species)).toEqual(CATCH_ITEMS.map((item) => item.species));
   });
 
-  it('no crea usuarios ni contraseñas (las cuentas llegan en M3)', async () => {
-    expect(await prisma.user.count()).toBe(0);
+  it('no crea usuarios ni contraseñas (las cuentas se crean con el registro de M3)', async () => {
+    // La base de prueba es compartida: las pruebas de identidad de M3 crean cuentas @example.com.
+    expect(await prisma.user.count({ where: { NOT: { email: { endsWith: '@example.com' } } } })).toBe(0);
   });
 });
 

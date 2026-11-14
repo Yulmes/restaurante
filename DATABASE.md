@@ -81,7 +81,7 @@ Todas tienen una prueba en `apps/api/test/restricciones.db.test.ts` o `auditoria
 3. Un usuario con entradas de auditoría no se puede borrar: la clave foránea es `RESTRICT`, así la traza no queda huérfana.
 4. La aplicación no puede crear ni borrar tablas, quitar el trigger ni leer `_prisma_migrations`.
 
-Pendiente para hitos posteriores: la escritura del AuditLog en la misma transacción que cada cambio, la lista blanca de campos y el enmascarado de correos (§8.6). Corresponden a los servicios que hacen esos cambios (M3, M7 y M8).
+**Desde M3:** `recordAudit(tx, …)` (`apps/api/src/modules/audit/audit.ts`) escribe en la misma transacción que el cambio, con lista blanca de campos por entidad y correos enmascarados. El primer cambio auditado es el de roles (`user.roles_changed`). Las listas de productos, configuración, pedidos y reembolsos se agregan con sus servicios (M7 y M8).
 
 ## Semilla
 

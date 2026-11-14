@@ -6,6 +6,13 @@ import { DEFAULT_LOCALE, type Locale } from '@marea-baja/shared';
  */
 const SEGMENTS: Record<string, string> = {
   _design: '_design',
+  // Cuenta (M3).
+  cuenta: 'account',
+  ingresar: 'sign-in',
+  registro: 'register',
+  verificar: 'verify',
+  recuperar: 'forgot-password',
+  restablecer: 'reset-password',
 };
 const REVERSE_SEGMENTS = Object.fromEntries(Object.entries(SEGMENTS).map(([es, en]) => [en, es]));
 

@@ -8,3 +8,7 @@ apps/api/src/generated/
 # Documentación en Markdown: se redacta a mano y no se reformatea automáticamente.
 *.md
 docs/
+
+# Plantilla de correo (ADR 0004): MJML es sensible a espacios y el HTML es generado.
+apps/api/src/modules/notifications/templates/layout.mjml
+apps/api/src/modules/notifications/templates/layout.html
