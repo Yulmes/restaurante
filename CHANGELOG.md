@@ -13,7 +13,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - **Carta con índice, búsqueda y filtros por etiqueta en línea.** En el celular se pliegan para que la carta empiece arriba (§2.4).
 - **Navegación del sitio** (§3.5) con menú del celular en `<dialog>`, también en las páginas de la cuenta.
 - **Imágenes:** variantes AVIF/WebP 4:5, 3:2, 1:1 y Open Graph JPEG generadas en el build con un único ajuste de color (§2.3, §9.4).
-- **Herramientas:** `npm run preview` sirve el build como el hosting estático.
+- **Herramientas:**
+  - `npm run preview` sirve el build como el hosting estático, con compresión Brotli/gzip;
+  - `npm run lighthouse` mide el build con Lighthouse 13.6.0 (dependencia de desarrollo).
+- **`CATALOG_API_URL` usa `API_PROXY_TARGET` si falta:** el servidor de desarrollo evalúa la lista de rutas del prerender.
 - **Pruebas:** E2E del catálogo sobre el build de producción y job **Catálogo y SEO** en CI.
 - **Documentos:**
   - ADR 0005;

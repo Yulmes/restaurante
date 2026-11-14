@@ -23,6 +23,17 @@ function setProduct(slug: string, changes: { price?: number; available?: boolean
   });
 }
 
+/**
+ * Espera a que React hidrate el HTML prerenderizado: antes, los botones existen pero todavía no
+ * responden. Una persona en una red lenta también lo nota (ver VALIDACIONES_M4).
+ */
+async function hydrated(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const button = document.querySelector('main button, header button');
+    return button !== null && Object.keys(button).some((key) => key.startsWith('__reactProps'));
+  });
+}
+
 async function rawHtml(page: Page, path: string): Promise<string> {
   const res = await page.request.get(path);
   expect(res.status()).toBe(200);
@@ -146,6 +157,7 @@ test.describe('carta: búsqueda y filtros (sin tapar la lista)', () => {
     page,
   }) => {
     await page.goto('/carta');
+    await hydrated(page);
     await page.getByRole('button', { name: 'Sin gluten' }).click();
     await expect(page.getByRole('button', { name: 'Sin gluten' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('article h3')).toHaveText([
@@ -164,6 +176,7 @@ test.describe('carta: búsqueda y filtros (sin tapar la lista)', () => {
 
   test('la búsqueda ignora tildes y mayúsculas, en los dos idiomas', async ({ page }) => {
     await page.goto('/carta');
+    await hydrated(page);
     await page.getByRole('searchbox', { name: 'Buscar en la carta' }).fill('ATUN');
     await expect(page.locator('article h3')).toHaveText([
       'Ceviche nikkei',
@@ -172,6 +185,7 @@ test.describe('carta: búsqueda y filtros (sin tapar la lista)', () => {
       'Bowl nikkei de atún',
     ]);
     await page.goto('/en/menu');
+    await hydrated(page);
     await page.getByRole('searchbox', { name: 'Search the menu' }).fill('octopus');
     await expect(page.locator('article h3')).toHaveText([
       'Ceviche mixto con chicharrón de calamar',
@@ -187,6 +201,7 @@ test.describe('carta: búsqueda y filtros (sin tapar la lista)', () => {
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/carta');
+    await hydrated(page);
     const first = page.locator('article').first();
     expect((await first.boundingBox())?.y ?? 9999).toBeLessThan(812);
     const toggle = page.getByRole('button', { name: 'Buscar y filtrar' });
@@ -201,6 +216,7 @@ test.describe('carta: búsqueda y filtros (sin tapar la lista)', () => {
 test.describe('navegación, idioma y accesibilidad', () => {
   test('el selector de idioma conserva la página (categoría y plato)', async ({ page }) => {
     await page.goto('/carta/makis/maki-acevichado');
+    await hydrated(page);
     await page.getByRole('navigation', { name: 'Principal' }).first().waitFor();
     await page.locator('header').getByRole('link', { name: /^EN/ }).click();
     await expect(page).toHaveURL(/\/en\/menu\/makis\/maki-acevichado$/);
@@ -211,6 +227,7 @@ test.describe('navegación, idioma y accesibilidad', () => {
   test('menú del celular: hoja modal que se cierra con Escape y lleva a las secciones', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
+    await hydrated(page);
     await page.getByRole('button', { name: 'Menú' }).click();
     const dialog = page.getByRole('dialog', { name: 'Menú del sitio' });
     await expect(dialog).toBeVisible();

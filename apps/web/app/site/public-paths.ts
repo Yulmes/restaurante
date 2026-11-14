@@ -43,4 +43,9 @@ export function publicPaths(catalog: Awaited<ReturnType<typeof fetchCatalogForBu
   return es.map((path) => ({ es: path, en: pathForLocale(path, 'en') }));
 }
 
-export const catalogApiBase = (): string => process.env['CATALOG_API_URL'] ?? 'http://127.0.0.1:3000';
+/**
+ * API que lee el prerender (también el servidor de desarrollo, que evalúa `prerender()`):
+ * `CATALOG_API_URL`, o la misma API a la que se reenvía `/api` (`API_PROXY_TARGET`), o la local.
+ */
+export const catalogApiBase = (): string =>
+  process.env['CATALOG_API_URL'] ?? process.env['API_PROXY_TARGET'] ?? 'http://127.0.0.1:3000';

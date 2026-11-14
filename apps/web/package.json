@@ -16,7 +16,8 @@
     "test:e2e:auth": "playwright test -c playwright.auth.config.ts",
     "images": "node scripts/build-images.ts",
     "preview": "node scripts/serve-build.ts",
-    "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts"
+    "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts",
+    "lighthouse": "node scripts/lighthouse.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -25,6 +26,7 @@
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "lighthouse": "13.6.0",
     "playwright-core": "1.64.1",
     "sharp": "0.35.5",
     "tailwindcss": "4.3.3",

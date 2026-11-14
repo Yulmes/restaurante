@@ -12,6 +12,7 @@ coverage/
 playwright-report/
 playwright-report-auth/
 playwright-report-catalog/
+apps/web/lighthouse-report/
 test-results/
 .react-router/
 # Cliente de Prisma generado (`npm run typegen`)

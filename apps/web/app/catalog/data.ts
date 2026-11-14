@@ -10,6 +10,7 @@ import {
   type OpeningHoursResponse,
 } from '@marea-baja/shared';
 import { useQuery } from '@tanstack/react-query';
+import { catalogApiBase } from '../site/public-paths.ts';
 import type { z } from 'zod';
 
 /**
@@ -20,8 +21,7 @@ import type { z } from 'zod';
  * - **Al hidratar (D10):** precios, disponibilidad y pesca del día se vuelven a pedir en vivo a
  *   `/api/public/*` (mismo origen).
  */
-const API_BASE = (): string =>
-  (typeof process === 'undefined' ? undefined : process.env['CATALOG_API_URL']) ?? 'http://127.0.0.1:3000';
+const API_BASE = (): string => (typeof process === 'undefined' ? 'http://127.0.0.1:3000' : catalogApiBase());
 
 async function buildFetch<S extends z.ZodType>(path: string, schema: S): Promise<z.output<S>> {
   const url = `${API_BASE().replace(/\/+$/, '')}${path}`;

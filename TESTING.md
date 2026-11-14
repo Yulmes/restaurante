@@ -10,6 +10,7 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test` | Vitest: pruebas unitarias de todos los paquetes |
 | `npm run test:db` | Vitest contra PostgreSQL real (requiere `npm run services:up`). Recrea la base `<base>_test`, aplica migraciones, crea el usuario de la API y carga la semilla antes de correr |
 | `npm run test:e2e:auth -w @marea-baja/web` | Playwright de identidad: levanta API, web y una base `<base>_e2e`; usa Mailpit |
+| `npm run lighthouse -w @marea-baja/web` | Lighthouse 13.6.0 sobre el build servido con `npm run preview` (escritorio y móvil, 3 corridas, mediana). Procedimiento en `docs/m4/VALIDACIONES_M4.md` |
 | `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |

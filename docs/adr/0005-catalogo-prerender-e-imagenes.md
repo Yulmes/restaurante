@@ -78,7 +78,8 @@
 
 ## 5. Pruebas y CI
 
-- **Servidor del build:** `scripts/serve-build.ts` sirve el build como el hosting estático (archivos, `index.html` por ruta, fallback SPA y `/api` en el mismo origen) y no sale de `build/client`.
+- **Servidor del build:** `scripts/serve-build.ts` sirve el build como el hosting estático (archivos, `index.html` por ruta, fallback SPA y `/api` en el mismo origen) y no sale de `build/client`. Comprime HTML, JS, CSS y JSON con Brotli (calidad 5) o gzip, como Cloudflare, para que las pruebas y Lighthouse midan lo que verá un visitante.
+- **Lighthouse 13.6.0** como dependencia de desarrollo (`npm run lighthouse`), con el Chromium de Playwright. Se descartó Lighthouse CI porque agrega un servidor de resultados que no hace falta.
 - **E2E del catálogo:** `playwright.catalog.config.ts` prueba el **build de producción**, no el servidor de desarrollo. Recrea `<base>_e2e`, levanta la API (puerto 3200), hace el build con prerender y lo sirve (puerto 5175).
 - **CI:**
   - job nuevo **Catálogo y SEO**;
