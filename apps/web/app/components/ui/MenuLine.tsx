@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { Price } from './Price.tsx';
 
 interface MenuLineProps {
@@ -12,6 +13,12 @@ interface MenuLineProps {
   soldOutLabel?: string;
   /** Un nivel por debajo del título de la categoría (en la carta real: h2 → h3). */
   headingLevel?: 3 | 4;
+  /** M4: el nombre enlaza a la página del plato. */
+  href?: string;
+  /** M4: nombre traducido cuando el original es descriptivo (§4.5). */
+  translatedName?: string | null;
+  /** M4: idioma real de la descripción si difiere del de la página (traducción pendiente, §4.5). */
+  descriptionLang?: string;
 }
 
 /**
@@ -26,6 +33,9 @@ export function MenuLine({
   soldOut = false,
   soldOutLabel,
   headingLevel = 3,
+  href,
+  translatedName,
+  descriptionLang,
 }: MenuLineProps) {
   const Heading = headingLevel === 4 ? 'h4' : 'h3';
   return (
@@ -34,9 +44,19 @@ export function MenuLine({
         className={`flex min-w-0 items-baseline gap-2.5 font-display text-xl leading-7 font-semibold lg:after:min-w-5 lg:after:flex-1 lg:after:translate-y-[-4px] lg:after:border-b lg:after:border-dotted lg:after:border-border-strong lg:after:content-[''] ${soldOut ? 'text-text-muted' : ''}`}
       >
         {/* D2: nombre original del plato; los traductores automáticos no deben cambiarlo. */}
-        <span translate="no" className="min-w-0 [overflow-wrap:anywhere]">
-          {name}
-        </span>
+        {href ? (
+          <Link
+            to={href}
+            translate="no"
+            className="min-w-0 underline-offset-4 [overflow-wrap:anywhere] hover:underline focus-visible:underline"
+          >
+            {name}
+          </Link>
+        ) : (
+          <span translate="no" className="min-w-0 [overflow-wrap:anywhere]">
+            {name}
+          </span>
+        )}
       </Heading>
       <span className={`self-baseline ${soldOut ? 'text-text-muted line-through' : ''}`}>
         <Price amountMinor={priceMinor} />
@@ -47,7 +67,13 @@ export function MenuLine({
           </span>
         ) : null}
       </span>
-      <p className="col-span-2 max-w-[58ch] text-[0.9375rem] leading-6 text-text-muted">{description}</p>
+      {translatedName ? <p className="col-span-2 t-ui text-text">{translatedName}</p> : null}
+      <p
+        lang={descriptionLang}
+        className="col-span-2 max-w-[58ch] text-[0.9375rem] leading-6 text-text-muted"
+      >
+        {description}
+      </p>
       {tags ? <div className="col-span-2 flex flex-wrap gap-2 pt-1">{tags}</div> : null}
     </article>
   );

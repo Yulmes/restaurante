@@ -40,6 +40,11 @@ const styles: Record<ButtonTone, Record<ButtonVariant, string>> = {
   },
 };
 
+/** Clases del botón para un enlace con aspecto de botón (M4): navegar no es una acción de formulario. */
+export function buttonClassName(variant: ButtonVariant = 'primary', tone: ButtonTone = 'light'): string {
+  return [base, styles[tone][variant]].join(' ');
+}
+
 export function Button({
   variant = 'primary',
   tone = 'light',

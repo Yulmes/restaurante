@@ -4,6 +4,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M4 · Catálogo y SEO
+
+- **API pública** (`/api/public/*`): carta por idioma con respaldo es-CR marcado (§4.5), `catalog-version` en memoria (R20), pizarra de pesca del día y horario. Contratos en `@marea-baja/shared`. Sin cambios de esquema.
+- **Sitio público prerenderizado en es-CR y en** (§4.2): portada con el plato de la casa y la pesca del día, carta, cada categoría, cada plato (informativo: opciones como información), Nosotros y Visítanos. Son 56 páginas.
+- **SEO:** título, descripción, canónica, `hreflang` (es-CR, en, x-default), Open Graph 1200×630, Twitter card, JSON-LD (`Restaurant`, `Menu`, `MenuItem`), `sitemap.xml` con alternativas, `robots.txt`, `noindex` en el fallback SPA y `catalog-version.json`.
+- **Precios, disponibilidad y pesca del día en vivo al hidratar** (D10, TanStack Query).
+- **Carta con índice, búsqueda y filtros por etiqueta en línea.** En el celular se pliegan para que la carta empiece arriba (§2.4).
+- **Navegación del sitio** (§3.5) con menú del celular en `<dialog>`, también en las páginas de la cuenta.
+- **Imágenes:** variantes AVIF/WebP 4:5, 3:2, 1:1 y Open Graph JPEG generadas en el build con un único ajuste de color (§2.3, §9.4).
+- **Herramientas:** `npm run preview` sirve el build como el hosting estático.
+- **Pruebas:** E2E del catálogo sobre el build de producción y job **Catálogo y SEO** en CI.
+- **Documentos:**
+  - ADR 0005;
+  - `docs/m4/CONTENIDO_EDITORIAL.md` (borrador pendiente de aprobación);
+  - `docs/m4/VALIDACIONES_M4.md`.
+
+### Cambiado — M4
+
+- `MenuLine` (M1) acepta enlace en el nombre, nombre traducido e idioma de la descripción. `Button` exporta `buttonClassName` para enlaces con aspecto de botón. No hay cambios visuales en lo existente.
+- **Páginas de la cuenta (M3):** usan la barra y el pie del sitio.
+- **Pruebas de M1 y M3 ajustadas a la navegación nueva:**
+  - la portada tiene dos regiones de navegación con nombre;
+  - en el celular, ES · EN está dentro del menú.
+- **CI:**
+  - el job de sistema de diseño levanta PostgreSQL y la API;
+  - el build de producción se prueba en el job de catálogo.
+
 ### Agregado — M3 · Identidad
 
 - **API Express 5** (§4.3):

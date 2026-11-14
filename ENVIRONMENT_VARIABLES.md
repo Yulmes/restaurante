@@ -34,7 +34,10 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | Variable | Obligatoria | Notas |
 |---|---|---|
 | `VITE_TURNSTILE_SITE_KEY` | En producción | Clave pública del widget de Turnstile. En desarrollo, si falta, se usa la clave de prueba de Cloudflare que siempre pasa |
-| `API_PROXY_TARGET` | No | Solo desarrollo: a qué API reenvía Vite `/api` (por defecto `http://127.0.0.1:3000`). Las E2E de identidad la apuntan a su propia API |
+| `API_PROXY_TARGET` | No | A qué API reenvía `/api` el servidor de desarrollo de Vite y `npm run preview` (por defecto `http://127.0.0.1:3000`). Las E2E la apuntan a su propia API |
+| `CATALOG_API_URL` | Para el build (M4) | API que lee el prerender en el build (por defecto `http://127.0.0.1:3000`). Si no responde, el build reintenta unos 50 s y falla: nunca publica una carta vacía. En M10, la API desplegada |
+| `VITE_SITE_URL` | En producción (M4) | Origen público del sitio para las canónicas, `hreflang`, Open Graph, JSON-LD, el sitemap y robots. En local, `http://127.0.0.1:5173`. Se configura en M10 |
+| `PORT` | No | Puerto de `npm run preview` (build servido como el hosting estático). Por defecto 4173 |
 
 ## Prisma: migraciones, semilla y scripts de base de datos
 

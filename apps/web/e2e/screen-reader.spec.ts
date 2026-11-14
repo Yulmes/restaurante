@@ -24,7 +24,10 @@ for (const path of PAGES) {
     await openPage(page, path);
     await expect(page.getByRole('main')).toHaveCount(1);
     await expect(page.getByRole('banner')).toHaveCount(1);
-    await expect(page.getByRole('navigation')).toHaveAccessibleName(/^(Idioma|Language)$/);
+    // Desde M4 la portada tiene la navegación principal (§3.5) además del selector de idioma:
+    // cada región de navegación tiene nombre y una de ellas es la de idioma.
+    for (const nav of await page.getByRole('navigation').all()) await expect(nav).toHaveAccessibleName(/\S/);
+    await expect(page.getByRole('navigation', { name: /^(Idioma|Language)$/ })).toHaveCount(1);
     await expect(page.getByRole('link', { name: /^(Saltar al contenido|Skip to content)$/ })).toHaveCount(1);
   });
 

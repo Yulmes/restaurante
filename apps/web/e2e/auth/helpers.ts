@@ -1,7 +1,7 @@
 /** Ayudas de las E2E de identidad: Mailpit, registro e inicio de sesión. */
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { E2E_DATABASE_URL } from '../../playwright.auth.config.ts';
 
 export const MAILPIT = 'http://127.0.0.1:8025';
@@ -78,4 +78,22 @@ export function createVerifiedAccount(locale: 'es-CR' | 'en'): string {
     },
   );
   return email;
+}
+
+/**
+ * Enlace del selector de idioma (ES · EN). Desde M4, en el celular vive dentro del menú (§3.5):
+ * a menos de 768 px se abre la hoja del menú antes de buscarlo.
+ */
+export async function languageLink(page: Page, code: 'ES' | 'EN'): Promise<Locator> {
+  const width = page.viewportSize()?.width ?? 1280;
+  const name = new RegExp(`^${code}`);
+  if (width >= 768) return page.locator('header').getByRole('link', { name }).first();
+  const dialog = page.getByRole('dialog');
+  if (!(await dialog.isVisible())) await page.getByRole('button', { name: /^(Menú|Menu)$/ }).click();
+  return dialog.getByRole('link', { name });
+}
+
+/** Cierra la hoja del menú del celular si quedó abierta. */
+export async function closeMenu(page: Page): Promise<void> {
+  if (await page.getByRole('dialog').isVisible()) await page.keyboard.press('Escape');
 }

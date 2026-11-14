@@ -1,15 +1,12 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-import { Logo } from '../components/brand/Logo.tsx';
 import { TideLine } from '../components/brand/TideLine.tsx';
 import { DemoBanner } from '../components/ui/DemoBanner.tsx';
-import { LanguageSwitcher } from '../components/ui/LanguageSwitcher.tsx';
 import { MAIN_ID, SkipLink } from '../components/ui/SkipLink.tsx';
-import { useLocalizedPath } from './links.ts';
+import { SiteFooter, SiteHeader } from '../site/SiteLayout.tsx';
 
 /**
- * Marco de las páginas de la cuenta (M3). Usa los componentes del sistema de M1 sin cambiarlos:
- * aviso de demostración, salto al contenido, marca, selector de idioma y línea de marea.
+ * Marco de las páginas de la cuenta (M3). Desde M4 usa la misma barra y el mismo pie que las
+ * páginas públicas (§3.5), con el aviso de demostración, el salto al contenido y la línea de marea.
  * Columna angosta: formularios cortos, pensados para el celular (§3.4, §3.8).
  */
 export function AccountShell({
@@ -21,17 +18,11 @@ export function AccountShell({
   intro?: string;
   children: ReactNode;
 }) {
-  const to = useLocalizedPath();
   return (
     <>
       <SkipLink />
       <DemoBanner />
-      <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-8">
-        <Link to={to('/')} className="rounded-[var(--radius-control)]">
-          <Logo />
-        </Link>
-        <LanguageSwitcher />
-      </header>
+      <SiteHeader />
       <main
         id={MAIN_ID}
         tabIndex={-1}
@@ -44,6 +35,7 @@ export function AccountShell({
         <TideLine className="text-border-strong" />
         {children}
       </main>
+      <SiteFooter />
     </>
   );
 }

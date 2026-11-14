@@ -5,15 +5,18 @@
   "description": "Frontend de Marea Baja (React + React Router en modo framework + Vite + Tailwind).",
   "type": "module",
   "scripts": {
-    "dev": "react-router dev",
-    "build": "react-router build",
+    "dev": "npm run images && react-router dev",
+    "build": "npm run images && react-router build && node scripts/seo-files.ts",
     "typegen": "react-router typegen",
     "typecheck": "npm run typegen && tsc -p tsconfig.json",
     "test:e2e": "playwright test",
     "capturas": "playwright test --grep @capturas",
     "glyphs": "node scripts/check-glyphs.ts",
     "hanko": "node scripts/extract-hanko.ts",
-    "test:e2e:auth": "playwright test -c playwright.auth.config.ts"
+    "test:e2e:auth": "playwright test -c playwright.auth.config.ts",
+    "images": "node scripts/build-images.ts",
+    "preview": "node scripts/serve-build.ts",
+    "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -23,6 +26,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "playwright-core": "1.64.1",
+    "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "vite": "8.3.5"
   },

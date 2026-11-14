@@ -10,8 +10,9 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test` | Vitest: pruebas unitarias de todos los paquetes |
 | `npm run test:db` | Vitest contra PostgreSQL real (requiere `npm run services:up`). Recrea la base `<base>_test`, aplica migraciones, crea el usuario de la API y carga la semilla antes de correr |
 | `npm run test:e2e:auth -w @marea-baja/web` | Playwright de identidad: levanta API, web y una base `<base>_e2e`; usa Mailpit |
+| `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
-| `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo |
+| `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
 | `npm run glyphs -w @marea-baja/web` | Informe de glifos por fuente, peso y subconjunto (V3) |
 
@@ -115,3 +116,15 @@ Levanta su propia base (`<base>_e2e`, recreada en cada corrida, umbral de Turnst
 | Idioma (`idioma.spec.ts`, en escritorio y a 375 px): la cuenta se abre en el idioma guardado aunque el login sea en el otro; el cambio desde el perfil se aplica y persiste tras cerrar sesión, en los dos sentidos; con sesión, ES · EN navega sin cambiar la preferencia; la selección manual antes del login sigue igual; un idioma inválido de la API abre es-CR sin errores | D2 |
 
 Las pruebas de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts` (solo contra `<base>_e2e`): las cinco cuentas de `identidad.spec.ts` ya usan el límite real de 5 registros por hora por IP. El registro por la interfaz se prueba en `identidad.spec.ts`.
+
+## Qué cubre M4
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| API pública: orden y precios de la semilla, traducciones y respaldo es-CR marcado, sin inactivos ni datos internos, idioma inválido; precio y disponibilidad en vivo; `catalog-version` en memoria e independiente del idioma; pizarra de hoy y de días anteriores; horario | `apps/api/test/catalogo.db.test.ts` | §4.2, D10, R20 |
+| Metadatos por idioma (canónica, `hreflang`, Open Graph), JSON-LD, rutas prerenderizadas, sitemap, robots, `noindex` del fallback, datos en vivo y URL de imágenes | `apps/web/app/site/seo.test.ts` | §4.2, §9.4 |
+| Mensajes del sitio con las mismas claves en es-CR y en | `apps/web/app/i18n/messages.test.ts` | D2 |
+| E2E sobre el build de producción: HTML crudo de 12 páginas, JSON-LD parseable, sitemap, robots, `catalog-version.json`, datos en vivo al hidratar, pizarra, búsqueda y filtros, carta a 375 px, idioma, menú del celular, teclado, 404 y axe a 1280 y 375 px | `apps/web/e2e/catalogo/catalogo.spec.ts` | §2.4, §3.5, §4.2, D1, D10 |
+
+Las E2E del catálogo cambian el precio de un plato con `apps/api/scripts/e2e-catalog.ts`, que solo corre contra `<base>_e2e`.
+

@@ -7,7 +7,7 @@
  * - un valor inválido o ausente se lee como es-CR.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { createVerifiedAccount, signIn } from './helpers.ts';
+import { closeMenu, createVerifiedAccount, languageLink, signIn } from './helpers.ts';
 
 async function expectAccountIn(page: Page, locale: 'es-CR' | 'en'): Promise<void> {
   await expect(page).toHaveURL(locale === 'en' ? /\/en\/account$/ : /\/cuenta$/);
@@ -16,10 +16,11 @@ async function expectAccountIn(page: Page, locale: 'es-CR' | 'en'): Promise<void
     locale === 'en' ? 'Your account' : 'Tu cuenta',
   );
   // Selector de idioma y radio del perfil coinciden con la página.
-  await expect(page.getByRole('link', { name: locale === 'en' ? /^EN/ : /^ES/ })).toHaveAttribute(
+  await expect(await languageLink(page, locale === 'en' ? 'EN' : 'ES')).toHaveAttribute(
     'aria-current',
     'true',
   );
+  await closeMenu(page);
   await expect(page.getByLabel(locale === 'en' ? 'English' : 'Español (Costa Rica)')).toBeChecked();
 }
 
@@ -76,7 +77,7 @@ for (const viewport of [
       await signIn(page, '/en/account/sign-in', email);
       await expectAccountIn(page, 'en');
 
-      await page.getByRole('link', { name: /^ES/ }).click();
+      await (await languageLink(page, 'ES')).click();
       await expect(page).toHaveURL(/\/cuenta$/);
       await expect(page.locator('html')).toHaveAttribute('lang', 'es-CR');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tu cuenta');
@@ -91,10 +92,10 @@ for (const viewport of [
 
 test('antes de iniciar sesión, la selección manual de idioma sigue igual que en M1', async ({ page }) => {
   await page.goto('/cuenta/ingresar');
-  await page.getByRole('link', { name: /^EN/ }).click();
+  await (await languageLink(page, 'EN')).click();
   await expect(page).toHaveURL(/\/en\/account\/sign-in$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.getByRole('link', { name: /^ES/ }).click();
+  await (await languageLink(page, 'ES')).click();
   await expect(page).toHaveURL(/\/cuenta\/ingresar$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'es-CR');
 });

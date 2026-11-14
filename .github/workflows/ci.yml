@@ -1,5 +1,5 @@
-# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3) y
-# servicios locales.
+# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3),
+# catálogo y SEO (M4) y servicios locales.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -58,15 +58,24 @@ jobs:
 
       - run: npm ci
 
+      # Desde M4 las páginas públicas leen la API del catálogo: base de desarrollo con la semilla.
+      - name: Levantar PostgreSQL y preparar la base
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120 postgres
+          npm run db:setup
+
       - name: Instalar Chromium para Playwright
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      # La configuración levanta la API y el servidor de desarrollo de la web.
       - name: axe, teclado, idiomas, responsive y movimiento reducido
         run: npm run test:e2e -w @marea-baja/web
 
-      - name: Build de producción de la web
-        run: npm run build -w @marea-baja/web
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
 
   services:
     name: Servicios locales (Docker Compose)
@@ -155,6 +164,41 @@ jobs:
       # Turnstile usa el proveedor falso y el script de Cloudflare se reemplaza: sin llamadas externas.
       - name: Registro, correo, verificación, login, perfil, recuperación, Turnstile y axe
         run: npm run test:e2e:auth -w @marea-baja/web
+
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
+
+  catalog:
+    name: Catálogo y SEO (build prerenderizado y E2E)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Levantar PostgreSQL
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120 postgres
+
+      - name: Instalar Chromium para Playwright
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      # La configuración crea su base (<base>_e2e), levanta la API, hace el build de producción con
+      # prerender (variantes de imagen, HTML por idioma, sitemap y robots) y lo sirve como el
+      # hosting estático. Prueba el HTML crudo, los datos en vivo, la carta y axe.
+      - name: Build de producción, prerender, SEO y E2E del catálogo
+        run: npm run test:e2e:catalog -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

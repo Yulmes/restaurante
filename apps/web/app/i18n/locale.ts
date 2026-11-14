@@ -6,6 +6,10 @@ import { DEFAULT_LOCALE, type Locale } from '@marea-baja/shared';
  */
 const SEGMENTS: Record<string, string> = {
   _design: '_design',
+  // Páginas públicas (M4). Los slugs de categorías y platos son iguales en los dos idiomas (§4.2).
+  carta: 'menu',
+  nosotros: 'about',
+  visitanos: 'visit',
   // Cuenta (M3).
   cuenta: 'account',
   ingresar: 'sign-in',
