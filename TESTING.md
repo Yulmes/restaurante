@@ -78,6 +78,7 @@ En CI, el job **Base de datos** levanta PostgreSQL, ejecuta `db:setup`, comprueb
 | Sanitizador del AuditLog: lista blanca, correo enmascarado, sin objetos anidados | `apps/api/src/modules/audit/audit.test.ts` | §8.6 |
 | Contratos: correo normalizado, códigos por campo, 12 a 128 caracteres, tokens base64url | `packages/shared/src/auth/schemas.test.ts` | §8.7 |
 | Mensajes de la cuenta con las mismas claves en es-CR y en | `apps/web/app/i18n/messages.test.ts` | D2 |
+| `resolveLocale` y lectura de un idioma inválido del usuario como es-CR; página de la cuenta según la preferencia | `packages/shared/src/i18n/locales.test.ts`, `apps/web/app/account/links.test.ts` | D2 |
 
 ### Integración con PostgreSQL real (`npm run test:db`)
 
@@ -90,6 +91,7 @@ Supertest contra la API completa, con reloj simulado e IP distintas por caso.
 | Login: cookie y banderas (también `__Host-` y `Secure` en producción), hash del token, mismo error para correo inexistente; logout, cerrar todas, inactividad de 7 días, absoluto de 30 días, rotación cada 24 h, usuario bloqueado | `identidad.db.test.ts` | R-SEC-02, R-SEC-03 |
 | Recuperación: respuesta idéntica, correo en el idioma de la cuenta, un solo uso, 30 min, revoca sesiones, límites | `identidad.db.test.ts` | §8.4, §8.7 |
 | Perfil y cambio de contraseña (revoca las demás, rota la actual) | `identidad.db.test.ts` | §8.2 |
+| Idioma: registro en es y en, cambio desde el perfil que persiste tras cerrar sesión, cuenta sin preferencia (es-CR) y valor inválido rechazado sin cambiar la preferencia | `identidad.db.test.ts` | D2 |
 | Errores sin trazas con `requestId`, JSON mal formado, Helmet, health; logs sin datos sensibles | `identidad.db.test.ts` | §8.7 |
 | CSRF: sin token, token de otro navegador, token de otra sesión, `Origin` ajeno y `Sec-Fetch-Site` | `apps/api/test/proteccion.db.test.ts` | R-SEC-04 |
 | Login: demora desde el 4.º fallo, bloqueo de cuenta+IP de 15 min que no afecta otra IP, escalamiento a 1 h, reinicio tras éxito, 30/15 min por IP | `proteccion.db.test.ts` | R-SEC-05 |
@@ -110,3 +112,6 @@ Levanta su propia base (`<base>_e2e`, recreada en cada corrida, umbral de Turnst
 | Turnstile: sin script ni widget bajo el umbral; al superarlo aparece; sin resolverlo no entra; resuelto, entra. El script de Cloudflare se reemplaza (sin llamadas externas) | D8 |
 | El resumen de errores recibe el foco y cada enlace nombra y enfoca su campo | §3.4 |
 | axe: 0 violaciones serias o críticas en las 10 pantallas de la cuenta (es y en), en un estado de error y en el perfil con sesión | D1 |
+| Idioma (`idioma.spec.ts`, en escritorio y a 375 px): la cuenta se abre en el idioma guardado aunque el login sea en el otro; el cambio desde el perfil se aplica y persiste tras cerrar sesión, en los dos sentidos; con sesión, ES · EN navega sin cambiar la preferencia; la selección manual antes del login sigue igual; un idioma inválido de la API abre es-CR sin errores | D2 |
+
+Las pruebas de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts` (solo contra `<base>_e2e`): las cinco cuentas de `identidad.spec.ts` ya usan el límite real de 5 registros por hora por IP. El registro por la interfaz se prueba en `identidad.spec.ts`.

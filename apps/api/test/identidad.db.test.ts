@@ -432,6 +432,80 @@ describe('perfil', () => {
   });
 });
 
+describe('idioma de la cuenta (D2, M3)', () => {
+  const localeOf = (body: unknown) => publicUserSchema.parse((body as { user: unknown }).user).locale;
+
+  it('el registro guarda el idioma de la página: español e inglés', async () => {
+    const es = await registerUser(api, { locale: 'es-CR' });
+    const en = await registerUser(api, { locale: 'en' });
+    expect((await api.db.user.findFirstOrThrow({ where: { email: es.email } })).locale).toBe('es_CR');
+    expect((await api.db.user.findFirstOrThrow({ where: { email: en.email } })).locale).toBe('en');
+    expect(
+      localeOf(
+        (await new Browser(api).post('/api/auth/login', { email: es.email, password: PASSWORD })).body,
+      ),
+    ).toBe('es-CR');
+    expect(
+      localeOf(
+        (await new Browser(api).post('/api/auth/login', { email: en.email, password: PASSWORD })).body,
+      ),
+    ).toBe('en');
+  });
+
+  it('el cambio desde el perfil persiste después de cerrar sesión y volver a entrar', async () => {
+    const { email } = await registerUser(api, { locale: 'es-CR' });
+    const browser = await signIn(api, email);
+    const changed = await browser.patch('/api/account/profile', { name: 'Ana', locale: 'en' });
+    expect(localeOf(changed.body)).toBe('en');
+    expect((await browser.post('/api/auth/logout')).status).toBe(204);
+
+    const again = await new Browser(api).post('/api/auth/login', { email, password: PASSWORD });
+    expect(localeOf(again.body)).toBe('en');
+    const back = await signIn(api, email);
+    expect(localeOf((await back.patch('/api/account/profile', { name: 'Ana', locale: 'es-CR' })).body)).toBe(
+      'es-CR',
+    );
+    expect(localeOf((await back.get('/api/auth/me')).body)).toBe('es-CR');
+  });
+
+  it('una cuenta sin preferencia guardada usa es-CR (valor por defecto de la base)', async () => {
+    const email = uniqueEmail('sin-idioma');
+    const { hashPassword } = await import('../src/modules/auth/passwords.ts');
+    const customer = await api.db.role.findUniqueOrThrow({ where: { key: 'CUSTOMER' } });
+    // Sin `locale`: la columna toma su valor por defecto.
+    await api.db.user.create({
+      data: {
+        email,
+        name: 'Sin idioma',
+        passwordHash: await hashPassword(PASSWORD),
+        roles: { create: { roleId: customer.id } },
+      },
+    });
+    const res = await new Browser(api).post('/api/auth/login', { email, password: PASSWORD });
+    expect(res.status).toBe(200);
+    expect(localeOf(res.body)).toBe('es-CR');
+  });
+
+  it('un idioma inválido se rechaza con un código por campo y no cambia la preferencia', async () => {
+    const { email } = await registerUser(api, { locale: 'en' });
+    const browser = await signIn(api, email);
+    for (const locale of ['fr', 'es_CR', 'EN', '']) {
+      const res = await browser.patch('/api/account/profile', { name: 'Ana', locale });
+      expect(res.status).toBe(400);
+      expect(errorCode(res.body)).toBe('VALIDATION_FAILED');
+      expect(apiErrorBodySchema.parse(res.body).error.fields).toHaveProperty('locale');
+    }
+    expect((await api.db.user.findFirstOrThrow({ where: { email } })).locale).toBe('en');
+    const register = await new Browser(api).post('/api/auth/register', {
+      name: 'X',
+      email: uniqueEmail(),
+      password: PASSWORD,
+      locale: 'fr',
+    });
+    expect(register.status).toBe(400);
+  });
+});
+
 describe('forma de los errores y cabeceras (§8.7)', () => {
   it('404 con código, requestId y X-Request-Id, sin trazas', async () => {
     const res = await new Browser(api).get('/api/no-existe');

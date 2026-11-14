@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router';
 import { AccountShell } from '../../account/AccountShell.tsx';
 import { ApiError, apiSend } from '../../account/api.ts';
 import { FormErrors, apiErrorMessage, fieldMessage, useAttempts } from '../../account/form.tsx';
-import { useLocalizedPath } from '../../account/links.ts';
+import { accountPathFor, useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
 import { useApplySession } from '../../account/session.ts';
 import { TurnstileChallenge } from '../../account/Turnstile.tsx';
@@ -53,8 +53,10 @@ export default function Ingresar() {
         sessionResponseSchema,
       ),
     onSuccess: (response) => {
-      applySession(response);
-      void navigate(to('/cuenta'));
+      const user = applySession(response);
+      // Al iniciar sesión manda la preferencia guardada (docs/I18N.md): la cuenta se abre en
+      // `User.locale`, aunque el formulario estuviera en el otro idioma.
+      void navigate(accountPathFor(user.locale));
     },
     onError: (error) => {
       if (error instanceof ApiError && error.challengeRequired) {

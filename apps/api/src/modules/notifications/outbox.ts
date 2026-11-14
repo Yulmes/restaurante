@@ -1,4 +1,4 @@
-import type { Locale } from '@marea-baja/shared';
+import { resolveLocale, type Locale } from '@marea-baja/shared';
 import type { Logger } from 'pino';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client.ts';
 import type { Clock } from '../../lib/clock.ts';
@@ -28,7 +28,7 @@ export interface OutboxEmail {
 }
 
 const prismaLocale = (locale: Locale): 'es_CR' | 'en' => (locale === 'es-CR' ? 'es_CR' : 'en');
-const fromPrismaLocale = (locale: 'es_CR' | 'en'): Locale => (locale === 'es_CR' ? 'es-CR' : 'en');
+const fromPrismaLocale = (locale: string): Locale => resolveLocale(locale.replace('_', '-'));
 
 export async function enqueueEmail(db: Db, email: OutboxEmail, now: Date): Promise<void> {
   await db.emailOutbox.create({

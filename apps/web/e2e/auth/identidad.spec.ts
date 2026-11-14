@@ -7,57 +7,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { E2E_TURNSTILE_THRESHOLD } from '../../playwright.auth.config.ts';
-
-const MAILPIT = 'http://127.0.0.1:8025';
-const PASSWORD = 'una frase larga para la demo';
-
-function uniqueEmail(prefix: string): string {
-  return `${prefix}.${String(Date.now())}.${String(Math.floor(Math.random() * 1e6))}@example.com`;
-}
-
-interface MailpitSummary {
-  ID: string;
-  Subject: string;
-}
-
-/** Espera el correo enviado a `to` y devuelve asunto, texto y el enlace con el token. */
-async function waitForEmail(
-  page: Page,
-  to: string,
-): Promise<{ subject: string; text: string; link: string }> {
-  let found: MailpitSummary | undefined;
-  await expect
-    .poll(
-      async () => {
-        const res = await page.request.get(`${MAILPIT}/api/v1/search`, { params: { query: `to:"${to}"` } });
-        const body = (await res.json()) as { messages: MailpitSummary[] };
-        found = body.messages[0];
-        return found?.ID;
-      },
-      { timeout: 15_000 },
-    )
-    .toBeTruthy();
-  const res = await page.request.get(`${MAILPIT}/api/v1/message/${found?.ID ?? ''}`);
-  const message = (await res.json()) as { Subject: string; Text: string };
-  const link = /https?:\/\/\S+#token=[A-Za-z0-9_-]{43}/.exec(message.Text)?.[0];
-  if (!link) throw new Error('El correo no tiene enlace con token');
-  return { subject: message.Subject, text: message.Text, link };
-}
-
-async function register(page: Page, path: string, data: { name: string; email: string }): Promise<void> {
-  await page.goto(path);
-  await page.locator('#register-name').fill(data.name);
-  await page.locator('#register-email').fill(data.email);
-  await page.locator('#register-password').fill(PASSWORD);
-  await page.locator('#register-form button[type=submit]').click();
-}
-
-async function signIn(page: Page, path: string, email: string, password = PASSWORD): Promise<void> {
-  await page.goto(path);
-  await page.locator('#login-email').fill(email);
-  await page.locator('#login-password').fill(password);
-  await page.locator('#login-form button[type=submit]').click();
-}
+import {
+  MAILPIT,
+  PASSWORD,
+  register,
+  signIn,
+  uniqueEmail,
+  waitForEmail,
+  type MailpitSummary,
+} from './helpers.ts';
 
 async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).analyze();
@@ -103,14 +61,16 @@ test('escenario 1 (identidad, es-CR): registro → correo → confirmación → 
   await page.locator('#profile-phone').fill('+506 8888-1234');
   await page.getByLabel('English').check();
   await page.getByRole('button', { name: 'Guardar los cambios' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Guardamos tus datos.' })).toBeVisible();
+  // El idioma guardado se aplica en el acto: la cuenta pasa a inglés y conserva el aviso.
+  await expect(page).toHaveURL(/\/en\/account$/);
+  await expect(page.getByRole('status').filter({ hasText: 'We saved your details.' })).toBeVisible();
 
   await page.reload();
   await expect(page.locator('#profile-phone')).toHaveValue('+506 8888-1234');
   await expect(page.getByLabel('English')).toBeChecked();
 
-  await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta\/ingresar$/);
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/account\/sign-in$/);
   await page.goto('/cuenta');
   await expect(page).toHaveURL(/\/cuenta\/ingresar$/);
 });

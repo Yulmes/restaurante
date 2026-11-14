@@ -10,7 +10,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { AccountShell, StatusMessage } from '../../account/AccountShell.tsx';
 import { apiSend } from '../../account/api.ts';
 import {
@@ -25,7 +25,8 @@ import { accountMeta } from '../../account/meta.ts';
 import { ME_QUERY_KEY, useApplySession, useClearSession, useMe } from '../../account/session.ts';
 import { Button } from '../../components/ui/Button.tsx';
 import { TextField } from '../../components/ui/TextField.tsx';
-import { useT } from '../../i18n/use-locale.ts';
+import { pathForLocale } from '../../i18n/locale.ts';
+import { useLocale, useT } from '../../i18n/use-locale.ts';
 import type { Route } from './+types/perfil';
 
 export function meta({ location }: Route.MetaArgs) {
@@ -97,8 +98,13 @@ function DetailsForm({
 }) {
   const { t } = useT('account');
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pageLocale = useLocale();
   const [attempt, failed] = useAttempts();
   const [general, setGeneral] = useState<string | null>(null);
+  // Tras cambiar el idioma, la página se abre en el nuevo y conserva el aviso de guardado.
+  const savedBeforeSwitch = (location.state as { profileSaved?: boolean } | null)?.profileSaved === true;
   const form = useForm({
     resolver: zodResolver(updateProfileRequestSchema),
     mode: 'onBlur',
@@ -112,7 +118,15 @@ function DetailsForm({
     mutationFn: (values: { name: string; phone?: string | null | undefined; locale: PublicUser['locale'] }) =>
       apiSend('PATCH', '/api/account/profile', values, meResponseSchema),
     onSuccess: (response) => {
-      if (response) queryClient.setQueryData(ME_QUERY_KEY, response.user);
+      if (!response) return;
+      queryClient.setQueryData(ME_QUERY_KEY, response.user);
+      // El idioma guardado se aplica en el acto: misma página, en el idioma elegido.
+      if (response.user.locale !== pageLocale) {
+        void navigate(pathForLocale(location.pathname, response.user.locale), {
+          replace: true,
+          state: { profileSaved: true },
+        });
+      }
     },
     onError: (error) => {
       if (!applyServerFieldErrors(error, form.setError, DETAIL_FIELDS)) setGeneral(apiErrorMessage(t, error));
@@ -183,7 +197,9 @@ function DetailsForm({
           <Button type="submit" loading={save.isPending}>
             {t('profile.save')}
           </Button>
-          {save.isSuccess ? <StatusMessage tone="success">{t('profile.saved')}</StatusMessage> : null}
+          {save.isSuccess || savedBeforeSwitch ? (
+            <StatusMessage tone="success">{t('profile.saved')}</StatusMessage>
+          ) : null}
         </div>
       </form>
     </section>

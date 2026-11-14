@@ -38,4 +38,10 @@ La API se ejecuta con `node archivo.ts`, sin paso de compilación (ADR 0003). No
 - Un solo layout sirve a los correos de M3 (verificación y recuperación). Los de pedidos (M7) reutilizan el layout o agregan otro `.mjml` con el mismo procedimiento.
 - Cambiar el diseño exige recompilar y versionar el HTML. La prueba lo recuerda.
 - La línea de marea de los correos es una línea recta (`mj-divider`). Gmail y Outlook no muestran SVG, y una imagen PNG necesita un alojamiento público que llega en M10.
+- **Revisión de dependencias (13/11/2026):**
+  - `glob@13.0.7` (aviso GHSA-3g3m-2fjr-6pw4, rango 9.0.0–14.0.1) es **transitiva**: llega por `mjml` (dependencia directa, solo de desarrollo), a través de `mjml-cli` y de `js-beautify@2.0.3` (vía `mjml-core`). Con ella llega también el aviso de `minimatch`, el mismo que trae ESLint desde M0.
+  - **No hay una actualización estable compatible.** `mjml` 5.4.1 y `js-beautify` 2.0.3 ya son las últimas versiones y piden `glob ^13`; la versión corregida (≥ 14.0.2) es otra versión mayor.
+  - La corrección que propone npm baja a `mjml` 4.14.1, una versión mayor anterior. Se descarta, igual que forzar `glob` 14 con `overrides`.
+  - **Exposición:** `mjml` solo corre en `npm run emails:build` y en la prueba de sincronía, sobre una plantilla propia. No llega a producción (`npm audit --omit=dev`: 0).
+  - **Recomendación:** revisar cuando `mjml` o `js-beautify` publiquen una versión estable con `glob` ≥ 14.0.2.
 - Mailpit evalúa la compatibilidad del HTML compilado en 84 % "soportado", 11,6 % "parcial" y 4,4 % "no soportado" (prueba manual del 13/11/2026). Lo no soportado son propiedades de estilo que MJML agrega como mejora progresiva.

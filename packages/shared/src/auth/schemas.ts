@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { localeSchema } from '../i18n/locales.ts';
+import { DEFAULT_LOCALE, localeSchema } from '../i18n/locales.ts';
 
 /**
  * Contratos de identidad (M3, §8). Los usan la API para validar y la web para los formularios
@@ -103,7 +103,8 @@ export const publicUserSchema = z.object({
   name: z.string(),
   email: z.string(),
   phone: z.string().nullable(),
-  locale: localeSchema,
+  /** Preferencia guardada (D2). Un valor que no sea es-CR ni en se lee como es-CR. */
+  locale: localeSchema.catch(DEFAULT_LOCALE),
   emailVerified: z.boolean(),
   roles: z.array(roleKeySchema),
 });

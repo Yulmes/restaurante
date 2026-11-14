@@ -24,9 +24,12 @@ function e2eDatabase(url: string | undefined): string {
   return parsed.toString();
 }
 
+/** Base de la API de las E2E (rol de la aplicación). */
+export const E2E_DATABASE_URL = e2eDatabase(process.env['DATABASE_URL']);
+
 const apiEnv = {
   NODE_ENV: 'development',
-  DATABASE_URL: e2eDatabase(process.env['DATABASE_URL']),
+  DATABASE_URL: E2E_DATABASE_URL,
   API_PORT: String(API_PORT),
   PUBLIC_WEB_URL: WEB_URL,
   EMAIL_PROVIDER: 'mailpit',

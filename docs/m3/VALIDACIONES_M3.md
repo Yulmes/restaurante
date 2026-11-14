@@ -10,10 +10,10 @@
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Formato, lint, tipos y unitarias | `npm run check` | ✅ 100 / 100 (62 anteriores + 38 nuevas) |
-| Integración con PostgreSQL real (y las pruebas de M2) | `npm run test:db` | ✅ 119 / 119 (71 de M2 + 48 de M3) |
+| Formato, lint, tipos y unitarias | `npm run check` | ✅ 105 / 105 (62 anteriores + 43 de M3) |
+| Integración con PostgreSQL real (y las pruebas de M2) | `npm run test:db` | ✅ 123 / 123 (71 de M2 + 52 de M3) |
 | Esquema y migraciones | `npm run db:drift -w @marea-baja/api` | ✅ Sin diferencias. **M3 no agrega migraciones** |
-| E2E de identidad (escenario 1, parte de auth) | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 6 / 6 |
+| E2E de identidad (escenario 1, parte de auth, e idioma de la cuenta) | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 (escritorio y 375 px) |
 | Regresión de la web de M1 | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (capturas), igual que en M1 |
 | Build de producción de la web | `npm run build -w @marea-baja/web` | ✅ |
 | Variables de entorno con los valores de ejemplo | `npm run env:check` | ✅ |
@@ -63,9 +63,74 @@ Con la API (`npm run start -w @marea-baja/api`) y la web (`npm run dev -w @marea
 
 | Tema | Motivo |
 |---|---|
-| **Prueba real con Resend** (D6) | Requiere la cuenta y la clave de Resend del propietario (D14, C9). `ResendProvider` está implementado y probado con un `fetch` simulado |
-| `siteverify` real con las claves de prueba de Cloudflare | Es una llamada a un servicio externo. Se validaron la documentación (V7) y la falla cerrada con `fetch` simulado |
+| **Prueba real con Resend** (D6) | **Pospuesta a M10** (decisión del propietario, 13/11/2026; D6, D14). `ResendProvider` está implementado y probado solo con un `fetch` simulado. **No está verificada** |
+| `siteverify` real con las claves de Cloudflare | **Pospuesta a M10** (decisión del propietario, 13/11/2026). Se validaron la documentación (V7) y la falla cerrada con `fetch` simulado. **No está verificada** |
 | CSP de la web, secreto de origen e IP detrás del Worker | Se configuran con el despliegue (M10) |
 | Cookies `__Host-`/`Secure` en un entorno HTTPS real | Verificadas en integración con configuración de producción. La prueba post-deploy es de M10 |
 | WebKit móvil en Playwright | La CI de M1 y M3 usa Chromium. §11 pide también WebKit móvil |
 | CI de GitHub para M3 | Requiere push (no autorizado) |
+
+## Correcciones finales (13/11/2026)
+
+### Decisiones del propietario
+
+| Tema | Decisión |
+|---|---|
+| Direcciones del cliente (R-AUTH-01) | Se implementan en **M5**, con el checkout y el delivery |
+| Prueba real de Resend | **Pospuesta a M10**, respetando D6 y D14. No se presenta como verificada |
+| Llamada real a Turnstile con las claves de Cloudflare | **Pospuesta a M10**. No se presenta como verificada |
+| Registro con un correo ya existente | Conserva la respuesta genérica y **no envía** un correo que permita identificar cuentas |
+| Idioma del perfil | Debe aplicarse al iniciar sesión. Implementado; la regla de prioridad está en [docs/I18N.md](../I18N.md) |
+
+### Idioma de la cuenta
+
+- **Al iniciar sesión,** la cuenta se abre en `User.locale` aunque el formulario estuviera en el otro idioma.
+- **Al guardar otro idioma en el perfil,** la misma página se abre en ese idioma, con el aviso de guardado.
+- **Antes de iniciar sesión,** la selección manual sigue igual que en M1.
+- **Con sesión,** ES · EN navega sin cambiar la preferencia.
+- **Una preferencia ausente o inválida** se lee como es-CR (`resolveLocale`).
+- **Infraestructura:** la de M1 (la URL como fuente del idioma y los mismos archivos de mensajes). No se agregó ninguna traducción nueva.
+- **Pruebas:**
+  - **unitarias:** `resolveLocale`, usuario con idioma inválido y página de la cuenta según la preferencia;
+  - **integración:** registro en es y en, persistencia tras cerrar sesión, cuenta sin preferencia y valor inválido rechazado sin cambiar la preferencia;
+  - **E2E en escritorio y a 375 px:** preferencia al iniciar sesión, cambio en los dos sentidos con persistencia, selector manual con sesión, selección manual antes de iniciar sesión e idioma inválido devuelto por la API.
+- **Navegador (manual, desarrollo):**
+  1. Registro en inglés y correo en inglés.
+  2. Login desde `/cuenta/ingresar`, que abre `/en/account`.
+  3. A 375 px, cambio a español en el perfil: abre `/cuenta` con "Guardamos tus datos." y sin scroll horizontal.
+  4. Cierre de sesión y login desde `/en/account/sign-in`, que abre `/cuenta`.
+- **Las E2E de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts`** (solo contra `<base>_e2e`). El límite real de 5 registros por hora por IP, que no se cambió, ya se consume con los registros por interfaz de `identidad.spec.ts`.
+
+### Cuentas de prueba de la base de desarrollo
+
+| Cuenta | Por qué se identificó con certeza | Resultado |
+|---|---|---|
+| `ana.smoke@example.com` ("Ana Smoke") | Creada a las 23:05:53 UTC: la prueba de humo con curl de la API (log de la API a las 17:05, hora local). Sin verificar, sin sesiones | Borrada |
+| `valeria.m3@example.com` ("Valeria Prueba") | Creada a las 23:22:31 UTC: la verificación manual en el navegador. Verificada, 1 sesión revocada, idioma cambiado a `en` en esa prueba | Borrada |
+| `manual.idioma.m3@example.com` ("Idioma Manual") | Creada a las 00:01:44 UTC del 14/11 por la verificación manual del idioma de esta tarea | Borrada |
+
+**Procedimiento:**
+- Antes de borrar: eran las únicas cuentas de la base, ninguna tenía pedidos, direcciones, carrito, entradas de auditoría, reembolsos ni roles otorgados a otros, y las otras pruebas usan bases aparte (`_test`, `_e2e`).
+- El borrado fue una transacción con el rol de la aplicación, por id y correo, con controles que abortan si algún conteo no coincide.
+- En la misma transacción se borraron sus correos del outbox: la clave foránea (`SET NULL`) los habría dejado huérfanos con la dirección en claro.
+- Las sesiones, los tokens y los roles se borraron en cascada.
+- **Resultado:** 0 usuarios, sesiones, tokens, roles y correos; la carta sigue con 17 platos.
+- **Restos:**
+  - quedan 3 filas de `RateLimitCounter` con claves de hash (sin correos ni IP en claro, sin relación con usuarios), que la limpieza horaria borra a las 24 h;
+  - las copias de los correos en la bandeja local de Mailpit no se tocaron.
+
+### Dependencias
+
+`npm audit --omit=dev`: **0**. `npm audit`: **42 moderadas, todas de desarrollo**, de dos avisos:
+
+| Aviso | Origen | ¿Directa? | Actualización estable compatible | Recomendación |
+|---|---|---|---|---|
+| `glob` 9.0.0–14.0.1 (GHSA-3g3m-2fjr-6pw4) | `mjml` → `mjml-cli` y `mjml-core` → `js-beautify@2.0.3` → `glob@13.0.7` | No: transitiva de `mjml`, que es directa y de desarrollo | **No.** `mjml` 5.4.1 y `js-beautify` 2.0.3 ya son las últimas y piden `glob ^13`; la corrección es `glob` ≥ 14.0.2 (versión mayor). npm propone bajar a `mjml` 4.14.1 (versión mayor anterior): descartado | Mantener. Revisar cuando `mjml` o `js-beautify` publiquen una versión con `glob` ≥ 14. Exposición baja: solo corre al compilar la plantilla propia |
+| `minimatch` 7.0.0–11.0.0 | Cadena de ESLint (aceptada en M0) y la misma cadena de `glob` | No | No sin cambiar versiones mayores | Mantener, como en M0. No se fuerza |
+
+Desglose de los 42 paquetes: 31 de la cadena de MJML (sus componentes), 9 de la cadena de ESLint, más `glob` y `minimatch`. Detalle en el [ADR 0004](../adr/0004-plantillas-de-correo-mjml.md).
+
+### Riesgo técnico registrado
+
+**Límites por ventanas:** la aproximación deslizante de §8.4 puede contar de menos los intentos repartidos entre dos ventanas. Se conserva el algoritmo aprobado y queda para revisar en M9. Detalle en [SECURITY.md](../../SECURITY.md) y en la auditoría (sección 3).
+

@@ -39,6 +39,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   - job **Identidad** en CI.
 - **Documentos:** `SECURITY.md`, ADR 0004, `docs/m3/VALIDACIONES_M3.md`, y actualizaciones de las variables de entorno, README y TESTING.
 
+### Agregado — M3 · Correcciones finales
+
+- El idioma guardado en el perfil se aplica al iniciar sesión, y guardar otro idioma cambia la página en el acto. Regla de prioridad en `docs/I18N.md`.
+- `resolveLocale` en `@marea-baja/shared`: una preferencia ausente o inválida se lee como es-CR.
+- Pruebas de idioma:
+  - unitarias;
+  - integración (registro es y en, persistencia, sin preferencia, valor inválido);
+  - E2E en escritorio y a 375 px.
+- Script solo para E2E `e2e-user.ts`: crea cuentas verificadas en `<base>_e2e`, porque el límite real de 5 registros por hora por IP no deja crear más desde el navegador de pruebas.
+- Documentadas las decisiones del propietario:
+  - direcciones en M5;
+  - prueba real de Resend y de Turnstile en M10;
+  - respuesta genérica para correos ya registrados.
+- También quedaron documentados el riesgo de los límites por ventanas y la revisión de dependencias (ADR 0004).
+
 ### Cambiado — M3
 
 - `TextField` (M1) acepta `ref` (React 19) y `hint`/`error` explícitamente indefinidos, sin cambios visuales.

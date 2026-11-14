@@ -63,7 +63,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-MENU-01 | Catálogo desde la base de datos con búsqueda, filtros, orden, detalle, personalización y cantidades | §3.6, §6 | Integración + E2E | Planificado |
 | R-CART-01 | Carrito con totales recalculados en el servidor; persistencia invitado→usuario | §6.2, §7.3 | Unitarios de pricing + E2E | Planificado |
 | R-CHK-01 | Checkout de 3 pasos optimizado para celular, retiro o delivery, zonas configurables | §3.8 | E2E a 375 px | Planificado |
-| R-AUTH-01 | Registro, verificación, login, logout, recuperación, perfil, direcciones | §8 | Integración + E2E | **Parcial (M3):** registro, verificación, login, logout, recuperación y perfil implementados y probados (integración + E2E). Direcciones: pendiente de decisión (sin asignar en §12; se propone M5, checkout) |
+| R-AUTH-01 | Registro, verificación, login, logout, recuperación, perfil, direcciones | §8 | Integración + E2E | **Parcial (M3):** registro, verificación, login, logout, recuperación y perfil implementados y probados (integración + E2E). Direcciones: **M5**, con el checkout y el delivery (decisión del propietario, 13/11/2026) |
 | R-ORD-01 | Estados validados en el backend, historial con actor y fecha, seguimiento | §7.1 | Matriz de transiciones | Planificado |
 | R-PAY-01 | Mock gateway con escenarios, authorize/capture/void/refund, idempotencia y reconciliación | §7.2–7.4 | Matriz de escenarios + concurrencia | Planificado |
 | R-ADM-01 | Dashboard con datos reales, Pase, carta, clientes, configuración, auditoría | §3.6, §8.6 | E2E escenarios 2 y 3 | Planificado |
@@ -121,6 +121,7 @@ El registro completo está en la propuesta, §14 (R1–R16). Resumen de los que 
 | R10 Carreras en pagos | M6, con tests de concurrencia |
 | R5 Bypass del proxy | M10, con la suite post-deploy |
 | R2/R3 Cuotas de Neon y Render | M10, con alertas. P09 se resolvió como D9 (monitoreo 24/7). R3 tiene impacto alto: ≈744 h de 750 h en un mes de 31 días (ver la propuesta, §14) |
+| Límites por ventanas: la aproximación deslizante puede contar de menos los intentos repartidos entre dos ventanas (M3, ver `SECURITY.md`) | Se conserva el algoritmo de §8.4; revisión en M9 |
 | R21 Cantidades totales mayores que 20 (fusión o edición) | M5, con la regla definitiva de C5: límite de 20 solo por línea interna, edición del total sin tope de 20, reorganización automática y presentación como un único producto |
 
 ---

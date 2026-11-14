@@ -1,5 +1,5 @@
 import type { Locale, PublicUser, RoleKey } from '@marea-baja/shared';
-import { ROLE_KEYS } from '@marea-baja/shared';
+import { ROLE_KEYS, resolveLocale } from '@marea-baja/shared';
 import type { AppConfig } from '../../config/app-config.ts';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.ts';
 import type { AuthContext } from '../../http/context.ts';
@@ -61,7 +61,8 @@ const userSelect = {
 
 type UserRow = Prisma.UserGetPayload<{ select: typeof userSelect }>;
 
-const toLocale = (locale: 'es_CR' | 'en'): Locale => (locale === 'es_CR' ? 'es-CR' : 'en');
+/** Enum de Prisma (`es_CR`, `en`) → idioma; cualquier otro valor → es-CR (`resolveLocale`). */
+const toLocale = (locale: string): Locale => resolveLocale(locale.replace('_', '-'));
 const toPrismaLocale = (locale: Locale): 'es_CR' | 'en' => (locale === 'es-CR' ? 'es_CR' : 'en');
 
 function rolesOf(user: UserRow): RoleKey[] {

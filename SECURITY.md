@@ -46,9 +46,15 @@ Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación 
 - el escalamiento del bloqueo vuelve al primer nivel tras 24 h sin bloqueos;
 - un login exitoso borra los contadores, la demora y el bloqueo de esa cuenta+IP.
 
-**Aproximación deslizante:** si los fallos caen repartidos entre dos ventanas, el conteo estimado puede quedar por debajo del real. Así lo eligió la propuesta, a cambio de una sola escritura por petición. La prueba del bloqueo de 10 fallos se alinea al inicio de una ventana para medir el umbral exacto.
+**Riesgo técnico registrado: aproximación deslizante.**
 
-Los mensajes de error nunca revelan si un correo tiene cuenta. El login con un correo inexistente verifica contra un hash ficticio, para igualar el tiempo de respuesta.
+- Si los intentos caen repartidos entre dos ventanas, el conteo estimado puede quedar por debajo del real. Por ejemplo, 6 fallos al final de una ventana y 4 al principio de la siguiente pueden contar como 8.
+- Es el algoritmo que eligió la propuesta (§8.4), a cambio de una sola escritura por petición, y **se conserva sin cambios**.
+- Impacto: un atacante puede hacer algunos intentos más antes de la demora o del bloqueo. Las demás defensas no cambian (demora progresiva, límite por IP y Turnstile global).
+- Queda para una revisión posterior (M9, revisión de seguridad completa). Por ejemplo, contar la ventana anterior sin redondear hacia abajo o usar ventanas más cortas.
+- La prueba del bloqueo de 10 fallos se alinea al inicio de una ventana para medir el umbral exacto.
+
+Los mensajes de error nunca revelan si un correo tiene cuenta. **El registro con un correo que ya existe** devuelve la misma respuesta genérica y no envía ningún correo que permita identificar cuentas (decisión del propietario, 13/11/2026). El login con un correo inexistente verifica contra un hash ficticio, para igualar el tiempo de respuesta.
 
 ## Turnstile condicional (D8)
 
@@ -66,7 +72,7 @@ Los mensajes de error nunca revelan si un correo tiene cuenta. El login con un c
 - **Tokens:** valen 300 s, son de un solo uso y miden hasta 2048 caracteres.
 - **CSP del widget:** `script-src` y `frame-src` `https://challenges.cloudflare.com`, solo en la página de inicio de sesión. Se configura con la CSP de la web en M10.
 - **Claves de prueba:** sitekey `1x00000000000000000000AA` (siempre pasa) y secreto `1x0000000000000000000000000000000AA`. Devuelven el token ficticio `XXXX.DUMMY.TOKEN.XXXX`, que las claves de producción rechazan.
-- **Sin probar todavía:** la llamada real a `siteverify` con las claves de prueba es una operación externa. En las pruebas automatizadas se usan un proveedor falso y un widget simulado.
+- **Pendiente y no verificado:** la llamada real a `siteverify` con las claves de Cloudflare queda **pospuesta a M10** (decisión del propietario, 13/11/2026). En las pruebas automatizadas se usan un proveedor falso y un widget simulado.
 
 ## Contraseñas y enlaces (§8.7)
 
