@@ -35,3 +35,28 @@ export type {
   SessionResponse,
   UpdateProfileRequest,
 } from './auth/schemas.ts';
+export {
+  DIETARY_TAGS,
+  catalogCategorySchema,
+  catalogImageSchema,
+  catalogOptionGroupSchema,
+  catalogOptionSchema,
+  catalogProductSchema,
+  catalogResponseSchema,
+  catalogVersionResponseSchema,
+  catchBoardResponseSchema,
+  dietaryTagSchema,
+  localizedTextSchema,
+  openingHoursResponseSchema,
+} from './catalog/schemas.ts';
+export type {
+  CatalogCategory,
+  CatalogImage,
+  CatalogOptionGroup,
+  CatalogProduct,
+  CatalogResponse,
+  CatchBoardResponse,
+  DietaryTag,
+  LocalizedText,
+  OpeningHoursResponse,
+} from './catalog/schemas.ts';

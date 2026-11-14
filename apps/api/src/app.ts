@@ -10,6 +10,8 @@ import type { Clock } from './lib/clock.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { loadSession } from './middleware/session.ts';
 import { authRouter } from './modules/auth/routes.ts';
+import { catalogRouter } from './modules/catalog/routes.ts';
+import { CatalogService } from './modules/catalog/service.ts';
 import { AuthService } from './modules/auth/service.ts';
 import { AUTH_LIMITS } from './modules/auth/policies.ts';
 import type { BotCheck } from './modules/bot-check/bot-check.ts';
@@ -36,6 +38,7 @@ export interface AppDeps {
 
 export interface App {
   app: Express;
+  catalog: CatalogService;
   outbox: OutboxWorker;
   limiter: RateLimiter;
 }
@@ -54,6 +57,8 @@ export function createApp(deps: AppDeps): App {
     botCheck: deps.botCheck,
     afterCommit: () => void outbox.kick(),
   });
+
+  const catalog = new CatalogService(deps.db, deps.clock);
 
   const app = express();
   app.disable('x-powered-by');
@@ -96,9 +101,10 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', loadSession({ db: deps.db, clock: deps.clock, config: deps.config }));
   app.use('/api', csrfProtection(deps.config));
   app.use('/api', authRouter(auth, deps.config));
+  app.use('/api', catalogRouter(catalog));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return { app, outbox, limiter };
+  return { app, outbox, limiter, catalog };
 }
