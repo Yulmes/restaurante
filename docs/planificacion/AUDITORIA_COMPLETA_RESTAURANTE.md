@@ -2,9 +2,9 @@
 
 > **Tipo:** auditoría de planificación (previa a la implementación).
 > **Fecha:** 9 de noviembre de 2026.
-> **Estado del código:** no existe. El repositorio solo contiene `README.md`, `.gitignore` y documentos de planificación.
+> **Estado del código (actualizado el 17/11/2026):** M0–M3 integrados en `main`; M4 implementado en su rama, pendiente de integración; M5–M11 sin implementar. *Al escribir esta auditoría (9/11) el código no existía.*
 > **Estado de las decisiones:** las decisiones de planificación están aprobadas (D1–D14, 10/11/2026). Ver la propuesta v3, sección 15.
-> **Nada de este documento está implementado.** Cuando el desarrollo avance, cada requisito pasará de "Planificado" a "Implementado" y luego a "Verificado", con su evidencia.
+> **Estados de los requisitos:** cada requisito pasa de "Planificado" a "Implementado" (o "Parcial") y luego a "Verificado", con su evidencia. Las filas se actualizan al cerrar cada hito; las que siguen en "Planificado" corresponden a hitos no iniciados o no revisados todavía.
 > Propuesta de referencia: [Propuesta Restaurante · Fase 1.md](Propuesta%20Restaurante%20·%20Fase%201.md)
 
 ---
@@ -59,8 +59,8 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 
 | ID | Requisito | Diseño (propuesta §) | Verificación prevista | Estado |
 |---|---|---|---|---|
-| R-PUB-01 | Página pública con header, hero, especialidades, destacados, categorías, promociones, historia, galería, horarios, ubicación, contacto y footer | §2.1, §3 | Finish gate + E2E de navegación | Planificado |
-| R-MENU-01 | Catálogo desde la base de datos con búsqueda, filtros, orden, detalle, personalización y cantidades | §3.6, §6 | Integración + E2E | Planificado |
+| R-PUB-01 | Página pública con header, hero, especialidades, destacados, categorías, promociones, historia, galería, horarios, ubicación, contacto y footer | §2.1, §3 | Finish gate + E2E de navegación | **Parcial (M4):** portada, carta, Nosotros y Visítanos con header, pesca del día, plato de la casa, categorías, historia, horarios, ubicación y footer; E2E y axe. Textos editoriales y plato de la casa aprobados el 13/11/2026. Promociones: con su motor (M5/M8). Finish gate: 375 y 1280 px revisados; 768 y 1024 px aplazados a M9 |
+| R-MENU-01 | Catálogo desde la base de datos con búsqueda, filtros, orden, detalle, personalización y cantidades | §3.6, §6 | Integración + E2E | **Parcial (M4):** catálogo desde la base, búsqueda, filtros por etiqueta y detalle del plato (opciones informativas). Sin control de orden (decisión del propietario). Personalización y cantidades: con el carrito (M5) |
 | R-CART-01 | Carrito con totales recalculados en el servidor; persistencia invitado→usuario | §6.2, §7.3 | Unitarios de pricing + E2E | Planificado |
 | R-CHK-01 | Checkout de 3 pasos optimizado para celular, retiro o delivery, zonas configurables | §3.8 | E2E a 375 px | Planificado |
 | R-AUTH-01 | Registro, verificación, login, logout, recuperación, perfil, direcciones | §8 | Integración + E2E | **Parcial (M3):** registro, verificación, login, logout, recuperación y perfil implementados y probados (integración + E2E). Direcciones: **M5**, con el checkout y el delivery (decisión del propietario, 13/11/2026) |
@@ -68,7 +68,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-PAY-01 | Mock gateway con escenarios, authorize/capture/void/refund, idempotencia y reconciliación | §7.2–7.4 | Matriz de escenarios + concurrencia | Planificado |
 | R-ADM-01 | Dashboard con datos reales, Pase, carta, clientes, configuración, auditoría | §3.6, §8.6 | E2E escenarios 2 y 3 | Planificado |
 | R-MAIL-01 | Plantillas de marca; outbox; estados SENT, DEMO_ONLY y FAILED | §8.5 | Integración + Mailpit | **Parcial (M3):** outbox transaccional, SENT y FAILED, plantillas de marca en es-CR y en, Mailpit. Resend preparado sin prueba real (requiere la cuenta del propietario, D14). DEMO_ONLY y bandeja demo: M7 |
-| R-SEO-01 | Prerender, meta, OG, JSON-LD, sitemap, robots, URLs legibles | §4.2 | Lighthouse + validador de datos estructurados | Planificado |
+| R-SEO-01 | Prerender, meta, OG, JSON-LD, sitemap, robots, URLs legibles | §4.2 | Lighthouse + validador de datos estructurados | **Implementado; validación local completa; validación pública pendiente (M4 → M10):**<br>**Implementado:** prerender bilingüe (56 páginas), meta, OG, `hreflang`, JSON-LD, sitemap, robots y `noindex` en el fallback SPA; `catalog-version` para el rebuild.<br>**Validado en local:** HTML crudo con E2E; estructura del JSON-LD y `hreflang` completo y recíproco en las 56 páginas; Lighthouse con los objetivos de categoría y CLS cumplidos en 16/16 combinaciones. LCP móvil < 2,5 s: no se cumple con HTTP/1.1 local; sí con HTTP/2 local (12/12 corridas).<br>**Aplazado a M10 (aceptado el 17/11/2026):** LCP en producción, validadores externos de JSON-LD y `hreflang`, workflow de rebuild.<br>**Riesgo abierto:** sin `VITE_SITE_URL`, el build publica URLs locales (M10) |
 | R-MONEY-01 | CRC/USD, enteros, impuestos en puntos básicos, redondeo una vez por tasa, OrderTaxLine | §6.2 | Tests de tabla | **Parcial (M2):** enteros, `rateBps`, `OrderTaxLine` y valores semilla de D5 en el esquema, con restricciones verificadas. Motor de precios y redondeo: M5 |
 
 ### 2.2 Seguridad
@@ -92,7 +92,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 
 | ID | Requisito | Diseño | Verificación prevista | Estado |
 |---|---|---|---|---|
-| R-IMG-01 | `ImageStorageProvider` con implementaciones Static, Cloudinary y R2 | §9.4 | Tests con un proveedor falso | Planificado |
+| R-IMG-01 | `ImageStorageProvider` con implementaciones Static, Cloudinary y R2 | §9.4 | Tests con un proveedor falso | **Parcial (M4):** proveedor estático con variantes AVIF/WebP y Open Graph generadas en el build. Cloudinary y R2: M8/M10 |
 | R-BKP-01 | Backups cifrados, externos, con retención, integridad y restauración probada | §10 | Restauración semanal + runbook | Planificado |
 | R-OBS-01 | Health checks sin tocar la base, logs estructurados, monitoreo | §9.5 | Post-deploy | Planificado |
 | R-PROXY-01 | Mismo origen verificado en el entorno desplegado | §5 | Suite post-deploy | Planificado |

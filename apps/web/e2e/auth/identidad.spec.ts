@@ -8,13 +8,14 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { E2E_TURNSTILE_THRESHOLD } from '../../playwright.auth.config.ts';
 import {
+  languageLink,
   MAILPIT,
+  type MailpitSummary,
   PASSWORD,
   register,
   signIn,
   uniqueEmail,
   waitForEmail,
-  type MailpitSummary,
 } from './helpers.ts';
 
 async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
@@ -91,7 +92,7 @@ test('en inglés: correo y enlaces en inglés, y el perfil exige sesión', async
   await expect(page).toHaveURL(/\/en\/account$/);
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
   // El selector de idioma lleva a la misma página en el otro idioma.
-  await page.getByRole('link', { name: /^ES/ }).click();
+  await (await languageLink(page, 'ES')).click();
   await expect(page).toHaveURL(/\/cuenta$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tu cuenta');
 });

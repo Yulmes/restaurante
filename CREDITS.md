@@ -6,7 +6,7 @@
 |---|---|---|---|
 | Shippori Mincho B1 (600, 800; subconjuntos latinos) | Títulos | SIL Open Font License 1.1 | © 2021 The Shippori Mincho Project Authors |
 | Zen Kaku Gothic New (400, 500, 700; subconjuntos latinos) | Texto e interfaz | SIL Open Font License 1.1 | © Yoshimichi Ohira (Zen Fonts) |
-| Noto Sans (400, 700; solo el carácter ₡, U+20A1) | Respaldo del símbolo de colón | SIL Open Font License 1.1 | © Google LLC / The Noto Project Authors |
+| Noto Sans (400, 700; solo el carácter ₡, U+20A1) | Respaldo del símbolo de colón. Desde M4 se sirve recortada a ese glifo (`apps/web/app/styles/fonts/marea-colon-*.woff2`, generada con `scripts/subset-colon-font.ts`); conserva las tablas de copyright y licencia | SIL Open Font License 1.1 (sin nombres reservados) | © Google LLC / The Noto Project Authors |
 
 ## Elementos gráficos derivados
 

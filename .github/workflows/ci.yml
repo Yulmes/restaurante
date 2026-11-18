@@ -1,5 +1,5 @@
-# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3) y
-# servicios locales.
+# CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3),
+# catálogo y SEO (M4), idioma del documento en el build de producción y servicios locales.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -58,15 +58,46 @@ jobs:
 
       - run: npm ci
 
+      # Desde M4 las páginas públicas leen la API del catálogo: base de desarrollo con la semilla.
+      - name: Levantar PostgreSQL y preparar la base
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120 postgres
+          npm run db:setup
+
       - name: Instalar Chromium para Playwright
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
+      # La configuración levanta la API y el servidor de desarrollo de la web.
       - name: axe, teclado, idiomas, responsive y movimiento reducido
         run: npm run test:e2e -w @marea-baja/web
 
-      - name: Build de producción de la web
-        run: npm run build -w @marea-baja/web
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
 
   services:
     name: Servicios locales (Docker Compose)
@@ -151,10 +182,98 @@ jobs:
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
       # La configuración crea su propia base (<base>_e2e) y levanta la API y la web.
       # Turnstile usa el proveedor falso y el script de Cloudflare se reemplaza: sin llamadas externas.
       - name: Registro, correo, verificación, login, perfil, recuperación, Turnstile y axe
         run: npm run test:e2e:auth -w @marea-baja/web
+
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
+
+  catalog:
+    name: Catálogo y SEO (build prerenderizado y E2E)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Levantar PostgreSQL
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120 postgres
+
+      - name: Instalar Chromium para Playwright
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
+      # La configuración crea su base (<base>_e2e), levanta la API, hace el build de producción con
+      # prerender (variantes de imagen, HTML por idioma, sitemap y robots) y lo sirve como el
+      # hosting estático. Prueba el HTML crudo, los datos en vivo, la carta y axe.
+      - name: Build de producción, prerender, SEO y E2E del catálogo
+        run: npm run test:e2e:catalog -w @marea-baja/web
+
+      # Idioma del documento (<html lang>) sobre el build servido por serve-build: páginas
+      # prerenderizadas y fallback SPA real (__spa-fallback.html). Vuelve a crear <base>_e2e y su
+      # propia API (3300) y web (5177), después de la suite anterior (nunca a la vez). Reutiliza las
+      # variantes de imagen ya generadas. No envía correos: no necesita Mailpit. Corre aunque la
+      # suite del catálogo falle, para que su resultado se vea por separado; si falla, falla el job.
+      - name: Idioma del documento en el build de producción (9 pruebas)
+        if: ${{ !cancelled() }}
+        run: npm run test:e2e:produccion -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

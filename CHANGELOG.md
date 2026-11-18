@@ -4,6 +4,52 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M4 · Catálogo y SEO
+
+- **API pública** (`/api/public/*`): carta por idioma con respaldo es-CR marcado (§4.5), `catalog-version` en memoria (R20), pizarra de pesca del día y horario. Contratos en `@marea-baja/shared`. Sin cambios de esquema.
+- **Sitio público prerenderizado en es-CR y en** (§4.2): portada con el plato de la casa y la pesca del día, carta, cada categoría, cada plato (informativo: opciones como información), Nosotros y Visítanos. Son 56 páginas.
+- **SEO:** título, descripción, canónica, `hreflang` (es-CR, en, x-default), Open Graph 1200×630, Twitter card, JSON-LD (`Restaurant`, `Menu`, `MenuItem`), `sitemap.xml` con alternativas, `robots.txt`, `noindex` en el fallback SPA y `catalog-version.json`.
+- **Precios, disponibilidad y pesca del día en vivo al hidratar** (D10, TanStack Query).
+- **Carta con índice, búsqueda y filtros por etiqueta en línea.** En el celular se pliegan para que la carta empiece arriba (§2.4).
+- **Navegación del sitio** (§3.5) con menú del celular en `<dialog>`, también en las páginas de la cuenta.
+- **Imágenes:** variantes AVIF/WebP 4:5, 3:2, 1:1 y Open Graph JPEG generadas en el build con un único ajuste de color (§2.3, §9.4).
+- **Herramientas:**
+  - `npm run preview` sirve el build como el hosting estático, con compresión Brotli/gzip;
+  - `npm run lighthouse` mide el build con Lighthouse 13.6.0 (dependencia de desarrollo).
+- **`CATALOG_API_URL` usa `API_PROXY_TARGET` si falta:** el servidor de desarrollo evalúa la lista de rutas del prerender.
+- **Pruebas:** E2E del catálogo sobre el build de producción y job **Catálogo y SEO** en CI.
+- **Documentos:**
+  - ADR 0005;
+  - `docs/m4/CONTENIDO_EDITORIAL.md` (textos y plato de la casa aprobados el 13/11/2026);
+  - `docs/m4/VALIDACIONES_M4.md`.
+
+### Cambiado — M4
+
+- **Textos por idioma y espacio en el navegador:** cada página pide solo `common` y `site` de su idioma (más `account` o `design` en esas secciones), en lugar de los 8 archivos en el paquete inicial. El prerender sigue con todos (ADR 0005, §5).
+- **Imágenes 4:5:** variante `card` de 720 px y `sizes` con las medidas reales de la grilla. En el celular, la foto del plato de la casa pasa de 30 KB a 21 KB.
+- **Textos aprobados:**
+  - "Una cocina nikkei en San José" y "Conocé nuestra propuesta";
+  - la portada y "Ubicación y horario" (antes "Visítanos") ya no prometen pedidos en línea antes de M5;
+  - el local se presenta como punto de retiro, sin servicio de mesa;
+  - "El oficio detrás de cada plato";
+  - en inglés, "Nikkei ceviche restaurant".
+- **Plato de la casa aprobado:** Ceviche clásico de corvina (`FEATURED_PRODUCT_SLUG`).
+- **Lighthouse:** `summary.json` guarda también el resultado de cada corrida.
+- **Idioma del documento (corrección de M3 integrada):** `entry.client.tsx` fija `<html lang>` con el idioma de la URL antes de hidratar. Antes, las rutas en inglés servidas por el fallback SPA quedaban en `es-CR`. Suite `npm run test:e2e:produccion` (9 pruebas) sobre el build prerenderizado servido por `serve-build`.
+- **CI:** la suite del idioma del documento corre en el job **Catálogo y SEO**, después de la E2E del catálogo.
+- **Criterios aplazados con aceptación del propietario** (17/11/2026): LCP móvil en producción, validadores externos de JSON-LD y `hreflang` y workflow de rebuild en M10; capturas a 768 y 1024 px en M9. Siguen pendientes (`docs/m4/VALIDACIONES_M4.md`).
+- **Medición con HTTP/2:** `npm run preview:h2` sirve el mismo build con HTTP/2 y TLS local, sin respaldo a HTTP/1.1, como el CDN. `npm run lighthouse:h2` lo mide y comprueba el protocolo de cada respuesta. El certificado (`npm run cert:dev`, `selfsigned` como dependencia de desarrollo) vive fuera del repositorio y solo lo acepta el Chromium de las pruebas. HTTP/1.1 (`preview`, `lighthouse`) se conserva como referencia histórica, con los resultados en `lighthouse-report/h1/`.
+- **Fuente del ₡ recortada a ese glifo** (ADR 0002): `Marea Colon` pasa de 55–59 KB a unos 850 B por peso, con el mismo dibujo (0 píxeles distintos) e incrustada en el documento. Se genera con `npm run fonts:colon -w @marea-baja/web` (`subset-font`, dependencia de desarrollo).
+
+- `MenuLine` (M1) acepta enlace en el nombre, nombre traducido e idioma de la descripción. `Button` exporta `buttonClassName` para enlaces con aspecto de botón. No hay cambios visuales en lo existente.
+- **Páginas de la cuenta (M3):** usan la barra y el pie del sitio.
+- **Pruebas de M1 y M3 ajustadas a la navegación nueva:**
+  - la portada tiene dos regiones de navegación con nombre;
+  - en el celular, ES · EN está dentro del menú.
+- **CI:**
+  - el job de sistema de diseño levanta PostgreSQL y la API;
+  - el build de producción se prueba en el job de catálogo.
+
 ### Agregado — M3 · Identidad
 
 - **API Express 5** (§4.3):

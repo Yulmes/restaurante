@@ -9,7 +9,7 @@ export function useLocale(): Locale {
 }
 
 /** Traducciones fijadas al idioma de la ruta actual. */
-export function useT<N extends 'common' | 'design' | 'account' = 'common'>(ns?: N) {
+export function useT<N extends 'common' | 'design' | 'account' | 'site' = 'common'>(ns?: N) {
   const locale = useLocale();
   return useTranslation(ns ?? 'common', { lng: locale });
 }

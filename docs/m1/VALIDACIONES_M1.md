@@ -54,6 +54,8 @@ Caracteres verificados: á é í ó ú Á É Í Ó Ú ñ Ñ ü Ü ¿ ¡ « » �
 
 En el navegador, `document.fonts` confirma que "Marea Colon" se carga solo con `unicode-range: U+20A1`, y que no se descarga ningún archivo japonés.
 
+> **Actualización M4 (17/11/2026):** el respaldo se sirve recortado al glifo ₡ (unos 850 B por peso, antes 55–59 KB). `check-glyphs.test.ts` revisa ahora los archivos servidos: tienen solo U+20A1 y pesan menos de 2 KB. Detalle en ADR 0002 y `docs/m4/VALIDACIONES_M4.md`.
+
 ## Responsive (V5 y §3.8)
 
 En 375, 768, 1024 y 1440 px, en es-CR y en: sin desborde horizontal, sin títulos, etiquetas, botones, enlaces ni precios cortados fuera de la pantalla. Capturas de página completa en `docs/evidencias/m1/` (8 archivos).

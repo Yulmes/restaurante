@@ -1,7 +1,16 @@
 import { type RouteConfig, index, route } from '@react-router/dev/routes';
 
-// es-CR sin prefijo, inglés con /en y segmentos traducidos (§4.2). M1: portada provisional y
-// sistema de diseño. M3: páginas de la cuenta, fuera del prerender y con noindex (§4.2).
+// es-CR sin prefijo, inglés con /en y segmentos traducidos (§4.2). Los slugs de categorías y
+// platos son iguales en los dos idiomas (D2). M1: sistema de diseño. M3: cuenta (noindex, fuera
+// del prerender). M4: páginas públicas prerenderizadas.
+const PUBLIC = [
+  ['carta', 'en/menu', 'routes/carta.tsx', 'carta'],
+  ['carta/:categoria', 'en/menu/:categoria', 'routes/categoria.tsx', 'categoria'],
+  ['carta/:categoria/:plato', 'en/menu/:categoria/:plato', 'routes/plato.tsx', 'plato'],
+  ['nosotros', 'en/about', 'routes/nosotros.tsx', 'nosotros'],
+  ['visitanos', 'en/visit', 'routes/visitanos.tsx', 'visitanos'],
+] as const;
+
 const ACCOUNT = [
   ['cuenta/ingresar', 'en/account/sign-in', 'routes/cuenta/ingresar.tsx', 'ingresar'],
   ['cuenta/registro', 'en/account/register', 'routes/cuenta/registro.tsx', 'registro'],
@@ -13,10 +22,10 @@ const ACCOUNT = [
 
 export default [
   index('routes/inicio.tsx', { id: 'inicio-es' }),
-  route('_design', 'routes/design.tsx', { id: 'design-es' }),
   route('en', 'routes/inicio.tsx', { id: 'inicio-en' }),
+  route('_design', 'routes/design.tsx', { id: 'design-es' }),
   route('en/_design', 'routes/design.tsx', { id: 'design-en' }),
-  ...ACCOUNT.flatMap(([es, en, file, id]) => [
+  ...[...PUBLIC, ...ACCOUNT].flatMap(([es, en, file, id]) => [
     route(es, file, { id: `${id}-es` }),
     route(en, file, { id: `${id}-en` }),
   ]),

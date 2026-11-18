@@ -2,13 +2,14 @@
 
 Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia** de demostración (San José, Costa Rica; dirección ficticia). Proyecto 1 de 4 del portafolio.
 
-**Estado:** hito **M3 · Identidad**. Ya existen:
+**Estado:** hito **M4 · Catálogo y SEO**. Ya existen:
 
 - el sistema visual y la infraestructura de idiomas (M1, página interna `/_design`);
 - la base de datos con su carta semilla bilingüe (M2, [DATABASE.md](DATABASE.md));
-- la API de identidad y las pantallas de la cuenta (M3, [SECURITY.md](SECURITY.md)): registro, verificación por correo, inicio de sesión, recuperación, perfil, sesiones, CSRF, límites, Turnstile condicional y RBAC.
+- la API de identidad y las pantallas de la cuenta (M3, [SECURITY.md](SECURITY.md)): registro, verificación por correo, inicio de sesión, recuperación, perfil, sesiones, CSRF, límites, Turnstile condicional y RBAC;
+- el sitio público (M4, [ADR 0005](docs/adr/0005-catalogo-prerender-e-imagenes.md)): portada con la pesca del día, carta con búsqueda y filtros, páginas de cada plato, Nosotros y Visítanos, prerenderizadas en los dos idiomas con metadatos, `hreflang`, JSON-LD, sitemap y robots, y precios y disponibilidad en vivo.
 
-La carta pública, el carrito y los pedidos llegan en los hitos siguientes.
+El carrito, el checkout y los pedidos llegan en los hitos siguientes.
 
 - Planificación aprobada: [docs/planificacion/Propuesta Restaurante · Fase 1.md](docs/planificacion/Propuesta%20Restaurante%20·%20Fase%201.md)
 - Auditoría de planificación: [docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md](docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md)
@@ -87,6 +88,9 @@ npm run db:setup
 | `npm run test` | Vitest (pruebas unitarias) |
 | `npm run test:db` | Pruebas contra PostgreSQL: restricciones, AuditLog, permisos, semilla e integración de la API de identidad |
 | `npm run test:e2e:auth -w @marea-baja/web` | E2E de identidad con API, base `<base>_e2e` y Mailpit |
+| `npm run test:e2e:catalog -w @marea-baja/web` | E2E del catálogo y SEO sobre el build de producción prerenderizado |
+| `npm run build -w @marea-baja/web` | Variantes de imagen, build con prerender (necesita la API: `CATALOG_API_URL`), sitemap y robots |
+| `npm run preview -w @marea-baja/web` | Sirve el build como el hosting estático, con `/api` en el mismo origen |
 | `npm run db:setup` | Migraciones, usuario de la API y semilla |
 | `npm run env:check` | Valida las variables de entorno sin mostrar sus valores |
 | `npm run services:up` / `services:down` | Levanta o baja PostgreSQL y Mailpit |

@@ -11,9 +11,17 @@ Thumbs.db
 coverage/
 playwright-report/
 playwright-report-auth/
+playwright-report-catalog/
+playwright-report-produccion/
+apps/web/lighthouse-report/
+# Certificado TLS local de las mediciones HTTP/2 (apps/web/scripts/dev-cert.ts). Vive fuera del
+# repositorio; esto evita versionarlo si DEV_CERT_DIR apunta adentro por error.
+*.pem
 test-results/
 .react-router/
 # Cliente de Prisma generado (`npm run typegen`)
 apps/api/src/generated/
+# Variantes de las fotos (M4): se generan con `npm run images -w @marea-baja/web`
+apps/web/public/images/
 .idea/
 .vscode/

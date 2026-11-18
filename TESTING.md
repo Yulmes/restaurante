@@ -10,8 +10,13 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test` | Vitest: pruebas unitarias de todos los paquetes |
 | `npm run test:db` | Vitest contra PostgreSQL real (requiere `npm run services:up`). Recrea la base `<base>_test`, aplica migraciones, crea el usuario de la API y carga la semilla antes de correr |
 | `npm run test:e2e:auth -w @marea-baja/web` | Playwright de identidad: levanta API, web y una base `<base>_e2e`; usa Mailpit |
+| `npm run lighthouse -w @marea-baja/web` | Lighthouse 13.6.0 sobre el build servido con `npm run preview` (HTTP/1.1, referencia histórica): escritorio y móvil, 3 corridas y mediana. `lighthouse-report/h1/summary.json` guarda también cada corrida, con su protocolo y sus conexiones. Procedimiento en `docs/m4/VALIDACIONES_M4.md` |
+| `npm run lighthouse:h2 -w @marea-baja/web` | Lo mismo sobre `npm run preview:h2` (HTTP/2 con TLS local, como el CDN; es la referencia local de entrega). Una corrida con alguna respuesta que no sea `h2` queda inválida y el comando falla. Salida en `lighthouse-report/h2/` |
+| `npm run cert:dev -w @marea-baja/web` | Crea o muestra el certificado local de `preview:h2` (`-- --renew` lo renueva). Vive fuera del repositorio |
+| `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
+| `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
-| `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo |
+| `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
 | `npm run glyphs -w @marea-baja/web` | Informe de glifos por fuente, peso y subconjunto (V3) |
 
@@ -22,7 +27,7 @@ Primera vez con Playwright: `npx playwright install chromium` dentro de `apps/we
 | Prueba | Archivo | Validación |
 |---|---|---|
 | Contraste WCAG de los pares de la paleta | `apps/web/app/design/contrast.test.ts` | D1 / V1 |
-| Glifos de las tipografías aprobadas y ₡ por respaldo (lectura de `cmap`) | `apps/web/scripts/check-glyphs.test.ts` | V3 |
+| Glifos de las tipografías aprobadas y ₡ por respaldo (lectura de `cmap`); el recorte servido de `Marea Colon` tiene solo U+20A1 y pesa menos de 2 KB | `apps/web/scripts/check-glyphs.test.ts` | V3, M4 |
 | Formato de precios CRC/USD por idioma | `packages/shared/src/money/format.test.ts` | V4 |
 | Paridad de mensajes es-CR / en | `apps/web/app/i18n/messages.test.ts` | D2 |
 | Rutas por idioma | `apps/web/app/i18n/locale.test.ts` | D2 |
@@ -115,3 +120,58 @@ Levanta su propia base (`<base>_e2e`, recreada en cada corrida, umbral de Turnst
 | Idioma (`idioma.spec.ts`, en escritorio y a 375 px): la cuenta se abre en el idioma guardado aunque el login sea en el otro; el cambio desde el perfil se aplica y persiste tras cerrar sesión, en los dos sentidos; con sesión, ES · EN navega sin cambiar la preferencia; la selección manual antes del login sigue igual; un idioma inválido de la API abre es-CR sin errores | D2 |
 
 Las pruebas de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts` (solo contra `<base>_e2e`): las cinco cuentas de `identidad.spec.ts` ya usan el límite real de 5 registros por hora por IP. El registro por la interfaz se prueba en `identidad.spec.ts`.
+
+### E2E de producción (`npm run test:e2e:produccion -w @marea-baja/web`)
+
+Corre contra el **build de producción**, no contra el servidor de desarrollo:
+- hace el build de M4 con prerender (`npm run build`) y lo sirve con `npm run preview` (`scripts/serve-build.ts`, HTTP/1.1) en el puerto 5177, como el hosting estático;
+- las páginas públicas reciben su HTML prerenderizado (por ejemplo, `/en` ya trae `lang="en"`);
+- la cuenta, `/_design` y las rutas inexistentes reciben el fallback real, `__spa-fallback.html`, renderizado desde `/` con `lang="es-CR"`;
+- `/api` va por el proxy de `serve-build`.
+
+**No se usa `vite preview`:** con este build entrega `index.html`, la portada prerenderizada en español, para cualquier ruta, incluso las que tienen HTML propio. Se comprobó el 17/11/2026.
+
+**Requisitos:**
+- `npm run services:up`, con Docker Desktop iniciado: PostgreSQL para la API. La API usa Mailpit como proveedor de correo, pero la suite no envía correos, así que funciona aunque Mailpit no esté levantado (como en CI);
+- un `.env` en la raíz con `DATABASE_URL`;
+- `npx playwright install chromium` la primera vez.
+
+**Configuración** (`apps/web/playwright.produccion.config.ts`):
+- recrea `<base>_e2e` y levanta su propia API en el puerto 3300;
+- el build prerenderiza el catálogo con esa API: `CATALOG_API_URL`, `API_PROXY_TARGET`, `VITE_SITE_URL=http://127.0.0.1:5177` y `PORT=5177`;
+- no toca la base de desarrollo, pero comparte `<base>_e2e` con las E2E de identidad y del catálogo: no hay que correr esas suites a la vez.
+
+**Por qué va aparte:**
+- El servidor de desarrollo genera el HTML de cada URL, así que no reproduce los problemas del fallback.
+- Hacer el build lleva tiempo y necesita la API.
+- Por eso `npm run test:e2e` la excluye (`testIgnore: 'produccion/**'`), igual que excluye las E2E de identidad y del catálogo.
+- **En CI** corre en el job **Catálogo y SEO**, en el paso "Idioma del documento en el build de producción (9 pruebas)". Va después de la E2E del catálogo, nunca a la vez, porque las dos recrean `<base>_e2e`. Reutiliza PostgreSQL, Chromium y las variantes de imagen ya generadas, y corre aunque la suite del catálogo falle; si falla, falla el job. Validado en local el 17/11/2026, todavía sin una ejecución en GitHub Actions.
+
+**Cómo se comprueba "antes de hidratar":** un `MutationObserver` registra cada cambio del atributo `lang` y si React ya había hidratado en ese momento.
+
+| Prueba (9) | Validación |
+|---|---|
+| Carga directa en el fallback: `/en/account/sign-in`, `/en/account/register` y `/en/_design`. El servidor entrega exactamente `__spa-fallback.html`; el documento pasa a `lang="en"` antes de hidratar y no vuelve a `es-CR`. En `sign-in`, un solo cambio | D2, accesibilidad |
+| `/cuenta/ingresar`: queda en `es-CR`; se reafirma antes de hidratar y nunca pasa por otro idioma | D2 |
+| `/en` prerenderizada: el HTML ya trae `lang="en"` (no es el fallback) y la hidratación solo reafirma `en` | D2 |
+| 404 en inglés y en español (fallback), con el idioma de la URL | D2 |
+| Recarga de `/en/account/sign-in`: `lang="en"` antes de hidratar también después de recargar | D2 |
+| Navegación sin recargar: de español a inglés y de vuelta con el selector; y entrando en inglés, de ingresar a registro y luego a español (antes quedaba en `es-CR`) | D2 |
+| El título y el `h1` de cada pantalla están en el idioma del atributo | D2 |
+
+**Contraprueba (17/11/2026):** sin la línea que fija `lang` en `entry.client.tsx` fallan 7 de 9.
+- 5 por idioma incorrecto (`es-CR` en lugar de `en`).
+- 2 porque falta la asignación antes de hidratar: la cuenta en español y `/en`.
+- Los dos 404 pasan igual: cuando ninguna ruta coincide, React vuelve a renderizar el documento entero y corrige `lang` por su cuenta.
+
+## Qué cubre M4
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| API pública: orden y precios de la semilla, traducciones y respaldo es-CR marcado, sin inactivos ni datos internos, idioma inválido; precio y disponibilidad en vivo; `catalog-version` en memoria e independiente del idioma; pizarra de hoy y de días anteriores; horario | `apps/api/test/catalogo.db.test.ts` | §4.2, D10, R20 |
+| Metadatos por idioma (canónica, `hreflang`, Open Graph), JSON-LD, rutas prerenderizadas, sitemap, robots, `noindex` del fallback, datos en vivo y URL de imágenes | `apps/web/app/site/seo.test.ts` | §4.2, §9.4 |
+| Mensajes del sitio con las mismas claves en es-CR y en | `apps/web/app/i18n/messages.test.ts` | D2 |
+| E2E sobre el build de producción: HTML crudo de 12 páginas, JSON-LD parseable, sitemap, robots, `catalog-version.json`, datos en vivo al hidratar, pizarra, búsqueda y filtros, carta a 375 px, idioma, menú del celular, teclado, 404 y axe a 1280 y 375 px | `apps/web/e2e/catalogo/catalogo.spec.ts` | §2.4, §3.5, §4.2, D1, D10 |
+
+Las E2E del catálogo cambian el precio de un plato con `apps/api/scripts/e2e-catalog.ts`, que solo corre contra `<base>_e2e`.
+
