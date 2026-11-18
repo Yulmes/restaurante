@@ -13,6 +13,9 @@ playwright-report/
 playwright-report-auth/
 playwright-report-catalog/
 apps/web/lighthouse-report/
+# Certificado TLS local de las mediciones HTTP/2 (apps/web/scripts/dev-cert.ts). Vive fuera del
+# repositorio; esto evita versionarlo si DEV_CERT_DIR apunta adentro por error.
+*.pem
 test-results/
 .react-router/
 # Cliente de Prisma generado (`npm run typegen`)

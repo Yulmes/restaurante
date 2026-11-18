@@ -3,19 +3,37 @@
  * `build/client`, el `index.html` prerenderizado de cada ruta, el fallback SPA para el resto y
  * `/api/*` en el mismo origen (proxy a `API_PROXY_TARGET`). Solo para pruebas y revisión local:
  *
- *   npm run preview -w @marea-baja/web     (PORT, API_PROXY_TARGET)
+ *   npm run preview -w @marea-baja/web      HTTP/1.1 sin TLS, http://127.0.0.1:4173 (referencia histórica)
+ *   npm run preview:h2 -w @marea-baja/web   HTTP/2 con TLS, https://127.0.0.1:4173 (como el CDN)
+ *
+ * Variables: PORT, API_PROXY_TARGET. Los dos modos sirven los mismos archivos, con la misma
+ * compresión, el mismo fallback y el mismo proxy: solo cambia el transporte. El modo HTTP/2 no
+ * acepta HTTP/1.1 (sin respaldo silencioso) y usa el certificado local de `dev-cert.ts`.
  */
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { createServer, request } from 'node:http';
+import { createServer, request, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createSecureServer, type Http2ServerRequest } from 'node:http2';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { constants, createBrotliCompress, createGzip } from 'node:zlib';
+import { ensureDevCert } from './dev-cert.ts';
 
 const COMPRESSIBLE = /^(text\/|application\/(json|xml)|image\/svg\+xml)/;
 
 const ROOT = fileURLToPath(new URL('../build/client/', import.meta.url));
 const PORT = Number(process.env['PORT'] ?? 4173);
 const API = new URL(process.env['API_PROXY_TARGET'] ?? 'http://127.0.0.1:3000');
+const HTTP2 = process.argv.includes('--http2');
+
+// Encabezados propios de la conexión: HTTP/2 los prohíbe, así que en ese modo no se reenvían.
+const CONNECTION_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-connection',
+  'transfer-encoding',
+  'upgrade',
+  'te',
+]);
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -33,6 +51,10 @@ const TYPES: Record<string, string> = {
   '.woff': 'font/woff',
 };
 
+type Req = IncomingMessage | Http2ServerRequest;
+// La API de compatibilidad de http2 replica la de http: se usa como ServerResponse.
+type Res = ServerResponse;
+
 function resolveFile(pathname: string): string | null {
   const safe = normalize(decodeURIComponent(pathname)).replace(/^([/\\])+/, '');
   const candidates = [join(ROOT, safe), join(ROOT, safe, 'index.html')];
@@ -44,20 +66,38 @@ function resolveFile(pathname: string): string | null {
   return null;
 }
 
-const server = createServer((req, res) => {
+function proxyHeaders(req: Req): Record<string, string | string[] | undefined> {
+  if (!HTTP2) return req.headers;
+  // HTTP/2: sin pseudo-encabezados (`:path`, …); `:authority` pasa a ser `host`, como en HTTP/1.1.
+  const headers = Object.fromEntries(
+    Object.entries(req.headers).filter(([k]) => !k.startsWith(':') && !CONNECTION_HEADERS.has(k)),
+  );
+  return { ...headers, host: String(req.headers[':authority'] ?? req.headers.host ?? '') };
+}
+
+function handler(req: Req, res: Res): void {
   const url = new URL(req.url ?? '/', 'http://localhost');
   if (url.pathname.startsWith('/api/')) {
     const upstream = request(
-      { hostname: API.hostname, port: API.port, path: req.url, method: req.method, headers: req.headers },
+      {
+        hostname: API.hostname,
+        port: API.port,
+        path: req.url,
+        method: req.method,
+        headers: proxyHeaders(req),
+      },
       (response) => {
-        res.writeHead(response.statusCode ?? 502, response.headers);
+        const headers = HTTP2
+          ? Object.fromEntries(Object.entries(response.headers).filter(([k]) => !CONNECTION_HEADERS.has(k)))
+          : response.headers;
+        res.writeHead(response.statusCode ?? 502, headers);
         response.pipe(res);
       },
     );
     upstream.on('error', () => {
       res.writeHead(502).end();
     });
-    req.pipe(upstream);
+    (req as IncomingMessage).pipe(upstream);
     return;
   }
   const file = resolveFile(url.pathname) ?? join(ROOT, '__spa-fallback.html');
@@ -83,8 +123,24 @@ const server = createServer((req, res) => {
     stream.pipe(createBrotliCompress({ params: { [constants.BROTLI_PARAM_QUALITY]: 5 } })).pipe(res);
   else if (encoding === 'gzip') stream.pipe(createGzip()).pipe(res);
   else stream.pipe(res);
-});
+}
+
+const server = HTTP2
+  ? await (async () => {
+      const tls = await ensureDevCert();
+      // allowHTTP1: false → un cliente sin HTTP/2 no se conecta (no hay respaldo silencioso).
+      return createSecureServer({ key: tls.key, cert: tls.cert, allowHTTP1: false }, (req, res) => {
+        handler(req, res as unknown as Res);
+      }).on('session', (session) => {
+        const alpn = (session.socket as { alpnProtocol?: string | false }).alpnProtocol;
+        if (alpn !== 'h2') console.warn(`Sesión con protocolo inesperado: ${String(alpn)}`);
+      });
+    })()
+  : createServer(handler);
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Build servido en http://127.0.0.1:${String(PORT)} (API: ${API.origin})`);
+  const origin = `${HTTP2 ? 'https' : 'http'}://127.0.0.1:${String(PORT)}`;
+  console.log(
+    `Build servido en ${origin} con ${HTTP2 ? 'HTTP/2 (TLS local)' : 'HTTP/1.1'} (API: ${API.origin})`,
+  );
 });

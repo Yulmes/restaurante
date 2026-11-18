@@ -16,9 +16,12 @@
     "test:e2e:auth": "playwright test -c playwright.auth.config.ts",
     "images": "node scripts/build-images.ts",
     "preview": "node scripts/serve-build.ts",
+    "preview:h2": "node scripts/serve-build.ts --http2",
     "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts",
     "lighthouse": "node scripts/lighthouse.ts",
-    "fonts:colon": "node scripts/subset-colon-font.ts"
+    "lighthouse:h2": "node scripts/lighthouse.ts --http2",
+    "fonts:colon": "node scripts/subset-colon-font.ts",
+    "cert:dev": "node scripts/dev-cert.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -29,6 +32,7 @@
     "@types/react-dom": "19.3.0",
     "lighthouse": "13.6.0",
     "playwright-core": "1.64.1",
+    "selfsigned": "5.5.0",
     "sharp": "0.35.5",
     "subset-font": "2.9.0",
     "tailwindcss": "4.3.3",

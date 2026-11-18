@@ -35,6 +35,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   - en inglés, "Nikkei ceviche restaurant".
 - **Plato de la casa aprobado:** Ceviche clásico de corvina (`FEATURED_PRODUCT_SLUG`).
 - **Lighthouse:** `summary.json` guarda también el resultado de cada corrida.
+- **Medición con HTTP/2:** `npm run preview:h2` sirve el mismo build con HTTP/2 y TLS local, sin respaldo a HTTP/1.1, como el CDN. `npm run lighthouse:h2` lo mide y comprueba el protocolo de cada respuesta. El certificado (`npm run cert:dev`, `selfsigned` como dependencia de desarrollo) vive fuera del repositorio y solo lo acepta el Chromium de las pruebas. HTTP/1.1 (`preview`, `lighthouse`) se conserva como referencia histórica, con los resultados en `lighthouse-report/h1/`.
 - **Fuente del ₡ recortada a ese glifo** (ADR 0002): `Marea Colon` pasa de 55–59 KB a unos 850 B por peso, con el mismo dibujo (0 píxeles distintos) e incrustada en el documento. Se genera con `npm run fonts:colon -w @marea-baja/web` (`subset-font`, dependencia de desarrollo).
 
 - `MenuLine` (M1) acepta enlace en el nombre, nombre traducido e idioma de la descripción. `Button` exporta `buttonClassName` para enlaces con aspecto de botón. No hay cambios visuales en lo existente.
