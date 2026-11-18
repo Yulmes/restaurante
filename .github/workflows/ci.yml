@@ -69,6 +69,28 @@ jobs:
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
       # La configuración levanta la API y el servidor de desarrollo de la web.
       - name: axe, teclado, idiomas, responsive y movimiento reducido
         run: npm run test:e2e -w @marea-baja/web
@@ -160,6 +182,28 @@ jobs:
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
       # La configuración crea su propia base (<base>_e2e) y levanta la API y la web.
       # Turnstile usa el proveedor falso y el script de Cloudflare se reemplaza: sin llamadas externas.
       - name: Registro, correo, verificación, login, perfil, recuperación, Turnstile y axe
@@ -193,6 +237,28 @@ jobs:
       - name: Instalar Chromium para Playwright
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
+
+      # Variantes de imagen (M4): `npm run dev` y `npm run build` las generan si faltan y, desde
+      # cero, tardan varios minutos en el runner (más que la espera de los servidores de Playwright).
+      # Se generan en este paso, fuera de esas esperas, y se guardan en caché según las fotos, el
+      # script, los anchos y las dependencias (sharp).
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          # Con la clave exacta el contenido es válido, pero el script compara fechas y el checkout
+          # las renueva: se marcan como recientes para que no se regeneren.
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
 
       # La configuración crea su base (<base>_e2e), levanta la API, hace el build de producción con
       # prerender (variantes de imagen, HTML por idioma, sitemap y robots) y lo sirve como el
