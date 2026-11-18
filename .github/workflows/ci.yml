@@ -1,5 +1,5 @@
 # CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3),
-# catálogo y SEO (M4) y servicios locales.
+# catálogo y SEO (M4), idioma del documento en el build de producción y servicios locales.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -199,6 +199,15 @@ jobs:
       # hosting estático. Prueba el HTML crudo, los datos en vivo, la carta y axe.
       - name: Build de producción, prerender, SEO y E2E del catálogo
         run: npm run test:e2e:catalog -w @marea-baja/web
+
+      # Idioma del documento (<html lang>) sobre el build servido por serve-build: páginas
+      # prerenderizadas y fallback SPA real (__spa-fallback.html). Vuelve a crear <base>_e2e y su
+      # propia API (3300) y web (5177), después de la suite anterior (nunca a la vez). Reutiliza las
+      # variantes de imagen ya generadas. No envía correos: no necesita Mailpit. Corre aunque la
+      # suite del catálogo falle, para que su resultado se vea por separado; si falla, falla el job.
+      - name: Idioma del documento en el build de producción (9 pruebas)
+        if: ${{ !cancelled() }}
+        run: npm run test:e2e:produccion -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()
