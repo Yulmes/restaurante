@@ -132,7 +132,7 @@ Corre contra el **build de producción**, no contra el servidor de desarrollo:
 **No se usa `vite preview`:** con este build entrega `index.html`, la portada prerenderizada en español, para cualquier ruta, incluso las que tienen HTML propio. Se comprobó el 17/11/2026.
 
 **Requisitos:**
-- `npm run services:up`, con Docker Desktop iniciado: PostgreSQL para la API y Mailpit como proveedor de correo de la API;
+- `npm run services:up`, con Docker Desktop iniciado: PostgreSQL para la API. La API usa Mailpit como proveedor de correo, pero la suite no envía correos, así que funciona aunque Mailpit no esté levantado (como en CI);
 - un `.env` en la raíz con `DATABASE_URL`;
 - `npx playwright install chromium` la primera vez.
 
@@ -145,7 +145,7 @@ Corre contra el **build de producción**, no contra el servidor de desarrollo:
 - El servidor de desarrollo genera el HTML de cada URL, así que no reproduce los problemas del fallback.
 - Hacer el build lleva tiempo y necesita la API.
 - Por eso `npm run test:e2e` la excluye (`testIgnore: 'produccion/**'`), igual que excluye las E2E de identidad y del catálogo.
-- Todavía no corre en CI.
+- **En CI** corre en el job **Catálogo y SEO**, en el paso "Idioma del documento en el build de producción (9 pruebas)". Va después de la E2E del catálogo, nunca a la vez, porque las dos recrean `<base>_e2e`. Reutiliza PostgreSQL, Chromium y las variantes de imagen ya generadas, y corre aunque la suite del catálogo falle; si falla, falla el job. Validado en local el 17/11/2026, todavía sin una ejecución en GitHub Actions.
 
 **Cómo se comprueba "antes de hidratar":** un `MutationObserver` registra cada cambio del atributo `lang` y si React ya había hidratado en ese momento.
 

@@ -77,9 +77,9 @@ function HoursTable({ hours }: { hours: OpeningHoursResponse }) {
 }
 
 /**
- * Visítanos (M4, D4): ubicación, horario y cómo pedir. El local se comunica como información;
- * la web solo toma pedidos para retiro y delivery (sin reservas ni mesas). Textos en BORRADOR
- * pendientes de aprobación (docs/m4/CONTENIDO_EDITORIAL.md).
+ * Ubicación y horario (ruta `/visitanos`, M4, D4): dirección, horario y modalidades. El local se
+ * comunica como punto de retiro; la propuesta contempla solo retiro y delivery (sin reservas ni
+ * mesas) y los pedidos en línea llegan en M5. Textos aprobados (docs/m4/CONTENIDO_EDITORIAL.md).
  */
 export default function Visitanos({ loaderData }: Route.ComponentProps) {
   const { t } = useT('site');

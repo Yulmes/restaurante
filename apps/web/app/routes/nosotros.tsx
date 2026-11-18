@@ -20,8 +20,8 @@ export function meta({ location }: Route.MetaArgs) {
 }
 
 /**
- * Nosotros (M4). Textos en BORRADOR pendientes de aprobación del propietario
- * (docs/m4/CONTENIDO_EDITORIAL.md): solo usan hechos aprobados (§1.1, carta de M2).
+ * Nosotros (M4). Textos aprobados por el propietario (docs/m4/CONTENIDO_EDITORIAL.md): solo usan
+ * hechos aprobados (§1.1, carta de M2).
  */
 export default function Nosotros() {
   const { t } = useT('site');

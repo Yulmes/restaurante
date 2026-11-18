@@ -1,13 +1,13 @@
 # Validaciones de M4 · Catálogo y SEO
 
-> Fecha: 13/11/2026. Son resultados de ejecutar los comandos, no estimaciones. Entorno: PostgreSQL 17.11 y Mailpit 1.32 en Docker, Node 24.15, Windows 10, Chromium de Playwright 1.64. Comandos en [TESTING.md](../../TESTING.md).
+> Fecha: 13/11/2026, actualizado el 17/11/2026. Son resultados de ejecutar los comandos, no estimaciones. Entorno: PostgreSQL 17.11 y Mailpit 1.32 en Docker, Node 24.15, Windows 10, Chromium de Playwright 1.64. Comandos en [TESTING.md](../../TESTING.md).
 
 ## Alcance vigente (propuesta §12)
 
 > **M4 · Catálogo y SEO:** API pública, páginas prerenderizadas en ambos idiomas, meta, OG, `hreflang`, JSON-LD, sitemap con alternativas, robots (D2). Precios y disponibilidad en tiempo real al hidratar (D10). Workflow de rebuild cada 30 min, configurable y sin ejecuciones innecesarias (D10). Evidencia de cierre: Lighthouse + validación de datos estructurados + validación de `hreflang`.
 
 **Decisiones del propietario para este hito (13/11/2026):**
-- textos editoriales y plato de la casa como borrador para revisión;
+- textos editoriales y plato de la casa como borrador para revisión (aprobados el 13/11/2026, ver [CONTENIDO_EDITORIAL.md](CONTENIDO_EDITORIAL.md));
 - página del plato informativa;
 - `catalog-version` ahora y el workflow de rebuild en M10;
 - filtros por etiqueta y búsqueda, sin orden.
@@ -28,6 +28,8 @@ Detalle en el [ADR 0005](../adr/0005-catalogo-prerender-e-imagenes.md).
 | Regresión de M1 | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (capturas), igual que antes |
 | Regresión de M3 | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 |
 | Dependencias de producción | `npm audit --omit=dev` | ✅ 0 vulnerabilidades. `sharp` es solo de desarrollo y no suma avisos |
+| Idioma del documento sobre el **build de producción** (corrección de M3 integrada) | `npm run test:e2e:produccion -w @marea-baja/web` | ✅ 9 / 9, en tres corridas. Contraprueba sin la línea que fija `lang`: fallan 7 de 9 (ver "Idioma del documento") |
+| CI: la suite anterior en el job **Catálogo y SEO** | `.github/workflows/ci.yml` (paso "Idioma del documento en el build de producción") | ✅ Validado en local: YAML correcto y los dos pasos del job en orden (catálogo 19 / 19 y después idioma 9 / 9), con Mailpit detenido como en CI. ⏳ **Sin ejecución en GitHub Actions todavía** (requiere push) |
 
 ### Qué prueban las E2E del catálogo
 
@@ -303,7 +305,7 @@ El propietario autorizó solo este cambio sobre M1, para intentar bajar el LCP m
 
 Mi recomendación es empezar por la 1. Sin ella no se sabe cuánto del incumplimiento es del producto y cuánto del entorno local. El criterio de §11 se define sobre el celular simulado, y la medición definitiva es con la URL pública (M10).
 
-## Sistema de medición: HTTP/1.1 y HTTP/2 (18/11/2026)
+## Sistema de medición: HTTP/1.1 y HTTP/2 (17/11/2026)
 
 El propietario autorizó incorporar al proyecto el modo HTTP/2, después de la medición experimental del 17/11 (fuera del repositorio). Es infraestructura local de medición: **no cambia el producto**.
 
@@ -431,6 +433,39 @@ El propietario autorizó incorporar al proyecto el modo HTTP/2, después de la m
 3. Correr PageSpeed Insights, que usa Lighthouse en móvil con slow 4G simulado, 3 o más veces sobre la portada y un plato, y registrar cada corrida. Si se quiere comparar con estas cifras, correr también `LH_BASE_URL=https://<sitio> npm run lighthouse:h2` contra la URL pública.
 4. El criterio de §11 se da por cumplido solo si el LCP móvil queda por debajo de 2,5 s en todas las corridas de la portada y el plato.
 
+## Idioma del documento (corrección de M3 integrada, 17/11/2026)
+
+- **Problema (M3):** el hosting sirve el fallback SPA (`__spa-fallback.html`, renderizado desde `/` con `lang="es-CR"`) a toda ruta sin HTML propio, también en inglés. React 19 no corrige atributos distintos al hidratar, así que el documento anunciaba español en `/en/account/*`, `/en/_design` y los 404 en inglés, también al navegar dentro del inglés.
+- **Corrección:** `apps/web/app/entry.client.tsx` asigna `document.documentElement.lang` con `localeFromPathname`, la misma regla que usa `Layout`, antes de cargar los textos y antes de hidratar.
+  - Se hizo en la rama `m3-lang-documento` (`d367503`) y se integró en M4 con un merge (`7955a37`), sin cherry-pick.
+  - La suite se adaptó al build prerenderizado (`04386ee`).
+- **Servidor de la suite:** `serve-build.ts` (`npm run preview`). `vite preview` no sirve: entrega `index.html` (la portada en español) para cualquier ruta, incluso las que tienen HTML propio. Comprobado el 17/11/2026 comparando cada respuesta con los archivos de `build/client`.
+- **Suite** (`apps/web/e2e/produccion/idioma-documento.spec.ts`, 9 pruebas): carga directa de rutas con fallback (`/en/account/sign-in`, `/en/account/register`, `/en/_design`), `/cuenta/ingresar`, `/en` prerenderizada, 404 en los dos idiomas, recarga en inglés y navegación entre idiomas. Un `MutationObserver` comprueba que `lang` se fija antes de hidratar.
+- **Contraprueba:** sin la línea que fija `lang`, fallan 7 de 9.
+  - 5 por idioma incorrecto (`es-CR` en lugar de `en`).
+  - 2 porque falta la asignación antes de hidratar.
+  - Los dos 404 pasan igual: cuando ninguna ruta coincide, React vuelve a renderizar el documento entero.
+- **CI:** corre en el job **Catálogo y SEO**, después de la E2E del catálogo y nunca a la vez. Reutiliza PostgreSQL, Chromium y las variantes de imagen; usa su propia `<base>_e2e`, API (3300) y web (5177). No necesita Mailpit.
+
+## Criterios aplazados, aceptados por el propietario (17/11/2026)
+
+El propietario aceptó expresamente estos aplazamientos después de la auditoría final de M4. **Siguen pendientes; no son requisitos cumplidos.**
+
+| Criterio | Hito | Estado y evidencia que se conserva |
+|---|---|---|
+| **LCP móvil < 2,5 s en producción** (§11) | M10 | Requiere el sitio desplegado en Cloudflare. Evidencia local, que **no es validación de producción**: HTTP/1.1, portada 3,10 s y plato 2,71 s; HTTP/2 local, portada 1,65–1,66 s y plato 1,50–2,10 s, con las 12 corridas por debajo de 2,5 s |
+| **Validación externa de JSON-LD y `hreflang`** (evidencia de cierre de §12) | M10 | Requiere una URL pública. La validación estructural local está aprobada (JSON-LD parseable con los tipos correctos; `hreflang` completo y recíproco en las 56 páginas); no reemplaza la externa |
+| **Workflow de rebuild cada 30 min** (D10) | M10 | Decisión del 13/11/2026. `GET /api/public/catalog-version` y `catalog-version.json` son parte de M4 |
+| **Capturas a 768 y 1024 px** (finish gate, §2.4) | M9 | Las revisiones a 375 y 1280 px siguen siendo evidencia válida de esos anchos |
+| **WebKit móvil** (§11) | **Sin hito asignado** | Pendiente desde M1. §11 lo pide para las E2E en CI, pero ningún hito lo tiene asignado: requiere una decisión del propietario. No bloquea M4 por sí solo |
+
+**Observaciones técnicas en seguimiento:**
+- **React #418** (no bloqueante): un error de hidratación visto **una sola vez** en `/en/no-existe`, por HTTP/2, el 17/11/2026.
+  - No se reprodujo en 180 cargas más: 90 con la corrección de `lang` y 90 sin ella, por HTTP/1.1 y HTTP/2.
+  - Sin causa identificada y sin evidencia que lo relacione con la corrección. Riesgo bajo: el contenido final fue correcto.
+  - Para investigarlo: un build sin minificar, la cascada de red completa de las cargas con error y cientos de cargas con red limitada.
+- **`VITE_SITE_URL`** (M10): si un build de producción se hace sin esta variable, las canónicas, el `hreflang`, Open Graph y el sitemap apuntan a `http://127.0.0.1:5173` sin ningún aviso (`app/site/seo.ts`, `scripts/seo-files.ts`). Se resolverá en M10, haciendo que el build falle si falta.
+
 ## Verificación manual en el navegador (13/11/2026)
 
 Con la API y la web en desarrollo, y después con el build servido como en producción:
@@ -468,17 +503,12 @@ Con la API y la web en desarrollo, y después con el build servido como en produ
 
 ## Lo que no se verificó o queda pendiente
 
-| Tema | Motivo |
+| Tema | Estado |
 |---|---|
-| **LCP móvil de la portada y del plato** (§11: < 2,5 s) | **Pendiente de validar en Cloudflare (M10).** Con HTTP/1.1 local no se cumple: línea base 3,25 s y 3,18 s; después de i18n e imágenes, 2,94 s y 2,71 s; después del recorte del ₡, 3,10 s y 2,71 s. Con HTTP/2 local, como servirá el CDN, se cumple en las 12 corridas (portada 1,65–1,66 s, plato 1,50–2,10 s), con un margen de 0,4 s en el peor caso. El procedimiento de M10 está en "Sistema de medición" |
-| **Validadores externos** de datos estructurados (Rich Results Test, Schema Markup Validator) | Son servicios externos y requieren una URL pública (M10). Se validó que el JSON-LD se parsea y tiene los tipos y campos de schema.org |
-| **Workflow de rebuild cada 30 min** | Pospuesto a M10 por decisión del propietario: necesita el despliegue en Cloudflare. `catalog-version` y `catalog-version.json` quedan listos |
-| Textos editoriales y plato de la casa | ✅ Aprobados el 13/11/2026 y aplicados ([CONTENIDO_EDITORIAL.md](CONTENIDO_EDITORIAL.md)). Quedan tres observaciones menores para tu decisión |
-| `lang` en inglés fuera del prerender (M3) | **Diagnosticado, sin corregir** (corregir M3 no estaba autorizado).
-- **Síntoma:** al entrar directo a una ruta en inglés que no se prerenderiza (`/en/account/*`, `/en/_design`, un 404 bajo `/en`), `<html>` queda con `lang="es-CR"`. Sigue así al navegar en inglés, incluso a `/en`, hasta pasar a español y volver.
-- **Causa:** el hosting sirve `__spa-fallback.html`, que React Router genera una sola vez renderizando `/`, con `lang="es-CR"`. Al hidratar, el `Layout` raíz calcula `en` desde la URL, pero React 19 en producción no corrige atributos distintos en la hidratación. Después cree que el valor ya es `en` y no vuelve a escribirlo.
-- **Por qué ninguna prueba lo detectó:** las E2E de M3 corren contra el servidor de desarrollo, que genera el HTML de cada URL. Las del catálogo usan el build, pero no abren páginas de la cuenta en inglés.
-- **Corrección propuesta:** en `entry.client.tsx`, asignar `document.documentElement.lang = localeFromPathname(pathname)` antes de `hydrateRoot`. Agregar una E2E sobre el build que abra `/en/account/sign-in`, compruebe `lang="en"` y lo mantenga al navegar a `/en`. |
-| Finish gate con capturas a 4 anchos (§2.4) | Se revisaron 1280 y 375 px en el navegador y con axe. Las capturas a 768 y 1024 px quedan para la auditoría de M9 |
-| WebKit móvil | Pendiente desde M1 |
-| CI de GitHub para M4 | Requiere push (no autorizado) |
+| LCP móvil en producción, validadores externos y rebuild programado | Aplazados a M10 (ver "Criterios aplazados") |
+| Capturas a 768 y 1024 px | Aplazadas a M9 |
+| WebKit móvil | Pendiente desde M1, sin hito asignado |
+| React #418 y `VITE_SITE_URL` | En seguimiento (ver "Criterios aplazados") |
+| Textos editoriales y plato de la casa | ✅ Aprobados el 13/11/2026 y aplicados ([CONTENIDO_EDITORIAL.md](CONTENIDO_EDITORIAL.md)). Quedan tres observaciones menores para la decisión del propietario |
+| `lang` en inglés fuera del prerender (M3) | ✅ Corregido e integrado (ver "Idioma del documento") |
+| CI de GitHub | La suite del idioma está en el job **Catálogo y SEO** (validado en local). ⏳ Ninguna ejecución remota todavía: requiere push |

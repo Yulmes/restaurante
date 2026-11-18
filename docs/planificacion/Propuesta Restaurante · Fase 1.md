@@ -1,7 +1,7 @@
 # Propuesta Restaurante · Fase 1 — Marea Baja
 
 > **Versión 3 (decisiones de planificación aprobadas)** · 10 de noviembre de 2026
-> **Estado:** planificación cerrada. **Las 14 decisiones pendientes de la versión 2 fueron aprobadas** (sección 15). **No hay código implementado** y la implementación todavía no comenzó. Todo lo que este documento describe es diseño aprobado para implementar, salvo lo marcado como verificado (fuentes consultadas), lo que sigue sin verificar (❓) y las validaciones técnicas de la sección 15.3.
+> **Estado:** planificación cerrada. **Las 14 decisiones pendientes de la versión 2 fueron aprobadas** (sección 15). **Implementación en curso** (actualización del 17/11/2026): M0–M3 integrados en `main`; M4 implementado en su rama y pendiente de integración; M5–M11 no iniciados. El estado vivo de cada hito está en [PORTFOLIO_MASTER_PLAN.md](../../PORTFOLIO_MASTER_PLAN.md). Este documento describe el diseño aprobado, salvo lo marcado como verificado (fuentes consultadas), lo que sigue sin verificar (❓) y las validaciones técnicas de la sección 15.3.
 > Historial: v1 (8/11, tres marcas) → v2 (9/11, Marea Baja consolidada) → v3 (10/11, decisiones D1–D14 aprobadas).
 > Documentos relacionados: [AUDITORIA_COMPLETA_RESTAURANTE.md](AUDITORIA_COMPLETA_RESTAURANTE.md) · [PORTFOLIO_MASTER_PLAN.md](../../PORTFOLIO_MASTER_PLAN.md)
 > Tablero visual del sistema de diseño (colores, tipografía, componentes y mockups): artefacto **Marea Baja · Sistema de diseño**.
@@ -1129,7 +1129,7 @@ Cada hito se cierra con: tests en verde, revisión en el navegador, auditoría d
 
 ## 15. Decisiones de planificación ✅ (todas resueltas)
 
-> **Estado:** las 14 decisiones que la v2 dejaba pendientes fueron **aprobadas individualmente** por el propietario el 10/11/2026. No queda ninguna decisión de planificación pendiente. Lo que sigue en 15.2 y 15.3 son **contradicciones documentadas y validaciones técnicas**, no decisiones abiertas. La implementación **no comenzó**; requiere la autorización del propietario para iniciar M0.
+> **Estado:** las 14 decisiones que la v2 dejaba pendientes fueron **aprobadas individualmente** por el propietario el 10/11/2026. No queda ninguna decisión de planificación pendiente. Lo que sigue en 15.2 y 15.3 son **contradicciones documentadas y validaciones técnicas**, no decisiones abiertas. **Actualización del 17/11/2026:** la implementación avanza hito por hito, cada uno con la autorización expresa del propietario. M0–M3 están integrados en `main` y M4 está implementado en su rama, pendiente de integración. Ninguna decisión de esta sección cambió.
 
 ### 15.1 Registro de decisiones
 
@@ -1193,7 +1193,8 @@ Se resuelven durante la implementación con evidencia; ninguna cambia lo aprobad
 
 ### 15.4 Restricciones de alcance vigentes
 
-- **No hay implementación iniciada.** M0 empieza solo con la autorización expresa del propietario.
+- **Implementación por hitos con autorización expresa** (actualizado el 17/11/2026): M0–M3 integrados en `main`; M4 implementado y pendiente de integración; M5 empieza solo con autorización expresa del propietario.
+- **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** LCP móvil < 2,5 s en producción, validación externa de JSON-LD y `hreflang` y workflow de rebuild (D10) en M10; capturas a 768 y 1024 px en M9. Siguen pendientes (detalle en `docs/m4/VALIDACIONES_M4.md`). WebKit móvil (§11) sigue pendiente desde M1, sin hito asignado.
 - Fuera de la v1: reservas, mesas, pedidos para consumir en el local (D4); modo oscuro y selector de apariencia (D11); dominio propio y correo de producción (D6).
 - Sin cuentas, compras ni datos de tarjeta sin la intervención del propietario (D14).
 - La identidad visual aprobada no se rediseña. Las auditorías (axe, Web Design Guidelines, finish gate) informan; los cambios a la identidad requieren aprobación.
