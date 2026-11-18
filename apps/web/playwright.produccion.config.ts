@@ -3,15 +3,21 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * E2E sobre el BUILD DE PRODUCCIÓN (no el servidor de desarrollo): `react-router build` y
- * `vite preview`, que sirve `build/client/index.html` para toda ruta sin archivo propio, como el
- * hosting estático (fallback SPA). Ahí aparecen problemas que el servidor de desarrollo no muestra,
- * porque este genera el HTML de cada URL. Levanta su propia API (puerto 3300) sobre `<base>_e2e`
- * (recreada en cada corrida). Requiere `npm run services:up`.
+ * E2E sobre el BUILD DE PRODUCCIÓN (no el servidor de desarrollo): el build de M4 con prerender
+ * (`npm run build`), servido por `scripts/serve-build.ts` (`npm run preview`) como el hosting
+ * estático. Las páginas públicas reciben su HTML prerenderizado; el resto (cuenta, `/_design`,
+ * 404), el fallback real `__spa-fallback.html`, renderizado desde `/` con `lang="es-CR"`.
+ *
+ * `vite preview` no sirve para esto: entrega `index.html` (la portada prerenderizada en español)
+ * para cualquier ruta, incluso las que tienen HTML propio.
+ *
+ * Levanta su propia API (puerto 3300) sobre `<base>_e2e` (recreada en cada corrida); el build la
+ * usa para prerenderizar el catálogo. Requiere `npm run services:up`.
  */
 const API_PORT = 3300;
 const WEB_PORT = 5177;
 export const WEB_URL = `http://127.0.0.1:${String(WEB_PORT)}`;
+const API = `http://127.0.0.1:${String(API_PORT)}`;
 
 const rootEnvFile = fileURLToPath(new URL('../../.env', import.meta.url));
 if (existsSync(rootEnvFile)) process.loadEnvFile(rootEnvFile);
@@ -46,18 +52,23 @@ export default defineConfig({
         BOT_CHECK_PROVIDER: 'fake',
         LOG_LEVEL: 'warn',
       },
-      url: `http://127.0.0.1:${String(API_PORT)}/api/health`,
+      url: `${API}/api/health`,
       reuseExistingServer: false,
       timeout: 180_000,
     },
     {
-      // `vite preview` usa el mismo proxy de /api que el servidor de desarrollo (preview.proxy).
-      command: `npm run build -w @marea-baja/web && npm exec -w @marea-baja/web -- vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`,
+      // El build lee la API (prerender del catálogo); por eso va después de que la API responde.
+      command: 'npm run build -w @marea-baja/web && npm run preview -w @marea-baja/web',
       cwd: '../..',
-      env: { API_PROXY_TARGET: `http://127.0.0.1:${String(API_PORT)}` },
-      url: `${WEB_URL}/`,
+      env: {
+        CATALOG_API_URL: API,
+        VITE_SITE_URL: WEB_URL,
+        API_PROXY_TARGET: API,
+        PORT: String(WEB_PORT),
+      },
+      url: `${WEB_URL}/sitemap.xml`,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 600_000,
     },
   ],
 });

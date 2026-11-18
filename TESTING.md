@@ -14,7 +14,7 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run lighthouse:h2 -w @marea-baja/web` | Lo mismo sobre `npm run preview:h2` (HTTP/2 con TLS local, como el CDN; es la referencia local de entrega). Una corrida con alguna respuesta que no sea `h2` queda inválida y el comando falla. Salida en `lighthouse-report/h2/` |
 | `npm run cert:dev -w @marea-baja/web` | Crea o muestra el certificado local de `preview:h2` (`-- --renew` lo renueva). Vive fuera del repositorio |
 | `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
-| `npm run test:e2e:produccion -w @marea-baja/web` | Playwright contra el **build de producción** servido con `vite preview` (fallback SPA, como el hosting). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
+| `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
@@ -124,29 +124,45 @@ Las pruebas de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts` (solo
 ### E2E de producción (`npm run test:e2e:produccion -w @marea-baja/web`)
 
 Corre contra el **build de producción**, no contra el servidor de desarrollo:
-- hace `react-router build` y sirve `build/client` con `vite preview` en el puerto 5177;
-- como el hosting estático, entrega el mismo `index.html` (el fallback SPA, renderizado desde `/`) para toda ruta sin archivo propio;
-- `/api` va por el mismo proxy que en desarrollo.
+- hace el build de M4 con prerender (`npm run build`) y lo sirve con `npm run preview` (`scripts/serve-build.ts`, HTTP/1.1) en el puerto 5177, como el hosting estático;
+- las páginas públicas reciben su HTML prerenderizado (por ejemplo, `/en` ya trae `lang="en"`);
+- la cuenta, `/_design` y las rutas inexistentes reciben el fallback real, `__spa-fallback.html`, renderizado desde `/` con `lang="es-CR"`;
+- `/api` va por el proxy de `serve-build`.
+
+**No se usa `vite preview`:** con este build entrega `index.html`, la portada prerenderizada en español, para cualquier ruta, incluso las que tienen HTML propio. Se comprobó el 17/11/2026.
 
 **Requisitos:**
 - `npm run services:up`, con Docker Desktop iniciado: PostgreSQL para la API y Mailpit como proveedor de correo de la API;
 - un `.env` en la raíz con `DATABASE_URL`;
 - `npx playwright install chromium` la primera vez.
 
-La configuración (`apps/web/playwright.produccion.config.ts`) recrea `<base>_e2e` y levanta su propia API en el puerto 3300. No toca la base de desarrollo, pero comparte `<base>_e2e` con las E2E de identidad: no hay que correr las dos suites a la vez.
+**Configuración** (`apps/web/playwright.produccion.config.ts`):
+- recrea `<base>_e2e` y levanta su propia API en el puerto 3300;
+- el build prerenderiza el catálogo con esa API: `CATALOG_API_URL`, `API_PROXY_TARGET`, `VITE_SITE_URL=http://127.0.0.1:5177` y `PORT=5177`;
+- no toca la base de desarrollo, pero comparte `<base>_e2e` con las E2E de identidad y del catálogo: no hay que correr esas suites a la vez.
 
 **Por qué va aparte:**
 - El servidor de desarrollo genera el HTML de cada URL, así que no reproduce los problemas del fallback.
 - Hacer el build lleva tiempo y necesita la API.
-- Por eso `npm run test:e2e` la excluye (`testIgnore: 'produccion/**'`), igual que excluye las E2E de identidad.
+- Por eso `npm run test:e2e` la excluye (`testIgnore: 'produccion/**'`), igual que excluye las E2E de identidad y del catálogo.
 - Todavía no corre en CI.
 
-| Prueba | Validación |
+**Cómo se comprueba "antes de hidratar":** un `MutationObserver` registra cada cambio del atributo `lang` y si React ya había hidratado en ese momento.
+
+| Prueba (9) | Validación |
 |---|---|
-| `<html lang>` en carga directa: `/en/account/sign-in` (y registro, `/en`, `/en/_design`) declara `lang="en"` aunque el HTML servido trae `es-CR`. El cambio ocurre una sola vez y antes de hidratar (lo registra un `MutationObserver`). `/cuenta/ingresar` queda en `es-CR` | D2, accesibilidad |
-| 404 en inglés y en español, recarga de una ruta de la cuenta en inglés | D2 |
-| Navegación sin recargar: de español a inglés y de vuelta con el selector, y en inglés de ingresar a registro (antes quedaba en `es-CR`) | D2 |
+| Carga directa en el fallback: `/en/account/sign-in`, `/en/account/register` y `/en/_design`. El servidor entrega exactamente `__spa-fallback.html`; el documento pasa a `lang="en"` antes de hidratar y no vuelve a `es-CR`. En `sign-in`, un solo cambio | D2, accesibilidad |
+| `/cuenta/ingresar`: queda en `es-CR`; se reafirma antes de hidratar y nunca pasa por otro idioma | D2 |
+| `/en` prerenderizada: el HTML ya trae `lang="en"` (no es el fallback) y la hidratación solo reafirma `en` | D2 |
+| 404 en inglés y en español (fallback), con el idioma de la URL | D2 |
+| Recarga de `/en/account/sign-in`: `lang="en"` antes de hidratar también después de recargar | D2 |
+| Navegación sin recargar: de español a inglés y de vuelta con el selector; y entrando en inglés, de ingresar a registro y luego a español (antes quedaba en `es-CR`) | D2 |
 | El título y el `h1` de cada pantalla están en el idioma del atributo | D2 |
+
+**Contraprueba (17/11/2026):** sin la línea que fija `lang` en `entry.client.tsx` fallan 7 de 9.
+- 5 por idioma incorrecto (`es-CR` en lugar de `en`).
+- 2 porque falta la asignación antes de hidratar: la cuenta en español y `/en`.
+- Los dos 404 pasan igual: cuando ninguna ruta coincide, React vuelve a renderizar el documento entero y corrige `lang` por su cuenta.
 
 ## Qué cubre M4
 
