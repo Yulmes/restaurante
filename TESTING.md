@@ -24,7 +24,7 @@ Primera vez con Playwright: `npx playwright install chromium` dentro de `apps/we
 | Prueba | Archivo | Validación |
 |---|---|---|
 | Contraste WCAG de los pares de la paleta | `apps/web/app/design/contrast.test.ts` | D1 / V1 |
-| Glifos de las tipografías aprobadas y ₡ por respaldo (lectura de `cmap`) | `apps/web/scripts/check-glyphs.test.ts` | V3 |
+| Glifos de las tipografías aprobadas y ₡ por respaldo (lectura de `cmap`); el recorte servido de `Marea Colon` tiene solo U+20A1 y pesa menos de 2 KB | `apps/web/scripts/check-glyphs.test.ts` | V3, M4 |
 | Formato de precios CRC/USD por idioma | `packages/shared/src/money/format.test.ts` | V4 |
 | Paridad de mensajes es-CR / en | `apps/web/app/i18n/messages.test.ts` | D2 |
 | Rutas por idioma | `apps/web/app/i18n/locale.test.ts` | D2 |

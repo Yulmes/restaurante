@@ -35,6 +35,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
   - en inglés, "Nikkei ceviche restaurant".
 - **Plato de la casa aprobado:** Ceviche clásico de corvina (`FEATURED_PRODUCT_SLUG`).
 - **Lighthouse:** `summary.json` guarda también el resultado de cada corrida.
+- **Fuente del ₡ recortada a ese glifo** (ADR 0002): `Marea Colon` pasa de 55–59 KB a unos 850 B por peso, con el mismo dibujo (0 píxeles distintos) e incrustada en el documento. Se genera con `npm run fonts:colon -w @marea-baja/web` (`subset-font`, dependencia de desarrollo).
 
 - `MenuLine` (M1) acepta enlace en el nombre, nombre traducido e idioma de la descripción. `Button` exporta `buttonClassName` para enlaces con aspecto de botón. No hay cambios visuales en lo existente.
 - **Páginas de la cuenta (M3):** usan la barra y el pie del sitio.

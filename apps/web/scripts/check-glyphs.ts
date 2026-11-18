@@ -10,7 +10,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { inflateSync } from 'node:zlib';
+import { fileURLToPath } from 'node:url';
+import { brotliDecompressSync, inflateSync } from 'node:zlib';
 
 export const REQUIRED_CHARS = [
   'á',
@@ -79,6 +80,53 @@ function readCmap(woff: Buffer): Set<number> {
   throw new Error('La fuente no tiene tabla cmap');
 }
 
+// Etiquetas conocidas de WOFF2 (índices 0–62 de la especificación); solo hace falta ubicar `cmap`.
+const WOFF2_TAGS =
+  'cmap head hhea hmtx maxp name OS/2 post cvt  fpgm glyf loca prep CFF VORG EBDT EBLC gasp hdmx kern LTSH PCLT VDMX vhea vmtx BASE GDEF GPOS GSUB EBSC JSTF MATH CBDT CBLC COLR CPAL SVG  sbix acnt avar bdat bloc bsln cvar fdsc feat fmtx fvar gvar hsty just lcar mort morx opbd prop trak Zapf Silf Glat Gloc Feat Sill'
+    .match(/.{4}\s?/g)
+    ?.map((t) => t.slice(0, 4)) ?? [];
+
+function readBase128(buf: Buffer, pos: number): [number, number] {
+  let value = 0;
+  for (let i = 0; i < 5; i++) {
+    const byte = buf.readUInt8(pos + i);
+    value = value * 128 + (byte & 0x7f);
+    if ((byte & 0x80) === 0) return [value, pos + i + 1];
+  }
+  throw new Error('UIntBase128 inválido');
+}
+
+/** `cmap` de un archivo WOFF2 (como los recortes servidos de `Marea Colon`). */
+export function readWoff2Cmap(woff2: Buffer): Set<number> {
+  if (woff2.toString('ascii', 0, 4) !== 'wOF2') throw new Error('No es un archivo WOFF2');
+  const numTables = woff2.readUInt16BE(12);
+  const compressedLength = woff2.readUInt32BE(20);
+  let pos = 48;
+  const entries: { tag: string; length: number }[] = [];
+  for (let i = 0; i < numTables; i++) {
+    const flags = woff2.readUInt8(pos);
+    pos += 1;
+    let tag = WOFF2_TAGS[flags & 0x3f] ?? '';
+    if ((flags & 0x3f) === 63) {
+      tag = woff2.toString('ascii', pos, pos + 4);
+      pos += 4;
+    }
+    const version = (flags >> 6) & 0x03;
+    let length: number;
+    [length, pos] = readBase128(woff2, pos);
+    const transformed = tag === 'glyf' || tag === 'loca' ? version === 0 : version !== 0;
+    if (transformed) [length, pos] = readBase128(woff2, pos);
+    entries.push({ tag, length });
+  }
+  const data = brotliDecompressSync(woff2.subarray(pos, pos + compressedLength));
+  let offset = 0;
+  for (const { tag, length } of entries) {
+    if (tag === 'cmap') return parseCmap(data.subarray(offset, offset + length));
+    offset += length;
+  }
+  throw new Error('La fuente no tiene tabla cmap');
+}
+
 function parseCmap(table: Buffer): Set<number> {
   const codepoints = new Set<number>();
   const numSubtables = table.readUInt16BE(2);
@@ -130,22 +178,25 @@ function fontDir(family: string): string {
 /**
  * Respaldo aprobado por el propietario en M1: Noto Sans aporta SOLO el carácter ₡
  * (ver app/styles/fonts.ts). Cada peso de las tipografías aprobadas cae en el más
- * cercano de los dos pesos declarados.
+ * cercano de los dos pesos declarados. Desde M4 se sirve recortada a ese glifo
+ * (`scripts/subset-colon-font.ts`): se revisan los archivos que llegan al navegador.
  */
 export const FALLBACK = {
   family: 'noto-sans',
-  subset: 'latin-ext',
   weights: [400, 700],
   chars: ['₡'],
 } as const;
 
+/** Archivo servido de `Marea Colon` para un peso. */
+export function fallbackFile(weight: number): string {
+  return fileURLToPath(new URL(`../app/styles/fonts/marea-colon-${String(weight)}.woff2`, import.meta.url));
+}
+
 export function fallbackCovers(char: string): boolean {
   if (!(FALLBACK.chars as readonly string[]).includes(char)) return false;
-  const dir = fontDir(FALLBACK.family);
-  return FALLBACK.weights.every((weight) => {
-    const file = join(dir, `${FALLBACK.family}-${FALLBACK.subset}-${String(weight)}-normal.woff`);
-    return readCmap(readFileSync(file)).has(char.codePointAt(0) ?? -1);
-  });
+  return FALLBACK.weights.every((weight) =>
+    readWoff2Cmap(readFileSync(fallbackFile(weight))).has(char.codePointAt(0) ?? -1),
+  );
 }
 
 export interface GlyphReport {
