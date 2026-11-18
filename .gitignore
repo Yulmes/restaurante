@@ -12,6 +12,7 @@ coverage/
 playwright-report/
 playwright-report-auth/
 playwright-report-catalog/
+playwright-report-produccion/
 apps/web/lighthouse-report/
 # Certificado TLS local de las mediciones HTTP/2 (apps/web/scripts/dev-cert.ts). Vive fuera del
 # repositorio; esto evita versionarlo si DEV_CERT_DIR apunta adentro por error.

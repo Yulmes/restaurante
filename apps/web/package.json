@@ -21,7 +21,8 @@
     "lighthouse": "node scripts/lighthouse.ts",
     "lighthouse:h2": "node scripts/lighthouse.ts --http2",
     "fonts:colon": "node scripts/subset-colon-font.ts",
-    "cert:dev": "node scripts/dev-cert.ts"
+    "cert:dev": "node scripts/dev-cert.ts",
+    "test:e2e:produccion": "playwright test -c playwright.produccion.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

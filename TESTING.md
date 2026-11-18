@@ -14,6 +14,7 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run lighthouse:h2 -w @marea-baja/web` | Lo mismo sobre `npm run preview:h2` (HTTP/2 con TLS local, como el CDN; es la referencia local de entrega). Una corrida con alguna respuesta que no sea `h2` queda inválida y el comando falla. Salida en `lighthouse-report/h2/` |
 | `npm run cert:dev -w @marea-baja/web` | Crea o muestra el certificado local de `preview:h2` (`-- --renew` lo renueva). Vive fuera del repositorio |
 | `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
+| `npm run test:e2e:produccion -w @marea-baja/web` | Playwright contra el **build de producción** servido con `vite preview` (fallback SPA, como el hosting). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
@@ -119,6 +120,33 @@ Levanta su propia base (`<base>_e2e`, recreada en cada corrida, umbral de Turnst
 | Idioma (`idioma.spec.ts`, en escritorio y a 375 px): la cuenta se abre en el idioma guardado aunque el login sea en el otro; el cambio desde el perfil se aplica y persiste tras cerrar sesión, en los dos sentidos; con sesión, ES · EN navega sin cambiar la preferencia; la selección manual antes del login sigue igual; un idioma inválido de la API abre es-CR sin errores | D2 |
 
 Las pruebas de idioma crean sus cuentas con `apps/api/scripts/e2e-user.ts` (solo contra `<base>_e2e`): las cinco cuentas de `identidad.spec.ts` ya usan el límite real de 5 registros por hora por IP. El registro por la interfaz se prueba en `identidad.spec.ts`.
+
+### E2E de producción (`npm run test:e2e:produccion -w @marea-baja/web`)
+
+Corre contra el **build de producción**, no contra el servidor de desarrollo:
+- hace `react-router build` y sirve `build/client` con `vite preview` en el puerto 5177;
+- como el hosting estático, entrega el mismo `index.html` (el fallback SPA, renderizado desde `/`) para toda ruta sin archivo propio;
+- `/api` va por el mismo proxy que en desarrollo.
+
+**Requisitos:**
+- `npm run services:up`, con Docker Desktop iniciado: PostgreSQL para la API y Mailpit como proveedor de correo de la API;
+- un `.env` en la raíz con `DATABASE_URL`;
+- `npx playwright install chromium` la primera vez.
+
+La configuración (`apps/web/playwright.produccion.config.ts`) recrea `<base>_e2e` y levanta su propia API en el puerto 3300. No toca la base de desarrollo, pero comparte `<base>_e2e` con las E2E de identidad: no hay que correr las dos suites a la vez.
+
+**Por qué va aparte:**
+- El servidor de desarrollo genera el HTML de cada URL, así que no reproduce los problemas del fallback.
+- Hacer el build lleva tiempo y necesita la API.
+- Por eso `npm run test:e2e` la excluye (`testIgnore: 'produccion/**'`), igual que excluye las E2E de identidad.
+- Todavía no corre en CI.
+
+| Prueba | Validación |
+|---|---|
+| `<html lang>` en carga directa: `/en/account/sign-in` (y registro, `/en`, `/en/_design`) declara `lang="en"` aunque el HTML servido trae `es-CR`. El cambio ocurre una sola vez y antes de hidratar (lo registra un `MutationObserver`). `/cuenta/ingresar` queda en `es-CR` | D2, accesibilidad |
+| 404 en inglés y en español, recarga de una ruta de la cuenta en inglés | D2 |
+| Navegación sin recargar: de español a inglés y de vuelta con el selector, y en inglés de ingresar a registro (antes quedaba en `es-CR`) | D2 |
+| El título y el `h1` de cada pantalla están en el idioma del atributo | D2 |
 
 ## Qué cubre M4
 
