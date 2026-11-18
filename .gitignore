@@ -11,6 +11,7 @@ Thumbs.db
 coverage/
 playwright-report/
 playwright-report-auth/
+playwright-report-produccion/
 test-results/
 .react-router/
 # Cliente de Prisma generado (`npm run typegen`)
