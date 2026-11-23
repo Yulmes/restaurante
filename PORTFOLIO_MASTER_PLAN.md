@@ -8,7 +8,7 @@
 
 | # | Proyecto | Stack previsto | Estado |
 |---|---|---|---|
-| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M4 integrados en `main`; M4 cerrado (PR #5, 18/11/2026).** M5 no iniciado. |
+| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M4 integrados en `main`; M4 cerrado (PR #5, 18/11/2026). M5 implementado en `m5-pedido`, en revisión.** |
 | 2 | E-commerce de ropa y accesorios | React, TypeScript, Java, Spring Boot, PostgreSQL | Futuro. No iniciado. |
 | 3 | Peluquería: reservas y gestión de citas | React, TypeScript, C#, ASP.NET Core, SQL Server | Futuro. No iniciado. |
 | 4 | SaaS multiusuario de gestión de proyectos | Next.js, TypeScript, NestJS, PostgreSQL, Redis | Futuro. No iniciado. |
@@ -32,7 +32,7 @@
   |---|---|
   | M0 · Fundaciones, M1 · Sistema de diseño, M2 · Datos, M3 · Identidad | Integrados en `main` (PR #1 a #4) |
   | **M4 · Catálogo y SEO** | **Integrado en `main` y cerrado** (PR #5, merge `a710dba`, 18/11/2026; CI posterior al merge: 6/6 jobs aprobados). Incluye la API pública del catálogo, 56 páginas prerenderizadas en es-CR y en, SEO (meta, Open Graph, `hreflang`, JSON-LD, sitemap y robots), precios y disponibilidad en vivo, textos editoriales aprobados y la medición con Lighthouse (HTTP/1.1 y HTTP/2). También integra la corrección de M3 del idioma del documento (`m3-lang-documento`), con su suite E2E sobre el build, que corre en CI |
-  | **M5 · Pedido** | Siguiente hito. No iniciado: requiere la autorización expresa del propietario |
+  | **M5 · Pedido** | **Implementado y validado en local en la rama `m5-pedido`; no integrado ni cerrado: espera la revisión del propietario.** Carrito de invitado y de cuenta con fusión idempotente, motor de precios, checkout de 3 pasos, direcciones y pedido en `PENDING_PAYMENT` sin cobro. Detalle en `docs/m5/VALIDACIONES_M5.md` |
   | M6 a M11 | No iniciados |
 
 - **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** siguen pendientes; no se dan por cumplidos.
@@ -43,7 +43,7 @@
   - WebKit móvil: pendiente desde M1, sin hito asignado.
   - En seguimiento: el error React #418, que no se pudo reproducir, y el riesgo de publicar URLs locales si falta `VITE_SITE_URL` (M10).
   - Detalle en `docs/m4/VALIDACIONES_M4.md`.
-- **Próximo paso:** M5 · Pedido. Empieza solo con la autorización expresa del propietario.
+- **Próximo paso:** revisión de M5 por el propietario y, si la autoriza, integración en `main` mediante PR. M6 empieza solo con autorización expresa.
 
 ## 2 · E-commerce (futuro)
 

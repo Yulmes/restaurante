@@ -4,6 +4,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M5 · Pedido (en revisión, no integrado)
+
+- **Carrito:** de invitado en el navegador (solo referencias) y de la cuenta en PostgreSQL, con la regla C5 (total sin tope de 20 y líneas internas de hasta 20). La fusión al iniciar sesión es idempotente por `mergeKey` (cada clave registrada).
+- **Motor de precios e impuestos** puro, con IVA 13 % incluido y servicio inactivo (D5), redondeo half-up una vez por tasa y ajuste al incremento.
+- **Checkout de 3 pasos**, solo retiro y delivery (D4), con direcciones y zonas del servidor, pedido mínimo (D-M5-4) y bloqueo fuera de horario (D-M5-3; `ORDERS_ALLOW_OUTSIDE_HOURS`).
+- **Pedido** transaccional con copia histórica, `Idempotency-Key`, detección de duplicados en 60 s y `409 PRICE_CHANGED` (D-M5-2). Queda en `PENDING_PAYMENT` con el pago en `REQUIRES_PAYMENT` (D-M5-1): sin cobro.
+- **Web:** botón del pedido en la barra, "Agregar" en la carta con hoja de producto, la página del plato como hoja de producto, carrito, checkout, confirmación demo y direcciones en el perfil, en es-CR y en.
+- **API:** `GET /api/auth/session` para saber si hay sesión sin un 401 en las páginas públicas.
+- **Pruebas:** unitarias, 38 de integración y E2E en Chromium y `Mobile Safari`; job **Pedido** en CI.
+- **Documentos:** ADR 0006 y `docs/m5/VALIDACIONES_M5.md`.
+
+### Cambiado — M5
+
+- La carta pública incluye el `id` de cada plato.
+- La página del plato deja de ser informativa: opciones, cantidad y "Agregar".
+- `OptionGroup` admite modo controlado y opciones deshabilitadas; `MenuLine`, una acción. Los dos cambios son compatibles con M1.
+
 ### Agregado — M4 · Catálogo y SEO
 
 - **API pública** (`/api/public/*`): carta por idioma con respaldo es-CR marcado (§4.5), `catalog-version` en memoria (R20), pizarra de pesca del día y horario. Contratos en `@marea-baja/shared`. Sin cambios de esquema.

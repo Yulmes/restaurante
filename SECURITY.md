@@ -40,6 +40,10 @@ Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación 
 | Recuperar contraseña | 5 / h por IP; 3 / h por correo | 429 por IP; por correo es silencioso (la respuesta no cambia) |
 | Reenviar verificación | 10 / h por IP; 1 / 60 s y 5 / día por cuenta | 429 con el tiempo de espera |
 | Cambiar contraseña | 30 / 15 min por IP | 429 |
+| Cotizar y editar el carrito (M5) | 240 / 10 min por IP | 429 |
+| Fusionar el carrito (M5) | 30 / 10 min por cuenta | 429 |
+| Crear pedidos (M5) | 20 / h por cuenta y 60 / h por IP | 429 |
+| Direcciones (M5) | 60 / h por cuenta | 429 |
 
 **Parámetros de implementación** (la propuesta no los fija):
 - la ventana de fallos de cuenta+IP es de 15 min;
@@ -90,7 +94,7 @@ Los mensajes de error nunca revelan si un correo tiene cuenta. **El registro con
 ## RBAC (§8.7)
 
 - `requireAuth` → 401, `requireRole(...)` → 403 y `requireVerifiedEmail` → `403 EMAIL_NOT_VERIFIED` (para pagar, M5 y M6).
-- La propiedad de cada recurso se comprueba en los servicios y responde 404. Llega con los pedidos (M5).
+- La propiedad de cada recurso se comprueba en los servicios y responde 404 (M5): `GET /api/orders/:id` y las direcciones de otra cuenta, inexistentes o con un id mal formado responden igual, sin confirmar que existan.
 - **Cambio de roles:** lo hace el script `users:set-role` del propietario; la pantalla de clientes llega en M8. En una sola transacción:
   - reemplaza los roles;
   - marca las sesiones para rotar con la política del nuevo rol;
@@ -117,6 +121,16 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 - Helmet en la API, sin `X-Powered-By`.
 - Los errores son `{ error: { code, message, requestId } }`, sin trazas.
 - La CSP de la web (con Turnstile solo en el login) se configura en el Worker o el hosting, en M10.
+
+## Pedido (M5)
+
+- **Montos:** el navegador nunca envía precios, impuestos, envío ni totales; si los manda, se ignoran. La API recalcula todo en la transacción del pedido (ADR 0006).
+- **Cambio de precio:** si lo recalculado difiere de la cotización aceptada (`quoteVersion`), `409 PRICE_CHANGED` y no se crea nada.
+- **Idempotencia:** `Idempotency-Key` obligatoria; misma clave y otro cuerpo → 422; en curso → 409. Un carrito idéntico en menos de 60 s devuelve el pedido existente.
+- **Identidad:** el usuario sale siempre de la sesión. Crear un pedido exige el correo verificado (D3).
+- **Horario:** fuera del horario se bloquea, salvo `ORDERS_ALLOW_OUTSIDE_HOURS=true` en la API.
+- **`?next=` al iniciar sesión:** solo acepta páginas del pedido del propio sitio (`/pedido…`, `/en/order…`); cualquier otro valor se ignora.
+- **Sesión del invitado:** `GET /api/auth/session` responde `{ user: null }` sin error. No expone nada que `/auth/me` no exponga.
 
 ## Pendiente en otros hitos
 

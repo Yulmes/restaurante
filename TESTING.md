@@ -15,12 +15,13 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run cert:dev -w @marea-baja/web` | Crea o muestra el certificado local de `preview:h2` (`-- --renew` lo renueva). Vive fuera del repositorio |
 | `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
 | `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
+| `npm run test:e2e:pedido -w @marea-baja/web` | Playwright del pedido (M5) en Chromium y `Mobile Safari` (WebKit con perfil de iPhone; no es un iPhone real). Recrea `<base>_e2e`, levanta su API (3400, con `ORDERS_ALLOW_OUTSIDE_HOURS=true`) y la web de desarrollo (5178) |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
 | `npm run glyphs -w @marea-baja/web` | Informe de glifos por fuente, peso y subconjunto (V3) |
 
-Primera vez con Playwright: `npx playwright install chromium` dentro de `apps/web`.
+Primera vez con Playwright: `npx playwright install chromium` dentro de `apps/web` (y `webkit` para las E2E del pedido).
 
 ## Qué cubre M1
 
@@ -175,3 +176,15 @@ Corre contra el **build de producción**, no contra el servidor de desarrollo:
 
 Las E2E del catálogo cambian el precio de un plato con `apps/api/scripts/e2e-catalog.ts`, que solo corre contra `<base>_e2e`.
 
+## Qué cubre M5
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| Motor de precios: half-up, redondeo al incremento (también negativo), mayor resto, IVA incluido y sumado, una vez por tasa, servicio inactivo y solo `DINE_IN`, envío en la base, promociones y validaciones | `apps/api/src/modules/pricing/engine.test.ts` | §6.2, D4, D5, R9 |
+| Reparto C5 (0 a 999), identidad de línea, validación de opciones, horario en la zona del local y distritos | `apps/api/src/modules/cart/lines.test.ts` | C5, V11, D-M5-3 |
+| `ORDERS_ALLOW_OUTSIDE_HOURS` | `apps/api/src/config/env.test.ts` | D-M5-3 |
+| `?next=` seguro al iniciar sesión | `apps/web/app/account/links.test.ts` | §8.7 |
+| 38 pruebas contra PostgreSQL: carrito, C5, fusión (incluida A → B → A y concurrencia), direcciones, cotización, pedido, idempotencia, duplicados, `PRICE_CHANGED`, horario, mínimo, delivery, IDOR, CSRF y límites | `apps/api/test/pedido.db.test.ts` | §7.3, §7.5, D3, D-M5-1 a D-M5-4 |
+| E2E en Chromium y `Mobile Safari`: invitado → hoja de producto → carrito → login con fusión → checkout → pedido (doble clic sin duplicar); delivery en inglés con cambio de precio; cuenta sin verificar; axe del carrito, del checkout y de la confirmación | `apps/web/e2e/pedido/pedido.spec.ts` | D3, D-M5-2, WebKit (opción A) |
+
+Las cuentas de las E2E del pedido se crean en la base E2E con `apps/api/scripts/e2e-user.ts` (`--unverified` para una sin verificar). Detalle y línea base de WebKit en `docs/m5/VALIDACIONES_M5.md`.

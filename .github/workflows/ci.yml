@@ -1,5 +1,6 @@
 # CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3),
-# catálogo y SEO (M4), idioma del documento en el build de producción y servicios locales.
+# catálogo y SEO (M4), pedido (M5, Chromium y WebKit), idioma del documento en el build de
+# producción y servicios locales.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -208,6 +209,59 @@ jobs:
       # Turnstile usa el proveedor falso y el script de Cloudflare se reemplaza: sin llamadas externas.
       - name: Registro, correo, verificación, login, perfil, recuperación, Turnstile y axe
         run: npm run test:e2e:auth -w @marea-baja/web
+
+      - name: Bajar servicios
+        if: always()
+        run: docker compose down --volumes
+
+  order:
+    name: Pedido (carrito, checkout y E2E en Chromium y WebKit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Sin correo real: las cuentas de prueba se crean ya verificadas en la base E2E.
+      - name: Levantar PostgreSQL
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 120 postgres
+
+      # WebKit de Playwright con perfil de iPhone (`Mobile Safari`): no es Safari de iOS real.
+      - name: Instalar Chromium y WebKit para Playwright
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Caché de las variantes de imagen
+        id: images-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/public/images
+          key: images-${{ runner.os }}-${{ hashFiles('apps/web/photos/source/**', 'apps/web/scripts/build-images.ts', 'apps/web/app/catalog/images.ts', 'package-lock.json') }}
+
+      - name: Variantes de imagen (AVIF, WebP y Open Graph)
+        env:
+          CACHE_HIT: ${{ steps.images-cache.outputs.cache-hit }}
+        run: |
+          if [ "$CACHE_HIT" = "true" ]; then
+            find apps/web/public/images -type f -exec touch {} +
+          fi
+          npm run images -w @marea-baja/web
+
+      # La configuración crea su base (<base>_e2e) y levanta la API (con el modo de demostración
+      # fuera de horario, para no depender de la hora) y la web. Carta → hoja de producto →
+      # carrito → fusión al iniciar sesión → checkout → pedido, en es-CR y en, y axe.
+      - name: Carrito, fusión, checkout y pedido (Chromium y Mobile Safari)
+        run: npm run test:e2e:pedido -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()
