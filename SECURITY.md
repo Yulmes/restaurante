@@ -132,6 +132,17 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 - **`?next=` al iniciar sesión:** solo acepta páginas del pedido del propio sitio (`/pedido…`, `/en/order…`); cualquier otro valor se ignora.
 - **Sesión del invitado:** `GET /api/auth/session` responde `{ user: null }` sin error. No expone nada que `/auth/me` no exponga.
 
+## Pagos (M6)
+
+- **Sin datos de tarjeta:** no se piden, no viajan y no se guardan. La tarjeta "DEMO •••• 0000" es una ilustración. El procesador es simulado (`MockGateway`) y no llama a ningún servicio externo.
+- **Montos y estados del servidor:** el monto de la autorización sale del pedido en la base, nunca del cuerpo. Los cuerpos son estrictos: un `amountMinor` o cualquier campo extra en `/authorize` → 400. Ningún endpoint recibe un estado de pago.
+- **Escenario demo:** lista cerrada (Zod) y solo con `DEMO_PAYMENTS_ENABLED=true`.
+- **Idempotencia:** `Idempotency-Key` obligatoria en `/authorize` y `/refunds` (misma clave y otro cuerpo → 422; en curso → 409). Hacia el procesador, cada operación usa una clave determinística: repetirla nunca cobra dos veces.
+- **Concurrencia:** el pago se bloquea con `SELECT … FOR UPDATE` en cada cambio. Un solo pago por pedido; mientras está en `PROCESSING`, otro intento → 409. Σ reembolsos ≤ capturado cuenta los reembolsos en curso, y además lo garantiza el `CHECK` de la base.
+- **Identidad y propiedad:** el cliente solo paga sus pedidos (ajeno → 404) y con el correo verificado (D3). Capturar y anular: STAFF o ADMIN. Reembolsar: solo ADMIN (`requireRole`).
+- **Límites (§8.4):** autorizar, 30 / h por IP y 10 / h por pedido; staff y admin, 30 / 10 min por usuario, con entrada `payment.rate_limited` en el AuditLog al exceder.
+- **AuditLog:** `payment.captured`, `payment.voided` y `payment.refunded`, en la misma transacción, con la lista blanca `payment` (código del pedido, estado, método y montos).
+
 ## Pendiente en otros hitos
 
 - **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): M10. Hasta entonces la API usa la IP del socket.

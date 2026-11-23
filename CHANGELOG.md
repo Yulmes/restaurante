@@ -4,6 +4,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M6 · Pagos (en revisión, no integrado)
+
+- **Interfaz `PaymentGateway`** y procesador simulado (`MockGateway`) con los escenarios de la tarjeta demo: aprobado, rechazado, fondos insuficientes, error del procesador, tiempo agotado y pendiente (§7.4). Sin dinero real ni datos de tarjeta.
+- **Autorizar** (`POST /api/orders/:id/payments/authorize`) con `Idempotency-Key`, intención registrada antes de llamar al procesador y bloqueo del pago. Aprobado → pedido en `PENDING_CONFIRMATION`.
+- **Pagar al recibir o al retirar** (`POST /api/orders/:id/payments/cash-on-delivery`, D-M6-1).
+- **Reconciliación** cada 5 s: tiempo agotado, pendiente y operaciones interrumpidas, sin cobrar dos veces.
+- **Staff y admin, sin interfaz (D-M6-2):** capturar y anular (STAFF/ADMIN) y reembolsar total o parcial (ADMIN) bajo `/api/admin/orders/:id/payment`, con AuditLog y límites.
+- **Web:** forma de pago y selector de escenarios en el paso 3 del checkout; en la confirmación, estado del pago, actualización sola mientras está en proceso y reintento tras un rechazo.
+- **Variable `DEMO_PAYMENTS_ENABLED`** (por defecto `false`).
+- **Pruebas:** matriz de la máquina de estados, 25 de integración y E2E de pagos en Chromium y `Mobile Safari` (`test:e2e:pagos`, también en CI).
+- **Documentos:** ADR 0007 y `docs/m6/VALIDACIONES_M6.md`.
+
+### Cambiado — M6
+
+- La idempotencia HTTP de `POST /orders` se extrajo a un módulo compartido, sin cambios de comportamiento.
+- El pedido trae `payment.method`, `payment.availableMethods` y `payment.lastAttempt`; la cotización del checkout, `paymentMethods`.
+- Textos del checkout y de la confirmación: el pago ya no dice "no habilitado"; dice que es un entorno de demostración sin dinero real.
+- El job de CI **Pedido** pasa a **Pedido y pagos** y ejecuta también `test:e2e:pagos`.
+
 ### Agregado — M5 · Pedido (integrado en `main` mediante el PR #6)
 
 - **Carrito:** de invitado en el navegador (solo referencias) y de la cuenta en PostgreSQL, con la regla C5 (total sin tope de 20 y líneas internas de hasta 20). La fusión al iniciar sesión es idempotente por `mergeKey` (cada clave registrada).
