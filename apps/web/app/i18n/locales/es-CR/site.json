@@ -132,9 +132,8 @@
   },
   "cart": {
     "button": "Pedido",
-    "buttonLabel_one": "Tu pedido: {{count}} producto, {{total}}",
-    "buttonLabel_other": "Tu pedido: {{count}} productos, {{total}}",
-    "buttonEmpty": "Tu pedido",
+    "buttonLabel_one": "{{count}} producto, {{total}}",
+    "buttonLabel_other": "{{count}} productos, {{total}}",
     "add": "Agregar · {{price}}",
     "addShort": "Agregar",
     "addLabel": "Agregar {{name}} al pedido",

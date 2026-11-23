@@ -23,7 +23,13 @@ import {
 import { useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
 import { AddressesSection } from '../../cart/addresses.tsx';
-import { ME_QUERY_KEY, useApplySession, useClearSession, useMe } from '../../account/session.ts';
+import {
+  ME_QUERY_KEY,
+  SESSION_QUERY_KEY,
+  useApplySession,
+  useClearSession,
+  useMe,
+} from '../../account/session.ts';
 import { Button } from '../../components/ui/Button.tsx';
 import { TextField } from '../../components/ui/TextField.tsx';
 import { pathForLocale } from '../../i18n/locale.ts';
@@ -122,6 +128,7 @@ function DetailsForm({
     onSuccess: (response) => {
       if (!response) return;
       queryClient.setQueryData(ME_QUERY_KEY, response.user);
+      queryClient.setQueryData(SESSION_QUERY_KEY, response.user);
       // El idioma guardado se aplica en el acto: misma página, en el idioma elegido.
       if (response.user.locale !== pageLocale) {
         void navigate(pathForLocale(location.pathname, response.user.locale), {

@@ -9,7 +9,7 @@ import {
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { apiGet, apiSend } from '../account/api.ts';
-import { useMe } from '../account/session.ts';
+import { useSessionUser } from '../account/session.ts';
 import { useLocale } from '../i18n/use-locale.ts';
 import {
   changeGuestLine,
@@ -50,7 +50,7 @@ export interface CartState {
 export function useCart(): CartState {
   const locale = useLocale();
   const client = useQueryClient();
-  const me = useMe();
+  const me = useSessionUser();
   const signedIn = !!me.data;
   const guest = useGuestCart();
   const guestLines = guest?.lines ?? [];
@@ -161,7 +161,7 @@ export function useMergeNotice(): [MergeNotice, () => void] {
  * `mergeKey` (la API no vuelve a sumar una clave ya fusionada).
  */
 export function CartSync(): null {
-  const me = useMe();
+  const me = useSessionUser();
   const guest = useGuestCart();
   const locale = useLocale();
   const client = useQueryClient();
@@ -184,6 +184,8 @@ export function CartSync(): null {
         if (readGuestCart()?.mergeKey === cart.mergeKey) clearGuestCart();
         client.setQueryData(cartKey(locale), result.cart);
         void client.invalidateQueries({ queryKey: ['cart'] });
+        // El checkout pudo haber cotizado el carrito antes de la fusión: se vuelve a cotizar.
+        void client.invalidateQueries({ queryKey: ['checkout-quote'] });
         if (result.unavailable.length > 0) setNotice(result.unavailable);
       })
       .catch(() => undefined)

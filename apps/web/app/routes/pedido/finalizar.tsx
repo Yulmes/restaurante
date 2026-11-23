@@ -11,7 +11,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { ApiError, NetworkError, apiSend } from '../../account/api.ts';
-import { useMe } from '../../account/session.ts';
+import { useSessionUser } from '../../account/session.ts';
 import { AddressForm, useAddresses } from '../../cart/addresses.tsx';
 import { orderMeta, OrderShell, TotalsList } from '../../cart/OrderShell.tsx';
 import { Button, buttonClassName } from '../../components/ui/Button.tsx';
@@ -35,7 +35,7 @@ export default function Finalizar() {
   const { t: tc } = useT();
   const locale = useLocale();
   const { pathname } = useLocation();
-  const me = useMe();
+  const me = useSessionUser();
 
   if (me.isPending) {
     return (
@@ -138,6 +138,8 @@ function Checkout({ user }: { user: PublicUser }) {
 
   const goTo = (next: Step) => {
     setStep(next);
+    // Al llegar al pago se vuelve a cotizar: lo que se confirma es lo vigente.
+    if (next === 3) void quote.refetch();
     requestAnimationFrame(() => headingRef.current?.focus());
   };
 
@@ -380,9 +382,15 @@ function Checkout({ user }: { user: PublicUser }) {
               only={['FULFILLMENT_UNAVAILABLE', 'ADDRESS_REQUIRED', 'DELIVERY_ZONE_UNAVAILABLE']}
             />
             <Button
-              {...(deliveryReady && enabled(fulfillment)
-                ? {}
-                : { disabledReason: t('checkout.problems.ADDRESS_REQUIRED') })}
+              {...(!enabled(fulfillment)
+                ? { disabledReason: t('checkout.notEnabled') }
+                : deliveryReady
+                  ? {}
+                  : {
+                      disabledReason: selected
+                        ? t('checkout.problems.DELIVERY_ZONE_UNAVAILABLE')
+                        : t('checkout.problems.ADDRESS_REQUIRED'),
+                    })}
               onClick={() => {
                 goTo(2);
               }}
@@ -461,7 +469,8 @@ function Checkout({ user }: { user: PublicUser }) {
                 loading={place.isPending}
                 {...(!q || q.problems.length > 0 ? { disabledReason: t('checkout.confirmBlocked') } : {})}
                 onClick={() => {
-                  if (!q) return;
+                  // Doble clic: mientras el intento está en curso no sale otro (la API igual lo frena).
+                  if (!q || place.isPending) return;
                   setBanner(null);
                   place.mutate(q);
                 }}

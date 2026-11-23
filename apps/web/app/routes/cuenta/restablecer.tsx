@@ -16,7 +16,7 @@ import {
 } from '../../account/form.tsx';
 import { tokenFromHash, useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
-import { ME_QUERY_KEY } from '../../account/session.ts';
+import { ME_QUERY_KEY, SESSION_QUERY_KEY } from '../../account/session.ts';
 import { Button } from '../../components/ui/Button.tsx';
 import { TextField } from '../../components/ui/TextField.tsx';
 import { useT } from '../../i18n/use-locale.ts';
@@ -60,6 +60,7 @@ export default function Restablecer() {
       // La API revocó todas las sesiones, también la de este navegador.
       rememberCsrfToken(null);
       queryClient.setQueryData(ME_QUERY_KEY, null);
+      queryClient.setQueryData(SESSION_QUERY_KEY, null);
     },
     onError: (error) => {
       if (error instanceof ApiError && error.code === 'INVALID_OR_EXPIRED_TOKEN') setExpired(true);

@@ -17,14 +17,17 @@ export function CartButton() {
   return (
     <Link
       to={pathForLocale('/pedido', locale)}
-      aria-label={count > 0 ? t('cart.buttonLabel', { count, total }) : t('cart.buttonEmpty')}
       className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control)] border border-text px-3 t-ui hover:bg-surface-raised"
     >
       <span>{t('cart.button')}</span>
       {count > 0 ? (
-        <span aria-hidden="true" className="tabular-nums">
-          {` · ${String(count)} · ${total}`}
-        </span>
+        <>
+          {/* Nombre accesible: "Pedido: 2 productos, ₡18 500" (empieza con el texto visible, WCAG 2.5.3). */}
+          <span aria-hidden="true" className="tabular-nums">
+            {` · ${String(count)} · ${total}`}
+          </span>
+          <span className="sr-only">{`: ${t('cart.buttonLabel', { count, total })}`}</span>
+        </>
       ) : null}
     </Link>
   );

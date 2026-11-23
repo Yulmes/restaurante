@@ -132,9 +132,8 @@
   },
   "cart": {
     "button": "Order",
-    "buttonLabel_one": "Your order: {{count}} item, {{total}}",
-    "buttonLabel_other": "Your order: {{count}} items, {{total}}",
-    "buttonEmpty": "Your order",
+    "buttonLabel_one": "{{count}} item, {{total}}",
+    "buttonLabel_other": "{{count}} items, {{total}}",
     "add": "Add · {{price}}",
     "addShort": "Add",
     "addLabel": "Add {{name}} to your order",

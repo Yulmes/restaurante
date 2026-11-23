@@ -22,6 +22,7 @@ export {
   resetPasswordRequestSchema,
   roleKeySchema,
   sessionResponseSchema,
+  sessionStateResponseSchema,
   updateProfileRequestSchema,
   verifyEmailRequestSchema,
 } from './auth/schemas.ts';

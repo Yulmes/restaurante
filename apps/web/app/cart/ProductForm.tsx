@@ -127,17 +127,20 @@ export function ProductForm({
               {...(group.name.lang === locale ? {} : { legendLang: group.name.lang })}
               type={group.minSelect === 1 && group.maxSelect === 1 ? 'single' : 'multiple'}
               {...(group.maxSelect > 1 || group.minSelect === 0 ? { max: group.maxSelect } : {})}
-              description={
-                invalid
-                  ? group.minSelect === 1 && group.maxSelect === 1
-                    ? t('cart.chooseRequired', { group: group.name.text })
-                    : t('cart.chooseRange', {
-                        group: group.name.text,
-                        min: group.minSelect,
-                        max: group.maxSelect,
-                      })
-                  : t(`product.${rule}`, { min: group.minSelect, max: group.maxSelect })
-              }
+              {...(invalid
+                ? {
+                    description:
+                      group.minSelect === 1 && group.maxSelect === 1
+                        ? t('cart.chooseRequired', { group: group.name.text })
+                        : t('cart.chooseRange', {
+                            group: group.name.text,
+                            min: group.minSelect,
+                            max: group.maxSelect,
+                          }),
+                  }
+                : rule === 'chooseUpTo'
+                  ? {} // El grupo ya anuncia "Elegí hasta N · elegiste X de N".
+                  : { description: t(`product.${rule}`, { min: group.minSelect, max: group.maxSelect }) })}
               invalid={invalid}
               selected={chosen(group)}
               onChange={(next) => {

@@ -897,3 +897,16 @@ describe('GET /api/orders/:id (IDOR, R-SEC-06)', () => {
     expect((await new Browser(api).get(`/api/orders/${created.id}`)).status).toBe(401);
   });
 });
+
+describe('GET /api/auth/session (M5)', () => {
+  it('responde 200 con user null al invitado y el usuario con sesión; /auth/me conserva su 401', async () => {
+    const guest = new Browser(api);
+    const anonymous = await guest.get('/api/auth/session').expect(200);
+    expect(anonymous.body).toEqual({ user: null });
+    expect(anonymous.headers['cache-control']).toBe('no-store');
+    expect((await guest.get('/api/auth/me')).status).toBe(401);
+    const { browser } = await verifiedCustomer();
+    const res = await browser.get('/api/auth/session').expect(200);
+    expect(res.body).toMatchObject({ user: { emailVerified: true } });
+  });
+});
