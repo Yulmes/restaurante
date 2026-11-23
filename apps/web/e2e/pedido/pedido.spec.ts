@@ -251,9 +251,16 @@ test('una cuenta sin verificar arma el pedido pero no puede confirmarlo (D3)', a
 /** Agrega dos ceviches con picante rocoto y palta (opciones con recargo) desde la página del plato. */
 async function addCevicheWithOptions(page: Page): Promise<void> {
   await page.goto('/carta/ceviches/ceviche-clasico');
+  // Antes de hidratar, un clic en una opción se pierde (React vuelve al valor por defecto): en CI
+  // la prueba D4 falló así una vez. Se espera a React y se comprueba el precio con las opciones.
+  await page.waitForFunction(() => {
+    const button = document.querySelector('main button');
+    return button !== null && Object.keys(button).some((key) => key.startsWith('__reactProps'));
+  });
   await page.getByText('Rocoto, para valientes').click();
   await page.getByText('Palta', { exact: true }).click();
   const add = page.getByRole('button', { name: /^Agregar · / });
+  await expect(add).toHaveAccessibleName(money('10 400'));
   await add.click();
   await expect(page.getByText('Agregado a tu pedido.')).toBeVisible();
   await add.click();

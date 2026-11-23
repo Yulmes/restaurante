@@ -131,6 +131,7 @@ Las E2E del pedido pasan en `Mobile Safari` (3/3; motor WebKit de Playwright, no
 
 **Pruebas ajustadas:**
 - `e2e/auth/helpers.ts` (`languageLink`): el selector de idioma está en la barra desde 1024 px, ya no desde 768. Las suites usan 375 y 1280 px, así que su comportamiento no cambia.
+- En el primer CI del PR #6, la prueba D4 falló una vez en Chromium y pasó al reintento (*flaky*). La causa estaba en la prueba: el helper hacía clic en las opciones del plato antes de que React hidratara la página y la hidratación las devolvía al valor por defecto. Ahora espera la hidratación (mismo criterio que la suite del catálogo) y comprueba el precio con las opciones (₡10 400) antes de agregar. La app no cambió.
 - La prueba "D1 y D2" carga cada página una vez y cambia el ancho sin recargar. En una primera versión, con 40 recargas por motor, la corrida de los dos proyectos superó el freno global de la API (300 solicitudes cada 5 min por IP) y el login de WebKit recibía 429. Fue un problema de la prueba, no de la app.
 
 **Evidencia:** capturas antes y después en Chromium y `Mobile Safari` (barra a 768 y 390 px vacía y con productos, carrito a 390 px y formulario de dirección tras recuperar el error). Quedaron en la carpeta temporal de la sesión (`…/scratchpad/m5/d1d4/antes` y `…/despues`) y **no se versionan**.
