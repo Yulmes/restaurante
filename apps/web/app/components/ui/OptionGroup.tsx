@@ -7,6 +7,12 @@ export interface Option {
   label: string;
   /** Diferencia de precio en unidad menor; 0 = incluido. */
   priceDeltaMinor: number;
+  /** M5: opción agotada hoy u otra razón para no elegirla. */
+  disabled?: boolean;
+  /** M5: texto breve junto a la etiqueta ("no disponible hoy"). */
+  note?: string;
+  /** M5: idioma real de la etiqueta si difiere del de la página (§4.5). */
+  lang?: string;
 }
 
 interface OptionGroupProps {
@@ -16,25 +22,56 @@ interface OptionGroupProps {
   /** Máximo de extras en grupos de elección múltiple. */
   max?: number;
   defaultSelected?: readonly string[];
+  /** M5: modo controlado (hoja de producto). Sin `selected`, el grupo guarda su propio estado. */
+  selected?: readonly string[];
+  onChange?: (next: string[]) => void;
+  /** M5: regla del grupo ("Elegí una (obligatorio)") o error, anunciada con el grupo. */
+  description?: string;
+  invalid?: boolean;
+  /** Idioma real de la leyenda si difiere del de la página. */
+  legendLang?: string;
 }
 
 /** Grupo de opciones de un plato (§3.4): fieldset + legend, diferencia de precio a la derecha. */
-export function OptionGroup({ legend, type, options, max, defaultSelected = [] }: OptionGroupProps) {
+export function OptionGroup({
+  legend,
+  type,
+  options,
+  max,
+  defaultSelected = [],
+  selected: controlled,
+  onChange,
+  description,
+  invalid = false,
+  legendLang,
+}: OptionGroupProps) {
   const { t } = useT();
   const name = useId();
   const statusId = useId();
-  const [selected, setSelected] = useState<string[]>([...defaultSelected]);
+  const descriptionId = useId();
+  const [own, setOwn] = useState<string[]>([...defaultSelected]);
+  const selected = controlled ? [...controlled] : own;
   const toggle = (id: string) => {
-    if (type === 'single') {
-      setSelected([id]);
-      return;
-    }
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    const next =
+      type === 'single' ? [id] : selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
+    if (!controlled) setOwn(next);
+    onChange?.(next);
   };
+  const describedBy = [description ? descriptionId : null, max ? statusId : null].filter(Boolean).join(' ');
   const limitReached = type === 'multiple' && max !== undefined && selected.length >= max;
   return (
-    <fieldset className="flex max-w-[30rem] flex-col" aria-describedby={max ? statusId : undefined}>
-      <legend className="mb-1 font-display text-lg leading-7 font-semibold">{legend}</legend>
+    <fieldset className="flex max-w-[30rem] flex-col" aria-describedby={describedBy || undefined}>
+      <legend lang={legendLang} className="mb-1 font-display text-lg leading-7 font-semibold">
+        {legend}
+      </legend>
+      {description ? (
+        <p
+          id={descriptionId}
+          className={`mb-2 text-sm leading-5 ${invalid ? 'text-danger' : 'text-text-muted'}`}
+        >
+          {description}
+        </p>
+      ) : null}
       {max ? (
         <p id={statusId} aria-live="polite" className="mb-2 text-sm leading-5 text-text-muted">
           {t('form.chooseUpTo', { max })} · {t('form.chosen', { count: selected.length, max })}
@@ -42,7 +79,7 @@ export function OptionGroup({ legend, type, options, max, defaultSelected = [] }
       ) : null}
       {options.map((option) => {
         const checked = selected.includes(option.id);
-        const optionDisabled = !checked && limitReached;
+        const optionDisabled = (option.disabled ?? false) || (!checked && limitReached);
         return (
           <label
             key={option.id}
@@ -58,7 +95,10 @@ export function OptionGroup({ legend, type, options, max, defaultSelected = [] }
               }}
               className="size-5 accent-tinta"
             />
-            <span>{option.label}</span>
+            <span>
+              <span lang={option.lang}>{option.label}</span>
+              {option.note ? <span className="text-sm text-text-muted">{` · ${option.note}`}</span> : null}
+            </span>
             <span className="text-text-muted">
               {option.priceDeltaMinor === 0 ? (
                 t('price.included')

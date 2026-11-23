@@ -11,6 +11,7 @@ import {
   useLocation,
 } from 'react-router';
 import type { Route } from './+types/root';
+import { CartSync } from './cart/use-cart.ts';
 import { i18n, namespacesForPath, useNamespaces } from './i18n/config.ts';
 import { useLocale, useT } from './i18n/use-locale.ts';
 import './styles/app.css';
@@ -49,6 +50,8 @@ export default function App() {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
+      {/* M5: al iniciar sesión, el carrito del navegador se fusiona con el de la cuenta (§7.5). */}
+      <CartSync />
       <Outlet />
     </QueryClientProvider>
   );

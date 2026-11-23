@@ -1,7 +1,7 @@
 /**
  * Solo para las E2E: crea una cuenta de cliente ya verificada en la base `<base>_e2e`.
  *
- *   node scripts/e2e-user.ts --email a@example.com --password "…" --locale en
+ *   node scripts/e2e-user.ts --email a@example.com --password "…" --locale en [--unverified]
  *
  * Las E2E registran cuentas por la interfaz, pero el límite real de 5 registros por hora por IP
  * (§8.4) impide crear más desde el mismo navegador de pruebas. Este script no cambia ese límite:
@@ -14,7 +14,13 @@ import { createPrismaClient } from '../src/db/client.ts';
 import { hashPassword } from '../src/modules/auth/passwords.ts';
 
 const { values } = parseArgs({
-  options: { email: { type: 'string' }, password: { type: 'string' }, locale: { type: 'string' } },
+  options: {
+    email: { type: 'string' },
+    password: { type: 'string' },
+    locale: { type: 'string' },
+    // M5: cuenta sin verificar, para probar que el checkout exige el correo verificado (D3).
+    unverified: { type: 'boolean', default: false },
+  },
 });
 const url = process.env['DATABASE_URL'] ?? '';
 if (!/\/[a-z0-9_]+_e2e(\?|$)/.test(url)) {
@@ -36,7 +42,7 @@ try {
       name: 'Cuenta E2E',
       passwordHash: await hashPassword(values.password),
       locale: locale === 'es-CR' ? 'es_CR' : 'en',
-      emailVerifiedAt: new Date(),
+      emailVerifiedAt: values.unverified ? null : new Date(),
       roles: { create: { roleId: customer.id } },
     },
   });

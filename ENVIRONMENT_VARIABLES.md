@@ -28,6 +28,7 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `TURNSTILE_SECRET_KEY` | Con `BOT_CHECK_PROVIDER=turnstile` | — | **Secreto.** Clave secreta del widget de Turnstile (D14) |
 | `TURNSTILE_GLOBAL_THRESHOLD` | No (por defecto `50`) | Entero positivo | Valor por defecto del umbral global de fallos de login. Manda `RestaurantSettings` (semilla: 50) |
 | `TURNSTILE_WINDOW_MINUTES` | No (por defecto `60`) | Entero positivo | Ventana del umbral. Manda `RestaurantSettings` (semilla: 60) |
+| `ORDERS_ALLOW_OUTSIDE_HOURS` | No (por defecto `false`) | `true`, `false` | M5 (D-M5-3): con `true`, la API acepta pedidos fuera del horario del local (modo de demostración). Por defecto los bloquea. El navegador no la puede cambiar. Las E2E del pedido la activan para no depender de la hora |
 
 ### Web
 

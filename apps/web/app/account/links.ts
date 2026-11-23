@@ -18,3 +18,13 @@ export function tokenFromHash(hash: string): string | null {
   const token = new URLSearchParams(hash.replace(/^#/, '')).get('token');
   return token && /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
 }
+
+/**
+ * Destino después de iniciar sesión (`?next=`), solo si es una página del pedido de este sitio
+ * (M5: volver al checkout). Cualquier otro valor se ignora: nunca redirige a otro origen.
+ */
+export function safeNextPath(value: string | null): string | null {
+  if (!value) return null;
+  // Solo rutas propias del pedido: sin `//`, sin barras invertidas ni otro esquema u origen.
+  return /^\/(?:en\/order|pedido)(?:\/[\w-]+)*$/.test(value) ? value : null;
+}

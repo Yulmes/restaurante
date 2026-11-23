@@ -44,6 +44,8 @@ export const catalogOptionGroupSchema = z.object({
 export type CatalogOptionGroup = z.infer<typeof catalogOptionGroupSchema>;
 
 export const catalogProductSchema = z.object({
+  /** Referencia estable para el carrito (M5): el del navegador guarda solo ids, nunca precios. */
+  id: z.uuid(),
   slug: slugSchema,
   /** Nombre original del plato (D2): nunca se traduce. */
   name: z.string(),

@@ -10,6 +10,8 @@ export interface AppConfig {
   appSecret: string;
   emailFrom: string;
   turnstileDefaults: { threshold: number; windowMinutes: number };
+  /** D-M5-3: pedidos fuera de horario solo con el modo de demostración explícito (por defecto, no). */
+  ordersAllowOutsideHours: boolean;
 }
 
 export function appConfigFromEnv(env: Env): AppConfig {
@@ -23,6 +25,7 @@ export function appConfigFromEnv(env: Env): AppConfig {
       threshold: env.TURNSTILE_GLOBAL_THRESHOLD,
       windowMinutes: env.TURNSTILE_WINDOW_MINUTES,
     },
+    ordersAllowOutsideHours: env.ORDERS_ALLOW_OUTSIDE_HOURS,
   };
 }
 

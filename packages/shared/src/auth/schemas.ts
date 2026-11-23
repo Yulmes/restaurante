@@ -118,4 +118,6 @@ export const sessionResponseSchema = z.object({
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 
 export const meResponseSchema = z.object({ user: publicUserSchema });
+/** M5: `GET /api/auth/session`, también para invitados (`user: null`). */
+export const sessionStateResponseSchema = z.object({ user: publicUserSchema.nullable() });
 export const csrfResponseSchema = z.object({ csrfToken: z.string() });

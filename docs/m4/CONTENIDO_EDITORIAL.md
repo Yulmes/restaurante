@@ -6,7 +6,7 @@
 
 - **Solo hechos aprobados.** Se usan el concepto de §1.1 (cevichería nikkei, Perú × Japón, Barrio Escalante, especialidades, pizarra de pesca del día), el eslogan, D4 (solo retiro y delivery propio, sin reservas) y la carta y la semilla de M2 (puertos, descripciones de las categorías).
 - **No se inventa nada:** ni personas, ni años de fundación, ni premios, ni teléfono o correo. La página "Ubicación y horario" dice explícitamente que el restaurante de demostración no tiene contacto de atención.
-- **Sin prometer pedidos antes de M5:** la portada y "Ubicación y horario" describen el retiro y el delivery como la propuesta del restaurante y aclaran que la demostración todavía no recibe pedidos.
+- **Sin prometer pedidos reales:** la portada y "Ubicación y horario" describen el retiro y el delivery como la propuesta del restaurante. Hasta M4 aclaraban que la demostración no recibía pedidos; desde M5 (actualización autorizada por el propietario el 22/11/2026, solo `home.visitBody` y `visit.lead`) dicen que se puede registrar un pedido de demostración, sin pago ni compra real.
 - **Sin servicio de mesa:** el local se presenta solo como punto de retiro (D4).
 - **Español de Costa Rica con voseo** en los textos comerciales ("Pedís", "Conocé"), sin mezclar tuteo.
 - **Inglés natural, no literal.** No se traducen "leche de tigre", "ají" ni los nombres de los platos (D2).
@@ -56,7 +56,7 @@
 | `home.aboutBody` | La cocina nikkei nace del encuentro entre Perú y Japón: la leche de tigre y el corte preciso. En Marea Baja la aplicamos a lo que trae el Pacífico costarricense cada mañana. | Nikkei cooking comes from Peru meeting Japan: leche de tigre and the precise cut. At Marea Baja we apply it to what Costa Rica’s Pacific brings in every morning. | §1.1 (Perú × Japón); carta de M2 |
 | `home.aboutCta` | Conocé nuestra propuesta | Discover our concept | Aprobado |
 | `home.visitTitle` | Retiro y delivery | Pickup and delivery | D4 |
-| `home.visitBody` | La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. Esta demostración todavía no recibe pedidos. | The concept offers pickup at the restaurant or our own delivery within designated areas. This demo does not accept orders yet. | D4; M5 pendiente |
+| `home.visitBody` | La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. En esta demostración podés armar y registrar un pedido, pero no es una compra real: el pago no está habilitado y el pedido no se prepara. | The concept offers pickup at the restaurant or our own delivery within designated areas. In this demo you can build and place an order, but it isn’t a real purchase: payment isn’t enabled and the order isn’t prepared. | D4; actualizado con M5 (22/11/2026) |
 | `catch.intro` | Cada mañana anotamos qué pescado entró y de qué puerto viene. | Every morning we write down which fish came in and from which port. | §1.1 (pizarra de pesca del día) |
 | `about.lead` | Una barra nikkei pensada como una carta impresa: pocos platos, bien cortados, con el pescado que entró hoy. | A nikkei bar designed like a printed menu: few dishes, cut well, with the fish that came in today. | §2.1 ("carta impresa de una barra nikkei") |
 | `about.originTitle` | Perú y Japón en la misma tabla | Peru and Japan on the same board | §1.1 |
@@ -68,7 +68,7 @@
 | `about.demoTitle` | Un restaurante de demostración | A demo restaurant | Aviso de demo (§3.6) |
 | `about.demoBody` | Marea Baja no existe: es un proyecto de portafolio. Los pedidos y pagos son simulados y ningún plato se prepara de verdad. | Marea Baja doesn’t exist: it’s a portfolio project. Orders and payments are simulated and no dish is actually prepared. | Aviso de demo (§3.6, §7.4) |
 | `visit.title` | Ubicación y horario | Location and hours | Aprobado |
-| `visit.lead` | Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio; esta demostración todavía no recibe pedidos. | We’re in Barrio Escalante. The concept offers pickup at the restaurant or our own delivery; this demo does not accept orders yet. | §1.1, D4; M5 pendiente |
+| `visit.lead` | Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio. En esta demostración podés registrar un pedido de ejemplo, sin pago ni compra real. | We’re in Barrio Escalante. The concept offers pickup at the restaurant or our own delivery. In this demo you can place a sample order, with no payment and no real purchase. | §1.1, D4; actualizado con M5 (22/11/2026) |
 | `visit.pickup` | Retiro en el local | Pickup at the restaurant | D4 |
 | `visit.delivery` | Delivery propio dentro de nuestras zonas | Our own delivery within our areas | D4 |
 | `visit.dineIn` | El local funciona únicamente como punto de retiro de pedidos. No ofrecemos servicio de mesa ni reservas. | The restaurant operates exclusively as a pickup location. We do not offer dine-in service or reservations. | D4, C12; aprobado |

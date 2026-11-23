@@ -19,6 +19,8 @@ interface MenuLineProps {
   translatedName?: string | null;
   /** M4: idioma real de la descripción si difiere del de la página (traducción pendiente, §4.5). */
   descriptionLang?: string;
+  /** M5: acción de la línea ("Agregar"), debajo de la descripción. */
+  action?: ReactNode;
 }
 
 /**
@@ -36,6 +38,7 @@ export function MenuLine({
   href,
   translatedName,
   descriptionLang,
+  action,
 }: MenuLineProps) {
   const Heading = headingLevel === 4 ? 'h4' : 'h3';
   return (
@@ -75,6 +78,7 @@ export function MenuLine({
         {description}
       </p>
       {tags ? <div className="col-span-2 flex flex-wrap gap-2 pt-1">{tags}</div> : null}
+      {action ? <div className="col-span-2 pt-2">{action}</div> : null}
     </article>
   );
 }

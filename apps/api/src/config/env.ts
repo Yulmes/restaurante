@@ -40,6 +40,16 @@ export const envSchema = z
     /** Valores por defecto si `RestaurantSettings` no existe; el admin los ajusta en M8. */
     TURNSTILE_GLOBAL_THRESHOLD: positiveInt(50),
     TURNSTILE_WINDOW_MINUTES: positiveInt(60),
+
+    // ─── M5 · Pedido (D-M5-3) ─────────────────────────────────────────────────
+    /**
+     * Modo de demostración: permite crear pedidos fuera del horario del local. Lo decide solo la
+     * API; desactivado por defecto. Solo acepta `true` o `false`.
+     */
+    ORDERS_ALLOW_OUTSIDE_HOURS: z
+      .enum(['true', 'false'], { error: 'debe ser true o false' })
+      .default('false')
+      .transform((value) => value === 'true'),
   })
   .superRefine((env, ctx) => {
     const production = env.NODE_ENV === 'production';

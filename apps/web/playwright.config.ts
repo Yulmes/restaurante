@@ -8,8 +8,8 @@ export default defineConfig({
   testDir: './e2e',
   // Las E2E de identidad necesitan API y base: corren con playwright.auth.config.ts.
   // Las del catálogo (M4) y las de producción usan el build servido: playwright.catalog.config.ts
-  // y playwright.produccion.config.ts.
-  testIgnore: ['auth/**', 'catalogo/**', 'produccion/**'],
+  // y playwright.produccion.config.ts. Las del pedido (M5), con playwright.pedido.config.ts.
+  testIgnore: ['auth/**', 'catalogo/**', 'produccion/**', 'pedido/**'],
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,

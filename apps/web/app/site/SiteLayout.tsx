@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
+import { CartButton } from '../cart/CartButton.tsx';
 import { Logo } from '../components/brand/Logo.tsx';
 import { TideLine } from '../components/brand/TideLine.tsx';
 import { DemoBanner } from '../components/ui/DemoBanner.tsx';
@@ -10,9 +11,12 @@ import { useLocale, useT } from '../i18n/use-locale.ts';
 
 /**
  * Marco de las páginas públicas (M4, §3.5): barra superior sobria con el wordmark, Carta ·
- * Pesca del día · Nosotros · Ubicación y horario, Cuenta y el selector ES · EN. En el celular, un botón
- * abre una hoja a pantalla completa (`<dialog>`: foco atrapado y Escape). El botón
- * "Pedido · 2 · ₡18.500" llega con el carrito (M5).
+ * Pesca del día · Nosotros · Ubicación y horario, Cuenta, el selector ES · EN y el botón del pedido
+ * ("Pedido · 2 · ₡18 500", M5). En el celular, un botón abre una hoja a pantalla completa
+ * (`<dialog>`: foco atrapado y Escape); el botón del pedido queda siempre a la vista.
+ *
+ * La barra completa aparece desde `lg` (1024 px): con el botón del pedido (M5) no entra a 768 px
+ * sin desbordar (D1 de la revisión de aceptación de M5); en tablet se usa la hoja del celular.
  */
 const LINKS = [
   { key: 'menu', path: '/carta' },
@@ -45,7 +49,7 @@ function MobileMenu() {
     dialog.current?.close();
   }, [pathname, hash]);
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         onClick={() => dialog.current?.showModal()}
@@ -109,7 +113,7 @@ export function SiteHeader() {
         <Link to={pathForLocale('/', locale)} aria-label={t('nav.home')} className="shrink-0">
           <Logo size={32} />
         </Link>
-        <nav aria-label={t('nav.label')} className="hidden md:block">
+        <nav aria-label={t('nav.label')} className="hidden lg:block">
           <ul className="flex items-center gap-6">
             {links.map((link) => (
               <li key={link.key}>
@@ -128,7 +132,7 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="hidden items-center gap-5 lg:flex">
           <NavLink
             to={pathForLocale('/cuenta', locale)}
             className="inline-flex min-h-11 items-center t-ui underline-offset-8 hover:underline"
@@ -136,8 +140,12 @@ export function SiteHeader() {
             {t('nav.account')}
           </NavLink>
           <LanguageSwitcher />
+          <CartButton />
         </div>
-        <MobileMenu />
+        <div className="flex items-center gap-2 lg:hidden">
+          <CartButton />
+          <MobileMenu />
+        </div>
       </div>
     </header>
   );

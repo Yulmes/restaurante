@@ -43,7 +43,17 @@ describe('loadEnv', () => {
       BOT_CHECK_PROVIDER: 'fake',
       TURNSTILE_GLOBAL_THRESHOLD: 50,
       TURNSTILE_WINDOW_MINUTES: 60,
+      ORDERS_ALLOW_OUTSIDE_HOURS: false,
     });
+  });
+
+  it('M5 (D-M5-3): los pedidos fuera de horario están bloqueados salvo ORDERS_ALLOW_OUTSIDE_HOURS=true', () => {
+    expect(loadEnv(BASE).ORDERS_ALLOW_OUTSIDE_HOURS).toBe(false);
+    expect(loadEnv({ ...BASE, ORDERS_ALLOW_OUTSIDE_HOURS: 'true' }).ORDERS_ALLOW_OUTSIDE_HOURS).toBe(true);
+    expect(loadEnv({ ...BASE, ORDERS_ALLOW_OUTSIDE_HOURS: 'false' }).ORDERS_ALLOW_OUTSIDE_HOURS).toBe(false);
+    expect(problemsOf({ ...BASE, ORDERS_ALLOW_OUTSIDE_HOURS: 'yes' })).toEqual([
+      'ORDERS_ALLOW_OUTSIDE_HOURS: debe ser true o false',
+    ]);
   });
 
   it('acepta el esquema postgres:// además de postgresql://', () => {

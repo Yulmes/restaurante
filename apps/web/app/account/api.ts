@@ -13,6 +13,8 @@ export class ApiError extends Error {
   readonly fields: Record<string, string>;
   readonly retryAfterSeconds: number | undefined;
   readonly challengeRequired: boolean;
+  /** M5: datos para resolver el error (cotización nueva, líneas no disponibles…). */
+  readonly details: Record<string, unknown>;
 
   constructor(status: number, body: z.infer<typeof apiErrorBodySchema>['error']) {
     super(body.message);
@@ -22,6 +24,7 @@ export class ApiError extends Error {
     this.fields = body.fields ?? {};
     this.retryAfterSeconds = body.retryAfterSeconds;
     this.challengeRequired = body.challengeRequired ?? false;
+    this.details = body.details ?? {};
   }
 }
 
@@ -70,15 +73,17 @@ export async function apiGet<S extends z.ZodType>(path: string, schema: S): Prom
 }
 
 export async function apiSend<S extends z.ZodType>(
-  method: 'POST' | 'PATCH',
+  method: 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body: unknown,
   schema?: S,
+  /** M5: encabezados extra, por ejemplo `Idempotency-Key`. */
+  headers: Record<string, string> = {},
 ): Promise<z.output<S> | undefined> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const response = await request(path, {
       method,
-      headers: { 'content-type': 'application/json', 'x-csrf-token': await ensureCsrf() },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': await ensureCsrf(), ...headers },
       body: JSON.stringify(body ?? {}),
     });
     if (response.ok) {

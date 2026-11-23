@@ -3,11 +3,11 @@ import { loginRequestSchema, sessionResponseSchema } from '@marea-baja/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { AccountShell } from '../../account/AccountShell.tsx';
 import { ApiError, apiSend } from '../../account/api.ts';
 import { FormErrors, apiErrorMessage, fieldMessage, useAttempts } from '../../account/form.tsx';
-import { accountPathFor, useLocalizedPath } from '../../account/links.ts';
+import { accountPathFor, safeNextPath, useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
 import { useApplySession } from '../../account/session.ts';
 import { TurnstileChallenge } from '../../account/Turnstile.tsx';
@@ -26,6 +26,7 @@ export default function Ingresar() {
   const { t } = useT('account');
   const to = useLocalizedPath();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const applySession = useApplySession();
   const [attempt, failed] = useAttempts();
   const [general, setGeneral] = useState<string | null>(null);
@@ -54,9 +55,11 @@ export default function Ingresar() {
       ),
     onSuccess: (response) => {
       const user = applySession(response);
+      // M5: si venía del checkout, vuelve ahí (solo páginas del pedido de este sitio).
+      const next = safeNextPath(searchParams.get('next'));
       // Al iniciar sesión manda la preferencia guardada (docs/I18N.md): la cuenta se abre en
       // `User.locale`, aunque el formulario estuviera en el otro idioma.
-      void navigate(accountPathFor(user.locale));
+      void navigate(next ?? accountPathFor(user.locale));
     },
     onError: (error) => {
       if (error instanceof ApiError && error.challengeRequired) {

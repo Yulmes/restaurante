@@ -14,7 +14,7 @@ import { resources } from './resources.ts';
  *   Cada archivo de `locales/` es un fragmento propio que se pide al hidratar y al navegar,
  *   así el otro idioma y los espacios de otras secciones no compiten con la carga inicial (M4).
  */
-export type Namespace = 'common' | 'design' | 'account' | 'site';
+export type Namespace = 'common' | 'design' | 'account' | 'site' | 'order';
 
 // En el build del navegador esta condición es falsa y `resources` queda fuera del paquete.
 const BUNDLED = import.meta.env.SSR || import.meta.env.MODE === 'test';
@@ -26,7 +26,7 @@ void i18n.use(initReactI18next).init({
   lng: DEFAULT_LOCALE,
   fallbackLng: DEFAULT_LOCALE,
   supportedLngs: [...SUPPORTED_LOCALES],
-  ns: ['common', 'design', 'account', 'site'],
+  ns: ['common', 'design', 'account', 'site', 'order'],
   defaultNS: 'common',
   interpolation: { escapeValue: false },
   initAsync: false,
@@ -42,7 +42,9 @@ const pending = new Map<string, Promise<void>>();
 /** Espacios que necesita una ruta: `common` y `site` (marco público) siempre; los demás por sección. */
 export function namespacesForPath(pathname: string): Namespace[] {
   const [section] = pathForLocale(pathname, DEFAULT_LOCALE).split('/').filter(Boolean);
-  if (section === 'cuenta') return ['common', 'site', 'account'];
+  // M5: la cuenta incluye las direcciones (textos del pedido); el pedido, también los de la cuenta.
+  if (section === 'cuenta') return ['common', 'site', 'account', 'order'];
+  if (section === 'pedido') return ['common', 'site', 'order'];
   if (section === '_design') return ['common', 'site', 'design'];
   return ['common', 'site'];
 }

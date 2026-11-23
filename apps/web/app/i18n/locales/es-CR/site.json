@@ -34,7 +34,7 @@
     "aboutBody": "La cocina nikkei nace del encuentro entre Perú y Japón: la leche de tigre y el corte preciso. En Marea Baja la aplicamos a lo que trae el Pacífico costarricense cada mañana.",
     "aboutCta": "Conocé nuestra propuesta",
     "visitTitle": "Retiro y delivery",
-    "visitBody": "La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. Esta demostración todavía no recibe pedidos.",
+    "visitBody": "La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. En esta demostración podés armar y registrar un pedido, pero no es una compra real: el pago no está habilitado y el pedido no se prepara.",
     "visitCta": "Horario y dirección"
   },
   "catch": {
@@ -80,15 +80,13 @@
     "priceLabel": "Precio",
     "taxIncluded": "IVA incluido",
     "optionsTitle": "Opciones",
-    "optionsNote": "Las opciones se eligen al agregar el plato al pedido.",
     "chooseOne": "Elegí una (obligatorio)",
     "chooseUpTo": "Hasta {{max}} (opcional)",
     "chooseBetween": "Entre {{min}} y {{max}}",
     "noExtra": "sin costo",
     "default": "por defecto",
     "unavailableOption": "no disponible hoy",
-    "soldOutNote": "Hoy no lo estamos preparando. Volvé a revisar mañana.",
-    "orderSoon": "El pedido en línea se habilita en la próxima etapa de la demo."
+    "soldOutNote": "Hoy no lo estamos preparando. Volvé a revisar mañana."
   },
   "about": {
     "metaTitle": "Nosotros · Marea Baja",
@@ -108,7 +106,7 @@
     "metaTitle": "Ubicación y horario · Marea Baja",
     "metaDescription": "Horario, dirección y modalidades de Marea Baja en Barrio Escalante, San José: retiro en el local y delivery propio. Restaurante ficticio de demostración.",
     "title": "Ubicación y horario",
-    "lead": "Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio; esta demostración todavía no recibe pedidos.",
+    "lead": "Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio. En esta demostración podés registrar un pedido de ejemplo, sin pago ni compra real.",
     "addressTitle": "Dirección",
     "hoursTitle": "Horario",
     "closed": "Cerrado",
@@ -131,5 +129,25 @@
     "craft": "Cuchillos de cocina junto a un plato servido, sobre una barra de madera.",
     "ingredient": "Media cebolla morada cortada, sobre fondo blanco.",
     "coast": "Playa con un acantilado rocoso y árboles junto al mar."
+  },
+  "cart": {
+    "button": "Pedido",
+    "buttonLabel_one": "{{count}} producto, {{total}}",
+    "buttonLabel_other": "{{count}} productos, {{total}}",
+    "add": "Agregar · {{price}}",
+    "addShort": "Agregar",
+    "addLabel": "Agregar {{name}} al pedido",
+    "added": "Agregado a tu pedido.",
+    "viewOrder": "Ver el pedido",
+    "close": "Cerrar",
+    "chooseRequired": "Elegí una opción en «{{group}}».",
+    "chooseRange": "En «{{group}}» elegí entre {{min}} y {{max}}.",
+    "soldOut": "Hoy no lo estamos preparando: no se puede agregar.",
+    "error": "No pudimos agregarlo. Volvé a intentarlo.",
+    "network": "No hay conexión con el servidor. Volvé a intentarlo.",
+    "unavailable": "Este plato o una de sus opciones ya no está disponible.",
+    "quantityLimit": "Llegaste al máximo de unidades de este plato en un pedido.",
+    "linesLimit": "Tu pedido ya tiene demasiados platos distintos.",
+    "priceNote": "El precio final se confirma al finalizar el pedido."
   }
 }

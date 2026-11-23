@@ -81,6 +81,15 @@ export function authRouter(service: AuthService, config: AppConfig): Router {
     res.json({ user: await service.me(authOf(req)) });
   });
 
+  /**
+   * M5: sesión actual sin error para el invitado (`{ user: null }`, 200). El botón del pedido de
+   * las páginas públicas la consulta; `/auth/me` conserva su contrato (401 sin sesión).
+   */
+  router.get('/auth/session', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ user: req.auth ? await service.me(req.auth) : null });
+  });
+
   router.post('/auth/verify-email', async (req, res) => {
     const { token } = parseBody(verifyEmailRequestSchema, req.body);
     const result = await service.verifyEmail(token, req.auth);
