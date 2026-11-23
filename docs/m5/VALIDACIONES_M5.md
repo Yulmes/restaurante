@@ -32,7 +32,7 @@
 | E2E de identidad (M3) | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 |
 | E2E del sistema de diseño (M1) | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (igual que antes) |
 | Dependencias de producción | `npm audit --omit=dev` | ⚠️ 3 avisos altos **heredados, no de M5**: `effect` ≤ 3.22.0 (ReDoS, GHSA-7589-6fvf-x4pw), transitiva de `@prisma/config`/`prisma`. `package-lock.json` no cambió desde M4; la única corrección que ofrece npm es bajar Prisma a 6.12 (cambio incompatible). Requiere decisión |
-| CI | `.github/workflows/ci.yml`, job **Pedido** | ⏳ Agregado, sin ejecución remota |
+| CI | `.github/workflows/ci.yml`, job **Pedido** | Se ejecuta en el PR #6 de integración (23/11/2026); resultado en el informe de integración |
 
 ### Integración (38 pruebas, `apps/api/test/pedido.db.test.ts`)
 
@@ -121,7 +121,7 @@ Las mismas suites pasan completas en Chromium con los cambios de M5 (ver "Result
 
 | Tema | Estado |
 |---|---|
-| CI en GitHub Actions (job **Pedido**) | Sin ejecución remota (requiere push) |
+| CI en GitHub Actions (job **Pedido**) | Se ejecuta en el PR #6 de integración (23/11/2026) |
 | Safari de iOS real | No probado (M9) |
 | Fallas heredadas de WebKit en M1–M4 | Documentadas arriba, no corregidas (requieren autorización) |
 | Capturas del checkout a 768 y 1024 px | No hechas (M9) |

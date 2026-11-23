@@ -4,7 +4,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
-### Agregado — M5 · Pedido (en revisión, no integrado)
+### Agregado — M5 · Pedido (integrado en `main` mediante el PR #6)
 
 - **Carrito:** de invitado en el navegador (solo referencias) y de la cuenta en PostgreSQL, con la regla C5 (total sin tope de 20 y líneas internas de hasta 20). La fusión al iniciar sesión es idempotente por `mergeKey` (cada clave registrada).
 - **Motor de precios e impuestos** puro, con IVA 13 % incluido y servicio inactivo (D5), redondeo half-up una vez por tasa y ajuste al incremento.
