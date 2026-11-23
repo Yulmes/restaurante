@@ -1,14 +1,14 @@
 # Portfolio Master Plan
 
 > Registro de los cuatro proyectos del portafolio profesional para Upwork.
-> **Actualizado:** 17 de noviembre de 2026.
+> **Actualizado:** 22 de noviembre de 2026.
 > Este archivo vive en el repositorio del restaurante mientras ese es el proyecto activo. 💡 Cuando empiece el segundo proyecto, conviene moverlo a un repositorio propio de portafolio.
 
 ## Estado general
 
 | # | Proyecto | Stack previsto | Estado |
 |---|---|---|---|
-| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M3 integrados en `main`. M4 implementado en `m4-catalogo-seo`, pendiente de revisión e integración.** M5 no iniciado. |
+| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M4 integrados en `main`; M4 cerrado (PR #5, 18/11/2026).** M5 no iniciado. |
 | 2 | E-commerce de ropa y accesorios | React, TypeScript, Java, Spring Boot, PostgreSQL | Futuro. No iniciado. |
 | 3 | Peluquería: reservas y gestión de citas | React, TypeScript, C#, ASP.NET Core, SQL Server | Futuro. No iniciado. |
 | 4 | SaaS multiusuario de gestión de proyectos | Next.js, TypeScript, NestJS, PostgreSQL, Redis | Futuro. No iniciado. |
@@ -26,13 +26,14 @@
   - SEO con prerender.
   - Backups cifrados con restauración probada.
 - **Documentos:** `docs/planificacion/Propuesta Restaurante · Fase 1.md` y `docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md`.
-- **Estado de los hitos (17/11/2026):**
+- **Estado de los hitos (22/11/2026):**
 
   | Hito | Estado |
   |---|---|
   | M0 · Fundaciones, M1 · Sistema de diseño, M2 · Datos, M3 · Identidad | Integrados en `main` (PR #1 a #4) |
-  | **M4 · Catálogo y SEO** | **Implementado y validado en local en la rama `m4-catalogo-seo`; no integrado en `main`.** Incluye la API pública del catálogo, 56 páginas prerenderizadas en es-CR y en, SEO (meta, Open Graph, `hreflang`, JSON-LD, sitemap y robots), precios y disponibilidad en vivo, textos editoriales aprobados y la medición con Lighthouse (HTTP/1.1 y HTTP/2). También integra la corrección de M3 del idioma del documento (`m3-lang-documento`), con su suite E2E sobre el build, ya agregada a CI (sin ejecución remota todavía) |
-  | M5 a M11 | No iniciados |
+  | **M4 · Catálogo y SEO** | **Integrado en `main` y cerrado** (PR #5, merge `a710dba`, 18/11/2026; CI posterior al merge: 6/6 jobs aprobados). Incluye la API pública del catálogo, 56 páginas prerenderizadas en es-CR y en, SEO (meta, Open Graph, `hreflang`, JSON-LD, sitemap y robots), precios y disponibilidad en vivo, textos editoriales aprobados y la medición con Lighthouse (HTTP/1.1 y HTTP/2). También integra la corrección de M3 del idioma del documento (`m3-lang-documento`), con su suite E2E sobre el build, que corre en CI |
+  | **M5 · Pedido** | Siguiente hito. No iniciado: requiere la autorización expresa del propietario |
+  | M6 a M11 | No iniciados |
 
 - **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** siguen pendientes; no se dan por cumplidos.
   - LCP móvil < 2,5 s en producción: M10. En local solo se cumple con HTTP/2.
@@ -42,7 +43,7 @@
   - WebKit móvil: pendiente desde M1, sin hito asignado.
   - En seguimiento: el error React #418, que no se pudo reproducir, y el riesgo de publicar URLs locales si falta `VITE_SITE_URL` (M10).
   - Detalle en `docs/m4/VALIDACIONES_M4.md`.
-- **Próximo paso:** revisión del propietario y, si la autoriza, integración de M4 en `main` mediante PR. M5 empieza solo con autorización expresa.
+- **Próximo paso:** M5 · Pedido. Empieza solo con la autorización expresa del propietario.
 
 ## 2 · E-commerce (futuro)
 

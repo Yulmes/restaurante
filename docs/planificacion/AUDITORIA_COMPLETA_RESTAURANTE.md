@@ -2,7 +2,7 @@
 
 > **Tipo:** auditoría de planificación (previa a la implementación).
 > **Fecha:** 9 de noviembre de 2026.
-> **Estado del código (actualizado el 17/11/2026):** M0–M3 integrados en `main`; M4 implementado en su rama, pendiente de integración; M5–M11 sin implementar. *Al escribir esta auditoría (9/11) el código no existía.*
+> **Estado del código (actualizado el 22/11/2026):** M0–M4 integrados en `main`; M4 cerrado (PR #5, 18/11/2026); M5–M11 sin implementar. *Al escribir esta auditoría (9/11) el código no existía.*
 > **Estado de las decisiones:** las decisiones de planificación están aprobadas (D1–D14, 10/11/2026). Ver la propuesta v3, sección 15.
 > **Estados de los requisitos:** cada requisito pasa de "Planificado" a "Implementado" (o "Parcial") y luego a "Verificado", con su evidencia. Las filas se actualizan al cerrar cada hito; las que siguen en "Planificado" corresponden a hitos no iniciados o no revisados todavía.
 > Propuesta de referencia: [Propuesta Restaurante · Fase 1.md](Propuesta%20Restaurante%20·%20Fase%201.md)
