@@ -34,7 +34,7 @@
     "aboutBody": "La cocina nikkei nace del encuentro entre Perú y Japón: la leche de tigre y el corte preciso. En Marea Baja la aplicamos a lo que trae el Pacífico costarricense cada mañana.",
     "aboutCta": "Conocé nuestra propuesta",
     "visitTitle": "Retiro y delivery",
-    "visitBody": "La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. Esta demostración todavía no recibe pedidos.",
+    "visitBody": "La propuesta contempla retiro en el local o delivery propio dentro de nuestras zonas. En esta demostración podés armar y registrar un pedido, pero no es una compra real: el pago no está habilitado y el pedido no se prepara.",
     "visitCta": "Horario y dirección"
   },
   "catch": {
@@ -106,7 +106,7 @@
     "metaTitle": "Ubicación y horario · Marea Baja",
     "metaDescription": "Horario, dirección y modalidades de Marea Baja en Barrio Escalante, San José: retiro en el local y delivery propio. Restaurante ficticio de demostración.",
     "title": "Ubicación y horario",
-    "lead": "Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio; esta demostración todavía no recibe pedidos.",
+    "lead": "Estamos en Barrio Escalante. La propuesta contempla retiro en el local o delivery propio. En esta demostración podés registrar un pedido de ejemplo, sin pago ni compra real.",
     "addressTitle": "Dirección",
     "hoursTitle": "Horario",
     "closed": "Cerrado",

@@ -34,7 +34,7 @@
     "aboutBody": "Nikkei cooking comes from Peru meeting Japan: leche de tigre and the precise cut. At Marea Baja we apply it to what Costa Rica’s Pacific brings in every morning.",
     "aboutCta": "Discover our concept",
     "visitTitle": "Pickup and delivery",
-    "visitBody": "The concept offers pickup at the restaurant or our own delivery within designated areas. This demo does not accept orders yet.",
+    "visitBody": "The concept offers pickup at the restaurant or our own delivery within designated areas. In this demo you can build and place an order, but it isn’t a real purchase: payment isn’t enabled and the order isn’t prepared.",
     "visitCta": "Hours and address"
   },
   "catch": {
@@ -106,7 +106,7 @@
     "metaTitle": "Location and hours · Marea Baja",
     "metaDescription": "Opening hours, address and ordering options for Marea Baja in Barrio Escalante, San José: pickup and our own delivery. Fictional demo restaurant.",
     "title": "Location and hours",
-    "lead": "We’re in Barrio Escalante. The concept offers pickup at the restaurant or our own delivery; this demo does not accept orders yet.",
+    "lead": "We’re in Barrio Escalante. The concept offers pickup at the restaurant or our own delivery. In this demo you can place a sample order, with no payment and no real purchase.",
     "addressTitle": "Address",
     "hoursTitle": "Opening hours",
     "closed": "Closed",

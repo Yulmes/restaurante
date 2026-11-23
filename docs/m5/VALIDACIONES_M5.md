@@ -124,6 +124,7 @@ Las mismas suites pasan completas en Chromium con los cambios de M5 (ver "Result
 | Capturas del checkout a 768 y 1024 px | No hechas (M9) |
 | Lighthouse de las páginas nuevas | No medido: no se prerenderizan ni se indexan |
 | Limpieza de `IdempotencyKey` vencidas | No hay job (ver ADR 0006) |
-| Textos editoriales aprobados que dicen "esta demostración todavía no recibe pedidos" (`home.visitBody` y `visit.lead`) | **No cambiados:** con M5 dejan de ser exactos. Requieren la aprobación del propietario |
-| `npm audit`: `effect` (transitiva de Prisma) | Heredado; requiere decisión sobre la versión de Prisma |
+| Textos editoriales `home.visitBody` y `visit.lead` | ✅ Actualizados el 22/11/2026 con la autorización del propietario (ver `REVISION_ACEPTACION_M5.md`) |
+| `npm audit`: `effect` (transitiva de Prisma) | Analizado en `REVISION_ACEPTACION_M5.md`: no está en el runtime; se recomienda aceptar el riesgo temporalmente y esperar una versión de Prisma 7 que lo corrija. Sin cambios de dependencias |
+| Defectos visuales D1–D4 (barra a 768 y 390 px, clic perdido al guardar una dirección, precio de la opción partido) | Documentados en `REVISION_ACEPTACION_M5.md`. No corregidos: requieren autorización |
 | Expiración de pedidos `PENDING_PAYMENT` a los 30 min | `expiresAt` guardado; el job que cancela es de M7 |
