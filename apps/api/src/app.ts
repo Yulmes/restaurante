@@ -9,7 +9,13 @@ import { requestContext } from './http/request-context.ts';
 import type { Clock } from './lib/clock.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { loadSession } from './middleware/session.ts';
+import { addressRouter } from './modules/addresses/routes.ts';
+import { AddressService } from './modules/addresses/service.ts';
 import { authRouter } from './modules/auth/routes.ts';
+import { cartRouter } from './modules/cart/routes.ts';
+import { CartService } from './modules/cart/service.ts';
+import { orderRouter } from './modules/orders/routes.ts';
+import { OrderService } from './modules/orders/service.ts';
 import { catalogRouter } from './modules/catalog/routes.ts';
 import { CatalogService } from './modules/catalog/service.ts';
 import { AuthService } from './modules/auth/service.ts';
@@ -59,6 +65,9 @@ export function createApp(deps: AppDeps): App {
   });
 
   const catalog = new CatalogService(deps.db, deps.clock);
+  const cart = new CartService(deps.db, deps.clock);
+  const addresses = new AddressService(deps.db);
+  const orders = new OrderService({ db: deps.db, clock: deps.clock, config: deps.config });
 
   const app = express();
   app.disable('x-powered-by');
@@ -102,6 +111,9 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', csrfProtection(deps.config));
   app.use('/api', authRouter(auth, deps.config));
   app.use('/api', catalogRouter(catalog));
+  app.use('/api', cartRouter(cart, limiter, deps.config));
+  app.use('/api', addressRouter(addresses, limiter));
+  app.use('/api', orderRouter(orders, limiter, deps.config));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);

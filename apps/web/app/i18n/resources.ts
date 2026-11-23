@@ -1,10 +1,12 @@
 import enAccount from './locales/en/account.json';
 import enCommon from './locales/en/common.json';
 import enDesign from './locales/en/design.json';
+import enOrder from './locales/en/order.json';
 import enSite from './locales/en/site.json';
 import esAccount from './locales/es-CR/account.json';
 import esCommon from './locales/es-CR/common.json';
 import esDesign from './locales/es-CR/design.json';
+import esOrder from './locales/es-CR/order.json';
 import esSite from './locales/es-CR/site.json';
 
 /**
@@ -13,6 +15,6 @@ import esSite from './locales/es-CR/site.json';
  * (`loadNamespaces` en `config.ts`).
  */
 export const resources = {
-  'es-CR': { common: esCommon, design: esDesign, account: esAccount, site: esSite },
-  en: { common: enCommon, design: enDesign, account: enAccount, site: enSite },
+  'es-CR': { common: esCommon, design: esDesign, account: esAccount, site: esSite, order: esOrder },
+  en: { common: enCommon, design: enDesign, account: enAccount, site: enSite, order: enOrder },
 } as const;

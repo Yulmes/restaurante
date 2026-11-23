@@ -1,6 +1,7 @@
-import { DIETARY_TAGS, type CatalogCategory, type DietaryTag } from '@marea-baja/shared';
+import { DIETARY_TAGS, type CatalogCategory, type CatalogProduct, type DietaryTag } from '@marea-baja/shared';
 import { useId, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { ProductSheet } from '../cart/ProductSheet.tsx';
 import { MenuLine } from '../components/ui/MenuLine.tsx';
 import { Tag } from '../components/ui/Tag.tsx';
 import { pathForLocale } from '../i18n/locale.ts';
@@ -38,6 +39,8 @@ export function MenuBrowser({
   // En el celular, búsqueda y filtros se pliegan para que la carta empiece arriba (§2.4).
   const [panelOpen, setPanelOpen] = useState(false);
   const panelId = useId();
+  // M5: la hoja de producto se abre desde "Agregar" con el precio y las opciones en vivo.
+  const [sheet, setSheet] = useState<CatalogProduct | null>(null);
 
   const visible = useMemo(() => {
     const words = normalize(query).split(/\s+/).filter(Boolean);
@@ -210,6 +213,20 @@ export function MenuBrowser({
                       soldOut={!current.isAvailable}
                       soldOutLabel={tc('tags.soldOutToday')}
                       href={pathForLocale(`/carta/${category.slug}/${product.slug}`, locale)}
+                      action={
+                        current.isAvailable ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSheet({ ...product, ...current });
+                            }}
+                            className="inline-flex min-h-11 items-center rounded-[var(--radius-control)] border border-text px-4 t-ui hover:bg-surface-raised"
+                          >
+                            {t('cart.addShort')}
+                            <span className="sr-only"> {product.name}</span>
+                          </button>
+                        ) : undefined
+                      }
                       tags={
                         product.tags.length > 0 || !current.isAvailable ? (
                           <>
@@ -228,6 +245,12 @@ export function MenuBrowser({
           ))
         )}
       </div>
+      <ProductSheet
+        product={sheet}
+        onClose={() => {
+          setSheet(null);
+        }}
+      />
     </div>
   );
 }

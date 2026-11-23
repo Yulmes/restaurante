@@ -80,15 +80,13 @@
     "priceLabel": "Price",
     "taxIncluded": "VAT included",
     "optionsTitle": "Options",
-    "optionsNote": "Options are chosen when adding the dish to your order.",
     "chooseOne": "Choose one (required)",
     "chooseUpTo": "Up to {{max}} (optional)",
     "chooseBetween": "Between {{min}} and {{max}}",
     "noExtra": "no charge",
     "default": "default",
     "unavailableOption": "not available today",
-    "soldOutNote": "We’re not making it today. Check back tomorrow.",
-    "orderSoon": "Online ordering arrives in the next stage of the demo."
+    "soldOutNote": "We’re not making it today. Check back tomorrow."
   },
   "about": {
     "metaTitle": "About · Marea Baja",
@@ -131,5 +129,26 @@
     "craft": "Kitchen knives next to a plated dish on a wooden counter.",
     "ingredient": "Half a red onion, cut open, on a white background.",
     "coast": "Beach with a rocky headland and trees by the sea."
+  },
+  "cart": {
+    "button": "Order",
+    "buttonLabel_one": "Your order: {{count}} item, {{total}}",
+    "buttonLabel_other": "Your order: {{count}} items, {{total}}",
+    "buttonEmpty": "Your order",
+    "add": "Add · {{price}}",
+    "addShort": "Add",
+    "addLabel": "Add {{name}} to your order",
+    "added": "Added to your order.",
+    "viewOrder": "View order",
+    "close": "Close",
+    "chooseRequired": "Choose an option in “{{group}}”.",
+    "chooseRange": "In “{{group}}”, choose between {{min}} and {{max}}.",
+    "soldOut": "We're not making it today, so it can't be added.",
+    "error": "We couldn't add it. Please try again.",
+    "network": "We can't reach the server. Please try again.",
+    "unavailable": "This dish or one of its options is no longer available.",
+    "quantityLimit": "You've reached the maximum units of this dish per order.",
+    "linesLimit": "Your order already has too many different dishes.",
+    "priceNote": "The final price is confirmed when you check out."
   }
 }

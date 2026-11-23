@@ -25,6 +25,10 @@ export class TestClock implements Clock {
   advance(ms: number): void {
     this.#ms += ms;
   }
+  /** M5: fija la hora (pruebas del horario de pedidos). */
+  set(date: Date): void {
+    this.#ms = date.getTime();
+  }
 }
 
 export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -35,6 +39,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     appSecret: 'clave-de-pruebas-de-al-menos-32-caracteres',
     emailFrom: 'Marea Baja <no-reply@marea-baja.test>',
     turnstileDefaults: { threshold: 50, windowMinutes: 60 },
+    ordersAllowOutsideHours: false,
     ...overrides,
   };
 }
@@ -106,21 +111,31 @@ export class Browser {
     return this.agent.get(path).set('x-test-ip', this.ip);
   }
 
-  async send(method: 'post' | 'patch', path: string, body: object = {}) {
+  async send(
+    method: 'post' | 'patch' | 'delete',
+    path: string,
+    body: object = {},
+    headers: Record<string, string> = {},
+  ) {
     if (!this.csrf) await this.refreshCsrf();
-    const res = await this.agent[method](path)
+    let req = this.agent[method](path)
       .set('x-test-ip', this.ip)
       .set('Origin', WEB_ORIGIN)
-      .set('X-CSRF-Token', this.csrf)
-      .send(body);
+      .set('X-CSRF-Token', this.csrf);
+    for (const [name, value] of Object.entries(headers)) req = req.set(name, value);
+    const res = await req.send(body);
     // Las respuestas que crean o rotan la sesión traen el token CSRF nuevo.
     const token = (res.body as { csrfToken?: unknown }).csrfToken;
     if (typeof token === 'string') this.csrf = token;
     return res;
   }
 
-  post(path: string, body: object = {}) {
-    return this.send('post', path, body);
+  post(path: string, body: object = {}, headers: Record<string, string> = {}) {
+    return this.send('post', path, body, headers);
+  }
+
+  delete(path: string) {
+    return this.send('delete', path);
   }
 
   patch(path: string, body: object = {}) {

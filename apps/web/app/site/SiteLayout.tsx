@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
+import { CartButton } from '../cart/CartButton.tsx';
 import { Logo } from '../components/brand/Logo.tsx';
 import { TideLine } from '../components/brand/TideLine.tsx';
 import { DemoBanner } from '../components/ui/DemoBanner.tsx';
@@ -10,9 +11,9 @@ import { useLocale, useT } from '../i18n/use-locale.ts';
 
 /**
  * Marco de las páginas públicas (M4, §3.5): barra superior sobria con el wordmark, Carta ·
- * Pesca del día · Nosotros · Ubicación y horario, Cuenta y el selector ES · EN. En el celular, un botón
- * abre una hoja a pantalla completa (`<dialog>`: foco atrapado y Escape). El botón
- * "Pedido · 2 · ₡18.500" llega con el carrito (M5).
+ * Pesca del día · Nosotros · Ubicación y horario, Cuenta, el selector ES · EN y el botón del pedido
+ * ("Pedido · 2 · ₡18 500", M5). En el celular, un botón abre una hoja a pantalla completa
+ * (`<dialog>`: foco atrapado y Escape); el botón del pedido queda siempre a la vista.
  */
 const LINKS = [
   { key: 'menu', path: '/carta' },
@@ -136,8 +137,12 @@ export function SiteHeader() {
             {t('nav.account')}
           </NavLink>
           <LanguageSwitcher />
+          <CartButton />
         </div>
-        <MobileMenu />
+        <div className="flex items-center gap-2 md:hidden">
+          <CartButton />
+          <MobileMenu />
+        </div>
       </div>
     </header>
   );

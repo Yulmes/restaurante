@@ -53,6 +53,7 @@ function toProduct(
   const image = row.images[0];
   const en = row.translations.find((t) => t.locale === 'en');
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     translatedName: locale === 'en' && en?.name ? en.name : null,

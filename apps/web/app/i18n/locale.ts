@@ -17,6 +17,10 @@ const SEGMENTS: Record<string, string> = {
   verificar: 'verify',
   recuperar: 'forgot-password',
   restablecer: 'reset-password',
+  // Pedido (M5).
+  pedido: 'order',
+  finalizar: 'checkout',
+  confirmacion: 'confirmation',
 };
 const REVERSE_SEGMENTS = Object.fromEntries(Object.entries(SEGMENTS).map(([es, en]) => [en, es]));
 

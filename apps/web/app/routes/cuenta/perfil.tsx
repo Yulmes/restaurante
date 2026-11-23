@@ -22,6 +22,7 @@ import {
 } from '../../account/form.tsx';
 import { useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
+import { AddressesSection } from '../../cart/addresses.tsx';
 import { ME_QUERY_KEY, useApplySession, useClearSession, useMe } from '../../account/session.ts';
 import { Button } from '../../components/ui/Button.tsx';
 import { TextField } from '../../components/ui/TextField.tsx';
@@ -81,6 +82,7 @@ function Profile({ user }: { user: PublicUser }) {
         )}
       </div>
       <DetailsForm user={user} localeLabel={(locale) => tc(`language.name.${locale}`)} />
+      <AddressesSection />
       <PasswordForm />
       <SessionsSection />
     </AccountShell>

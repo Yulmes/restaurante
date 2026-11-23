@@ -1,5 +1,5 @@
-import type { CatalogOptionGroup } from '@marea-baja/shared';
 import { data, Link } from 'react-router';
+import { ProductForm } from '../cart/ProductForm.tsx';
 import { DietaryTags, DishPicture, Localized } from '../catalog/components.tsx';
 import { HALF_COLUMN_SIZES } from '../catalog/images.ts';
 import { findProduct, liveProduct, loadCatalog, useLiveCatalog } from '../catalog/data.ts';
@@ -37,21 +37,10 @@ export function meta({ location, loaderData }: Route.MetaArgs) {
   });
 }
 
-function ruleKey(group: CatalogOptionGroup): {
-  key: 'chooseOne' | 'chooseUpTo' | 'chooseBetween';
-  min: number;
-  max: number;
-} {
-  if (group.minSelect === 1 && group.maxSelect === 1) return { key: 'chooseOne', min: 1, max: 1 };
-  if (group.minSelect === 0) return { key: 'chooseUpTo', min: 0, max: group.maxSelect };
-  return { key: 'chooseBetween', min: group.minSelect, max: group.maxSelect };
-}
-
 /**
- * Página del plato (M4, informativa por decisión del propietario): foto 4:5, nombre original,
- * descripción, etiquetas, precio y disponibilidad en vivo, y los grupos de opciones con su
- * precio adicional como información. Elegir opciones, la cantidad y "Agregar" llegan con el
- * carrito (M5).
+ * Página del plato: foto 4:5, nombre original, descripción, etiquetas, precio y disponibilidad en
+ * vivo (M4). Desde M5 es también la hoja de producto: opciones, cantidad y "Agregar · ₡X", con las
+ * opciones y precios vigentes de la API.
  */
 export default function Plato({ loaderData }: Route.ComponentProps) {
   const { t } = useT('site');
@@ -104,59 +93,12 @@ export default function Plato({ loaderData }: Route.ComponentProps) {
           </div>
           {current.isAvailable ? null : <p className="t-body">{t('product.soldOutNote')}</p>}
 
-          {current.optionGroups.length > 0 ? (
-            <section aria-labelledby="opciones" className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <h2 id="opciones" className="t-h3">
-                  {t('product.optionsTitle')}
-                </h2>
-                <p className="text-sm leading-5 text-text-muted">{t('product.optionsNote')}</p>
-              </div>
-              {current.optionGroups.map((group) => {
-                const rule = ruleKey(group);
-                return (
-                  <div key={group.id} className="flex flex-col gap-2">
-                    <h3 className="t-ui text-text">
-                      <Localized value={group.name} />
-                      <span className="font-normal text-text-muted">
-                        {' · '}
-                        {t(`product.${rule.key}`, { min: rule.min, max: rule.max })}
-                      </span>
-                    </h3>
-                    <ul className="flex flex-col">
-                      {group.options.map((option) => (
-                        <li
-                          key={option.id}
-                          className="flex items-baseline justify-between gap-4 border-b border-border py-2 t-body"
-                        >
-                          <span className={option.isAvailable ? '' : 'text-text-muted'}>
-                            <Localized value={option.name} />
-                            {option.isDefault ? (
-                              <span className="text-text-muted">{` · ${t('product.default')}`}</span>
-                            ) : null}
-                            {option.isAvailable ? null : (
-                              <span className="text-text-muted">{` · ${t('product.unavailableOption')}`}</span>
-                            )}
-                          </span>
-                          {option.priceDeltaMinor > 0 ? (
-                            <span className="text-text-muted">
-                              {tc('price.plus')}
-                              <Price amountMinor={option.priceDeltaMinor} />
-                            </span>
-                          ) : (
-                            <span className="text-sm text-text-muted">{t('product.noExtra')}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
+          {current.isAvailable ? (
+            <section className="flex flex-col gap-4">
+              {current.optionGroups.length > 0 ? <h2 className="t-h3">{t('product.optionsTitle')}</h2> : null}
+              <ProductForm product={{ ...product, ...current }} idPrefix="plato" />
             </section>
           ) : null}
-          <p className="border-l-4 border-border-strong bg-surface-raised px-4 py-3 text-sm leading-6">
-            {t('product.orderSoon')}
-          </p>
         </div>
       </article>
     </SiteLayout>

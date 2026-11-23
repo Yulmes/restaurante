@@ -7,6 +7,7 @@ import { publicPaths } from './public-paths.ts';
 import { menuItemJsonLd, menuJsonLd, restaurantJsonLd, seoMeta, SITE_URL } from './seo.ts';
 
 const product = {
+  id: '00000000-0000-4000-8000-000000000001',
   slug: 'ceviche-clasico',
   name: 'Ceviche clásico de corvina',
   translatedName: null,

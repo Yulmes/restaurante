@@ -80,15 +80,13 @@
     "priceLabel": "Precio",
     "taxIncluded": "IVA incluido",
     "optionsTitle": "Opciones",
-    "optionsNote": "Las opciones se eligen al agregar el plato al pedido.",
     "chooseOne": "Elegí una (obligatorio)",
     "chooseUpTo": "Hasta {{max}} (opcional)",
     "chooseBetween": "Entre {{min}} y {{max}}",
     "noExtra": "sin costo",
     "default": "por defecto",
     "unavailableOption": "no disponible hoy",
-    "soldOutNote": "Hoy no lo estamos preparando. Volvé a revisar mañana.",
-    "orderSoon": "El pedido en línea se habilita en la próxima etapa de la demo."
+    "soldOutNote": "Hoy no lo estamos preparando. Volvé a revisar mañana."
   },
   "about": {
     "metaTitle": "Nosotros · Marea Baja",
@@ -131,5 +129,26 @@
     "craft": "Cuchillos de cocina junto a un plato servido, sobre una barra de madera.",
     "ingredient": "Media cebolla morada cortada, sobre fondo blanco.",
     "coast": "Playa con un acantilado rocoso y árboles junto al mar."
+  },
+  "cart": {
+    "button": "Pedido",
+    "buttonLabel_one": "Tu pedido: {{count}} producto, {{total}}",
+    "buttonLabel_other": "Tu pedido: {{count}} productos, {{total}}",
+    "buttonEmpty": "Tu pedido",
+    "add": "Agregar · {{price}}",
+    "addShort": "Agregar",
+    "addLabel": "Agregar {{name}} al pedido",
+    "added": "Agregado a tu pedido.",
+    "viewOrder": "Ver el pedido",
+    "close": "Cerrar",
+    "chooseRequired": "Elegí una opción en «{{group}}».",
+    "chooseRange": "En «{{group}}» elegí entre {{min}} y {{max}}.",
+    "soldOut": "Hoy no lo estamos preparando: no se puede agregar.",
+    "error": "No pudimos agregarlo. Volvé a intentarlo.",
+    "network": "No hay conexión con el servidor. Volvé a intentarlo.",
+    "unavailable": "Este plato o una de sus opciones ya no está disponible.",
+    "quantityLimit": "Llegaste al máximo de unidades de este plato en un pedido.",
+    "linesLimit": "Tu pedido ya tiene demasiados platos distintos.",
+    "priceNote": "El precio final se confirma al finalizar el pedido."
   }
 }
