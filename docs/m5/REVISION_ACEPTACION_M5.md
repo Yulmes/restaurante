@@ -150,3 +150,13 @@ Las E2E del pedido pasan en `Mobile Safari` (3/3; motor WebKit de Playwright, no
 |---|---|---|---|
 | **R-M5-1 · `npm audit`: GHSA-7589-6fvf-x4pw** (ReDoS en `Schema.TemplateLiteral` de `effect`, alta) | Sin cambios: `npm audit --omit=dev` informa los mismos 3 avisos altos (`effect` ≤ 3.22.0 → `@prisma/config` → `prisma` 7.10.1). `prisma` 7.10.1 sigue siendo la última 7.x y su `@prisma/config` fija `effect` en 3.20.0. `package-lock.json` no cambió desde `a710dba`. Sigue fuera del runtime de la API y del paquete del navegador (§2) | Aceptado temporalmente: impacto y explotabilidad bajos en este contexto. No se fuerza Prisma 6, no se usan `overrides` y no se corre `npm audit fix` | Revisar en cada hito si hay una Prisma 7.x que use `effect` ≥ 3.22.1 y actualizar con autorización. Alternativa: `overrides` a `effect` 3.22.x, solo si el propietario la autoriza |
 | **R-M5-2 · Fallas heredadas de M1–M4 en WebKit** (motor WebKit de Playwright con perfil de iPhone 13) | Sin cambios después de D1–D4: M1 35 pasan, 6 fallan y 1 se omite; identidad 12/2; catálogo 15/4; idioma del documento 8/1. Son las mismas pruebas y causas del inventario de `VALIDACIONES_M5.md`: supuestos de escritorio, Tab de WebKit, `sameSite` y axe en `/_design`. **Las 6 E2E del pedido, incluidas las regresiones D1–D4, pasan en WebKit** | Aceptadas temporalmente: no las causa M5 y en CI esas suites corren solo en Chromium. No se modificaron ni se deshabilitaron pruebas | Corregirlas, con autorización, al ampliar la cobertura de dispositivos (M9). Safari de iOS real sigue sin probarse (M9) |
+
+## 8. Integración y cierre (23/11/2026)
+
+- **PR:** #6, "M5 · Pedido". Merge commit `bcebdcb` en `main` (padres `a710dba` y `d3ac474`), con autorización de Nivel 3 del propietario.
+- **CI previo al merge** (`d3ac474`): 7/7 jobs aprobados, sin reintentos.
+- **CI posterior al merge en `main`** (`bcebdcb`): **7/7 jobs aprobados, sin reintentos** ([run](https://github.com/Yulmes/restaurante/actions/runs/45126868582)).
+- **Nota final:** **90/100**. Sube de 88 porque el CI quedó aprobado sin reintentos.
+- **Estado:** M5 cerrado.
+- **Riesgos pendientes:** R-M5-1 (`npm audit`, GHSA-7589-6fvf-x4pw) y R-M5-2 (fallas heredadas de WebKit en M1–M4). Siguen aceptados temporalmente y **no resueltos** (§7).
+- **Sin despliegue.** M6–M11 no iniciados. La rama `m5-pedido` sigue en el remoto; no se eliminaron ramas ni worktrees.
