@@ -4,8 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * E2E del pedido (M5): carrito de invitado, hoja de producto, fusión al iniciar sesión, checkout de
- * 3 pasos, direcciones, cambio de precio y confirmación, en Chromium de escritorio y en WebKit con
- * el perfil de un iPhone (`Mobile Safari`).
+ * 3 pasos, direcciones, cambio de precio y confirmación (desde M6, con la tarjeta demo "Aprobado"),
+ * en Chromium de escritorio y en WebKit con el perfil de un iPhone (`Mobile Safari`). Los
+ * escenarios de pago tienen su propia suite: `playwright.pagos.config.ts`.
  *
  * ⚠️ `Mobile Safari` es el motor WebKit de Playwright con viewport y user agent de iPhone, en
  * Windows o Linux: **no** es Safari de iOS en un dispositivo real.
@@ -60,6 +61,8 @@ export default defineConfig({
         EMAIL_PROVIDER: 'memory',
         BOT_CHECK_PROVIDER: 'fake',
         ORDERS_ALLOW_OUTSIDE_HOURS: 'true',
+        // M6: tarjeta demo con el selector de escenarios (§7.4).
+        DEMO_PAYMENTS_ENABLED: 'true',
         LOG_LEVEL: 'warn',
       },
       url: `http://127.0.0.1:${String(API_PORT)}/api/health`,

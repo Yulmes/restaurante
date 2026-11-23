@@ -1,6 +1,7 @@
 /**
  * Arranque de la API: `npm run dev -w @marea-baja/api` (o `node src/server.ts`).
- * Valida el entorno (si falta algo, no arranca), conecta la base y procesa el outbox cada 30 s.
+ * Valida el entorno (si falta algo, no arranca), conecta la base, procesa el outbox cada 30 s y
+ * reconcilia los pagos cada 5 s (M6).
  */
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ import { createLogger } from './config/logger.ts';
 import { createPrismaClient } from './db/client.ts';
 import { HOUR, systemClock } from './lib/clock.ts';
 import { FakeBotCheck, TurnstileBotCheck, type BotCheck } from './modules/bot-check/bot-check.ts';
+import { PAYMENT_TIMING } from './modules/payments/policies.ts';
 import {
   MailpitProvider,
   MemoryEmailProvider,
@@ -53,7 +55,7 @@ const botCheck: BotCheck =
     : new FakeBotCheck();
 
 const db = createPrismaClient(env.DATABASE_URL);
-const { app, outbox, limiter } = createApp({
+const { app, outbox, limiter, payments } = createApp({
   config,
   db,
   logger,
@@ -70,9 +72,30 @@ setInterval(() => {
   });
 }, HOUR).unref();
 
+// Reconciliación de pagos (§7.3, punto 3): resuelve los tiempos agotados, los pendientes de la demo
+// (unos 20 s) y las operaciones interrumpidas. Una vuelta a la vez, mientras la API está despierta.
+let reconciling = false;
+setInterval(() => {
+  if (reconciling) return;
+  reconciling = true;
+  payments
+    .reconcile(logger)
+    .catch((error: unknown) => {
+      logger.error({ err: error }, 'payment reconciliation failed');
+    })
+    .finally(() => {
+      reconciling = false;
+    });
+}, PAYMENT_TIMING.reconcileEveryMs).unref();
+
 const server = app.listen(env.API_PORT, () => {
   logger.info(
-    { port: env.API_PORT, emailProvider: env.EMAIL_PROVIDER, botCheck: env.BOT_CHECK_PROVIDER },
+    {
+      port: env.API_PORT,
+      emailProvider: env.EMAIL_PROVIDER,
+      botCheck: env.BOT_CHECK_PROVIDER,
+      demoPayments: env.DEMO_PAYMENTS_ENABLED,
+    },
     'API lista',
   );
 });

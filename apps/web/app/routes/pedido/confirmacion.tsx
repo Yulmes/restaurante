@@ -1,10 +1,12 @@
-import { orderSchema, type Order } from '@marea-baja/shared';
+import { formatMoney, orderSchema, type Order } from '@marea-baja/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { z } from 'zod';
 import { ApiError, apiGet } from '../../account/api.ts';
 import { orderMeta, OrderShell, TotalsList } from '../../cart/OrderShell.tsx';
-import { buttonClassName } from '../../components/ui/Button.tsx';
+import { PaymentChoice, payErrorKey, usePayOrder, type PaymentSelection } from '../../cart/payment.tsx';
+import { Button, buttonClassName } from '../../components/ui/Button.tsx';
 import { Price } from '../../components/ui/Price.tsx';
 import { pathForLocale } from '../../i18n/locale.ts';
 import { useLocale, useT } from '../../i18n/use-locale.ts';
@@ -16,10 +18,14 @@ export function meta({ location }: Route.MetaArgs) {
 
 const responseSchema = z.object({ order: orderSchema });
 
+/** Mientras el pago está en proceso (pendiente o tiempo agotado), la pantalla se actualiza sola. */
+const PROCESSING_POLL_MS = 2_000;
+
 /**
- * Pedido registrado (M5, D-M5-1): el pedido queda en `PENDING_PAYMENT` con el pago pendiente.
- * La pantalla lo dice con claridad: es una demostración, el pago no está habilitado y no se cobró
- * nada. Solo el dueño del pedido lo ve (la API responde 404 a cualquier otra cuenta).
+ * Pedido registrado (M5) y su pago (M6). La pantalla deja claro que es una demostración: no se
+ * procesa dinero real. Si el pago está en proceso se actualiza sola; si la tarjeta demo se rechazó,
+ * se puede reintentar mientras el pedido sigue reservado. Solo el dueño del pedido lo ve (la API
+ * responde 404 a cualquier otra cuenta).
  */
 export default function Confirmacion() {
   const { t } = useT('order');
@@ -29,6 +35,8 @@ export default function Confirmacion() {
     queryKey: ['order', id],
     queryFn: async () => (await apiGet(`/api/orders/${encodeURIComponent(id)}`, responseSchema)).order,
     retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.payment.status === 'PROCESSING' ? PROCESSING_POLL_MS : false,
   });
 
   if (order.isPending) {
@@ -110,6 +118,7 @@ function OrderDetail({ order }: { order: Order }) {
               ) : null}
             </dd>
           </dl>
+          <PaymentPanel order={order} />
           <section aria-labelledby="order-items" className="flex flex-col gap-2">
             <h2 id="order-items" className="t-h3">
               {t('confirmation.items')}
@@ -152,5 +161,103 @@ function OrderDetail({ order }: { order: Order }) {
         </aside>
       </div>
     </OrderShell>
+  );
+}
+
+function PaymentPanel({ order }: { order: Order }) {
+  const { t } = useT('order');
+  const locale = useLocale();
+  const { payment } = order;
+  const pay = usePayOrder();
+  const methods = payment.availableMethods;
+  const [selection, setSelection] = useState<PaymentSelection>({
+    method: methods[0] ?? 'DEMO_CARD',
+    scenario: 'APPROVED',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
+
+  const failure = payment.lastAttempt?.result === 'FAILED' ? payment.lastAttempt.failureCode : null;
+  const effective: PaymentSelection = methods.includes(selection.method)
+    ? selection
+    : { ...selection, method: methods[0] ?? 'CASH_ON_DELIVERY' };
+  const total = formatMoney(order.totals.totalMinor, order.currency, locale);
+  const heldUntil = order.expiresAt
+    ? new Intl.DateTimeFormat(locale, {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'America/Costa_Rica',
+      }).format(new Date(order.expiresAt))
+    : null;
+
+  let message: string | null = null;
+  if (payment.status === 'PROCESSING') message = t('confirmation.processing');
+  else if (payment.status === 'AUTHORIZED') message = t('confirmation.authorized');
+  else if (payment.status === 'PENDING_COLLECTION') message = t('confirmation.pendingCollection');
+  else if (
+    payment.status === 'REQUIRES_PAYMENT' &&
+    order.status === 'PENDING_PAYMENT' &&
+    methods.length === 0
+  )
+    message = t('confirmation.expired');
+
+  return (
+    <section aria-labelledby="order-payment" className="flex flex-col gap-4 border-t border-border pt-6">
+      <h2 id="order-payment" className="t-h3">
+        {t('confirmation.payTitle')}
+      </h2>
+      {/* Región viva: el cambio de "en proceso" a "autorizado" se anuncia solo. */}
+      <div aria-live="polite" className="flex flex-col gap-3">
+        {message ? <p className="t-body">{message}</p> : null}
+        {failure && methods.length > 0 ? (
+          <p className="border border-l-4 border-danger bg-surface-raised px-4 py-3 t-body">
+            {t(`confirmation.failure.${failure}`)}
+          </p>
+        ) : null}
+      </div>
+      {methods.length > 0 ? (
+        <>
+          {heldUntil ? (
+            <p className="text-sm leading-5 text-text-muted">
+              {t('confirmation.reservedUntil', { time: heldUntil })}
+            </p>
+          ) : null}
+          <PaymentChoice
+            idPrefix="order-payment"
+            methods={methods}
+            value={effective}
+            onChange={setSelection}
+          />
+          {error ? (
+            <p ref={errorRef} tabIndex={-1} role="alert" className="t-body text-danger">
+              {error}
+            </p>
+          ) : null}
+          <Button
+            loading={pay.isPending}
+            className="self-start"
+            onClick={() => {
+              if (pay.isPending) return;
+              setError(null);
+              pay.mutate(
+                { orderId: order.id, selection: effective },
+                {
+                  onError: (cause) => {
+                    setError(t(payErrorKey(cause)));
+                  },
+                },
+              );
+            }}
+          >
+            {effective.method === 'DEMO_CARD'
+              ? t('confirmation.payCard', { total })
+              : t('confirmation.payCash')}
+          </Button>
+        </>
+      ) : null}
+    </section>
   );
 }

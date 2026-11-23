@@ -13,6 +13,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { ApiError, NetworkError, apiSend } from '../../account/api.ts';
 import { useSessionUser } from '../../account/session.ts';
 import { AddressForm, useAddresses } from '../../cart/addresses.tsx';
+import { PaymentChoice, usePayOrder, type PaymentSelection } from '../../cart/payment.tsx';
 import { orderMeta, OrderShell, TotalsList } from '../../cart/OrderShell.tsx';
 import { Button, buttonClassName } from '../../components/ui/Button.tsx';
 import { Price } from '../../components/ui/Price.tsx';
@@ -29,6 +30,10 @@ export function meta({ location }: Route.MetaArgs) {
  * Checkout de 3 pasos (§3.8, D3, D4): Entrega → Datos → Pago. Confirmar exige una cuenta con el
  * correo verificado; el carrito se conserva mientras tanto. Todo importe viene de la API: la
  * pantalla muestra la cotización y la confirma con su huella (`quoteVersion`, D-M5-2).
+ *
+ * M6 (§7.3): al confirmar se crea el pedido y enseguida se paga con la forma elegida (tarjeta demo
+ * con un escenario, o al recibir/retirar). La confirmación muestra el resultado del pago y, si la
+ * tarjeta demo se rechazó, permite reintentar mientras el pedido sigue reservado.
  */
 export default function Finalizar() {
   const { t } = useT('order');
@@ -107,6 +112,8 @@ function Checkout({ user }: { user: PublicUser }) {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [selection, setSelection] = useState<PaymentSelection>({ method: 'DEMO_CARD', scenario: 'APPROVED' });
+  const pay = usePayOrder();
   const attempt = useRef<{ signature: string; key: string } | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -163,11 +170,17 @@ function Checkout({ user }: { user: PublicUser }) {
         'Idempotency-Key': attempt.current.key,
       });
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       if (!response) return;
       attempt.current = null;
       client.setQueryData(['order', response.order.id], response.order);
       void client.invalidateQueries({ queryKey: ['cart'] });
+      if (response.order.payment.availableMethods.length > 0) {
+        // Si el pago falla, la confirmación muestra el estado y permite reintentar.
+        await pay
+          .mutateAsync({ orderId: response.order.id, selection: paymentSelection })
+          .catch(() => undefined);
+      }
       void navigate(pathForLocale(`/pedido/confirmacion/${response.order.id}`, locale));
     },
     onError: (error) => {
@@ -234,6 +247,13 @@ function Checkout({ user }: { user: PublicUser }) {
   };
 
   const total = q ? formatMoney(q.totals.totalMinor, currency, locale) : '';
+  const methods = q?.paymentMethods ?? [];
+  // Si la tarjeta demo no está habilitada en la API, queda la única forma disponible.
+  const paymentSelection: PaymentSelection =
+    methods.includes(selection.method) || methods.length === 0
+      ? selection
+      : { ...selection, method: methods[0] ?? 'CASH_ON_DELIVERY' };
+  const busy = place.isPending || pay.isPending;
 
   return (
     <OrderShell title={t('checkout.title')}>
@@ -460,17 +480,25 @@ function Checkout({ user }: { user: PublicUser }) {
             <p className="border-l-4 border-border-strong bg-surface-raised px-4 py-3 t-body">
               {t('checkout.paymentDemo')}
             </p>
+            {methods.length > 0 ? (
+              <PaymentChoice
+                idPrefix="checkout-payment"
+                methods={methods}
+                value={paymentSelection}
+                onChange={setSelection}
+              />
+            ) : null}
             {q && !q.openNow && q.orderingAllowed ? (
               <p className="t-body text-text-muted">{t('checkout.demoHours')}</p>
             ) : null}
             <Problems quote={q} />
             <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 py-3 md:static md:border-0 md:bg-transparent md:p-0">
               <Button
-                loading={place.isPending}
+                loading={busy}
                 {...(!q || q.problems.length > 0 ? { disabledReason: t('checkout.confirmBlocked') } : {})}
                 onClick={() => {
                   // Doble clic: mientras el intento está en curso no sale otro (la API igual lo frena).
-                  if (!q || place.isPending) return;
+                  if (!q || busy) return;
                   setBanner(null);
                   place.mutate(q);
                 }}

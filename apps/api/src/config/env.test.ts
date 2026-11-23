@@ -44,6 +44,7 @@ describe('loadEnv', () => {
       TURNSTILE_GLOBAL_THRESHOLD: 50,
       TURNSTILE_WINDOW_MINUTES: 60,
       ORDERS_ALLOW_OUTSIDE_HOURS: false,
+      DEMO_PAYMENTS_ENABLED: false,
     });
   });
 
@@ -53,6 +54,14 @@ describe('loadEnv', () => {
     expect(loadEnv({ ...BASE, ORDERS_ALLOW_OUTSIDE_HOURS: 'false' }).ORDERS_ALLOW_OUTSIDE_HOURS).toBe(false);
     expect(problemsOf({ ...BASE, ORDERS_ALLOW_OUTSIDE_HOURS: 'yes' })).toEqual([
       'ORDERS_ALLOW_OUTSIDE_HOURS: debe ser true o false',
+    ]);
+  });
+
+  it('M6 (§7.4): la tarjeta demo está apagada salvo DEMO_PAYMENTS_ENABLED=true', () => {
+    expect(loadEnv(BASE).DEMO_PAYMENTS_ENABLED).toBe(false);
+    expect(loadEnv({ ...BASE, DEMO_PAYMENTS_ENABLED: 'true' }).DEMO_PAYMENTS_ENABLED).toBe(true);
+    expect(problemsOf({ ...BASE, DEMO_PAYMENTS_ENABLED: '1' })).toEqual([
+      'DEMO_PAYMENTS_ENABLED: debe ser true o false',
     ]);
   });
 

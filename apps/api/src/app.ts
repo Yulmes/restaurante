@@ -22,6 +22,10 @@ import { AuthService } from './modules/auth/service.ts';
 import { AUTH_LIMITS } from './modules/auth/policies.ts';
 import type { BotCheck } from './modules/bot-check/bot-check.ts';
 import { OutboxWorker, processOutbox } from './modules/notifications/outbox.ts';
+import type { PaymentGateway } from './modules/payments/gateway.ts';
+import { MockGateway } from './modules/payments/mock-gateway.ts';
+import { paymentRouter } from './modules/payments/routes.ts';
+import { PaymentService } from './modules/payments/service.ts';
 import type { EmailProvider } from './modules/notifications/providers.ts';
 import { RateLimiter } from './modules/rate-limit/rate-limiter.ts';
 
@@ -40,6 +44,8 @@ export interface AppDeps {
   extraRoutes?: Router;
   /** Solo pruebas: simula clientes con IP distintas. En ejecución real es la IP del socket. */
   clientIp?: (req: Request) => string;
+  /** Procesador de pagos (§7.4). Por defecto, el simulado; las pruebas pueden inyectar fallas. */
+  paymentGateway?: PaymentGateway;
 }
 
 export interface App {
@@ -47,6 +53,7 @@ export interface App {
   catalog: CatalogService;
   outbox: OutboxWorker;
   limiter: RateLimiter;
+  payments: PaymentService;
 }
 
 export function createApp(deps: AppDeps): App {
@@ -68,6 +75,12 @@ export function createApp(deps: AppDeps): App {
   const cart = new CartService(deps.db, deps.clock);
   const addresses = new AddressService(deps.db);
   const orders = new OrderService({ db: deps.db, clock: deps.clock, config: deps.config });
+  const payments = new PaymentService({
+    db: deps.db,
+    clock: deps.clock,
+    config: deps.config,
+    gateway: deps.paymentGateway ?? new MockGateway({ db: deps.db, clock: deps.clock }),
+  });
 
   const app = express();
   app.disable('x-powered-by');
@@ -114,9 +127,10 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', cartRouter(cart, limiter, deps.config));
   app.use('/api', addressRouter(addresses, limiter));
   app.use('/api', orderRouter(orders, limiter, deps.config));
+  app.use('/api', paymentRouter(payments, limiter, deps.config));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return { app, outbox, limiter, catalog };
+  return { app, outbox, limiter, catalog, payments };
 }

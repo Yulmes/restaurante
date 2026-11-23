@@ -71,7 +71,7 @@
     "rounding": "Rounding",
     "total": "Total",
     "pickupSummary": "Pickup at the restaurant",
-    "paymentDemo": "This is a demo: payment isn't enabled yet. When you confirm, your order is recorded without any charge.",
+    "paymentDemo": "Demo environment: no real money is processed. Choose how to simulate the payment; no card details are requested.",
     "confirm": "Place order · {{total}}",
     "confirmBlocked": "Fix the issues above to place the order.",
     "priceChanged": "The amounts changed since you reviewed them. Check the updated total and confirm again.",
@@ -102,14 +102,43 @@
       "inProgress": "Your order is being processed. Wait a moment and try again.",
       "rateLimited": "Too many attempts. Wait a few minutes.",
       "invalid": "Check your order details."
-    }
+    },
+    "methodLegend": "Payment method",
+    "method": {
+      "DEMO_CARD": "Demo card",
+      "CASH_ON_DELIVERY": "Pay on delivery or pickup"
+    },
+    "methodHint": {
+      "DEMO_CARD": "Simulate the outcome with a scenario. Nothing real is charged.",
+      "CASH_ON_DELIVERY": "You pay when we hand over the order. In this demo there is no real charge."
+    },
+    "demoCard": "Demo card",
+    "demoCardNumber": "DEMO •••• 0000",
+    "scenarioLegend": "Demo card scenario",
+    "scenario": {
+      "APPROVED": "Approved",
+      "DECLINED": "Declined",
+      "INSUFFICIENT_FUNDS": "Insufficient funds",
+      "PROCESSOR_ERROR": "Processor error",
+      "TIMEOUT": "Timeout",
+      "PENDING": "Pending"
+    },
+    "scenarioHint": {
+      "APPROVED": "The demo bank authorizes the payment.",
+      "DECLINED": "The demo bank declines the card.",
+      "INSUFFICIENT_FUNDS": "The demo bank declines the payment for lack of funds.",
+      "PROCESSOR_ERROR": "The demo processor fails and charges nothing.",
+      "TIMEOUT": "The demo processor doesn’t answer in time; reconciliation finds it did authorize and never charges twice.",
+      "PENDING": "The payment stays pending for about 20 seconds and you can watch the status change."
+    },
+    "cardDisabled": "The demo card isn’t available in this environment."
   },
   "confirmation": {
     "metaTitle": "Order recorded · Marea Baja",
     "title": "Order recorded",
     "loading": "Loading your order…",
     "lead": "We've recorded your order {{code}}.",
-    "demo": "This is a demo: payment isn't enabled, nothing was charged and the order isn't prepared.",
+    "demo": "Demo environment: no real money is processed and the order isn’t prepared.",
     "statusLabel": "Status",
     "paymentLabel": "Payment",
     "fulfillmentLabel": "Delivery method",
@@ -133,7 +162,7 @@
       "CANCELLED": "Cancelled"
     },
     "paymentStatus": {
-      "REQUIRES_PAYMENT": "Pending: payment isn't enabled in this demo",
+      "REQUIRES_PAYMENT": "Awaiting payment",
       "PROCESSING": "Processing",
       "AUTHORIZED": "Authorized",
       "CAPTURED": "Charged",
@@ -142,6 +171,28 @@
       "VOIDED": "Voided",
       "PENDING_COLLECTION": "Awaiting collection",
       "COLLECTED": "Collected"
+    },
+    "payTitle": "Order payment",
+    "payCard": "Pay with the demo card · {{total}}",
+    "payCash": "Pay on delivery or pickup",
+    "reservedUntil": "Your order is held until {{time}}",
+    "failure": {
+      "card_declined": "The demo bank declined the card. You can try another scenario.",
+      "insufficient_funds": "The demo bank declined the payment for insufficient funds. You can try another scenario.",
+      "processor_error": "The demo processor had an error and charged nothing. You can try again."
+    },
+    "processing": "We’re waiting for the demo processor. This page updates by itself.",
+    "authorized": "Demo payment authorized. It would be charged when the restaurant confirms the order; no real money moved.",
+    "pendingCollection": "You chose to pay on delivery or pickup. In this demo there is no real charge.",
+    "expired": "This order’s hold expired and it can no longer be paid.",
+    "payErrors": {
+      "network": "We can’t reach the server. The payment wasn’t sent; please try again.",
+      "inProgress": "The payment is already being processed. Wait a moment.",
+      "notAllowed": "This order can’t take that payment anymore. Check its status.",
+      "expired": "The order’s hold expired and it can no longer be paid.",
+      "rateLimited": "Too many payment attempts. Wait a few minutes.",
+      "disabled": "The demo card isn’t available in this environment.",
+      "generic": "We couldn’t process the payment. Please try again."
     }
   },
   "addresses": {

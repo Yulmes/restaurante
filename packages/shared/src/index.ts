@@ -120,3 +120,25 @@ export type {
   TaxLine,
   UnavailableReason,
 } from './orders/schemas.ts';
+export {
+  DEMO_SCENARIOS,
+  PAYMENT_ATTEMPT_RESULTS,
+  PAYMENT_FAILURE_CODES,
+  PAYMENT_METHODS,
+  adminPaymentResponseSchema,
+  adminPaymentSchema,
+  authorizePaymentRequestSchema,
+  customerPaymentSchema,
+  demoScenarioSchema,
+  paymentMethodSchema,
+  refundRequestSchema,
+} from './payments/schemas.ts';
+export type {
+  AdminPayment,
+  AuthorizePaymentRequest,
+  CustomerPayment,
+  DemoScenario,
+  PaymentFailureCode,
+  PaymentMethod,
+  RefundRequest,
+} from './payments/schemas.ts';

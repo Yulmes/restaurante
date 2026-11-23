@@ -10,13 +10,15 @@ import {
 } from '@marea-baja/shared';
 import { randomInt } from 'node:crypto';
 import type { AppConfig } from '../../config/app-config.ts';
-import { Prisma, type PrismaClient } from '../../generated/prisma/client.ts';
+import type { Prisma, PrismaClient } from '../../generated/prisma/client.ts';
 import { AppError } from '../../http/errors.ts';
 import type { Clock } from '../../lib/clock.ts';
 import { activeZones, zoneForDistrict } from '../addresses/service.ts';
 import { cartView, loadProducts, resolveLine, type Db, type ResolvedLine } from '../cart/catalog-lines.ts';
 import { isOpenAt, splitQuantity } from '../cart/lines.ts';
 import { clearCart, hashJson, lockCart, readGroups } from '../cart/service.ts';
+import { HttpIdempotency } from '../idempotency/http-idempotency.ts';
+import { customerPayment, paymentViewInclude, type PaymentContext } from '../payments/view.ts';
 import { priceOrder, type PricingResult } from '../pricing/engine.ts';
 import { ORDER_TIMING } from './policies.ts';
 
@@ -30,13 +32,14 @@ import { ORDER_TIMING } from './policies.ts';
  * - **Cambio de precio (D-M5-2):** si la huella recalculada no coincide con la aceptada, `409
  *   PRICE_CHANGED` con la cotización nueva. Nunca se registra un pedido con otro importe.
  * - **Pago (D-M5-1):** el pedido queda en `PENDING_PAYMENT` con su `Payment` en
- *   `REQUIRES_PAYMENT`. No hay cobro, autorización ni contra entrega en este hito.
+ *   `REQUIRES_PAYMENT`. El pago (tarjeta demo o contra entrega) es un paso aparte (M6, §7.3).
  * - **Idempotencia (§7.3, punto 1):** `Idempotency-Key` + `requestHash`. Misma clave y cuerpo →
  *   la respuesta original; otro cuerpo → 422; en curso → 409.
  * - **Duplicados (§7.3, punto 5):** mismo usuario y carrito idéntico en menos de 60 s → el pedido
  *   existente, aunque llegue con otra clave.
  */
 const ORDER_SCOPE = 'orders.create';
+export { orderInclude, type OrderRow };
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 export interface CheckoutInput {
@@ -116,7 +119,7 @@ const orderInclude = {
   },
   taxLines: { orderBy: { id: 'asc' } },
   deliveryZone: { select: { name: true, etaMinutes: true } },
-  payment: { select: { status: true } },
+  payment: paymentViewInclude,
 } as const satisfies Prisma.OrderInclude;
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
@@ -152,7 +155,7 @@ function groupOrderItems(row: OrderRow): Order['items'] {
   return [...groups.values()];
 }
 
-export function toOrder(row: OrderRow): Order {
+export function toOrder(row: OrderRow, payment: PaymentContext): Order {
   return {
     id: row.id,
     code: row.code,
@@ -182,7 +185,7 @@ export function toOrder(row: OrderRow): Order {
     deliveryAddress: (row.deliveryAddress as AddressSnapshot | null) ?? null,
     contactPhone: row.contactPhone,
     customerNote: row.customerNote,
-    payment: { status: row.payment?.status ?? 'REQUIRES_PAYMENT' },
+    payment: customerPayment(row, payment),
   };
 }
 
@@ -237,19 +240,24 @@ const PROBLEM_ORDER: readonly CheckoutProblem[] = [
   'MIN_ORDER_NOT_MET',
 ];
 
-function isUniqueViolation(error: unknown): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
-}
-
 export class OrderService {
   readonly #db: PrismaClient;
   readonly #clock: Clock;
   readonly #config: AppConfig;
+  readonly #idempotency: HttpIdempotency;
 
   constructor(deps: { db: PrismaClient; clock: Clock; config: AppConfig }) {
     this.#db = deps.db;
     this.#clock = deps.clock;
     this.#config = deps.config;
+    this.#idempotency = new HttpIdempotency(deps.db, deps.clock, {
+      lockMs: ORDER_TIMING.idempotencyLockMs,
+      ttlMs: ORDER_TIMING.idempotencyTtlMs,
+    });
+  }
+
+  #paymentContext(): PaymentContext {
+    return { now: this.#clock.now(), demoCardEnabled: this.#config.demoPaymentsEnabled };
   }
 
   /** Cotización del checkout: lo mismo que se validará al confirmar, sin escribir nada. */
@@ -383,6 +391,9 @@ export class OrderService {
         orderingAllowed,
         pickupEnabled: settings.pickupEnabled,
         deliveryEnabled: settings.deliveryEnabled,
+        paymentMethods: this.#config.demoPaymentsEnabled
+          ? ['DEMO_CARD', 'CASH_ON_DELIVERY']
+          : ['CASH_ON_DELIVERY'],
         problems: PROBLEM_ORDER.filter((p) => problems.has(p)),
       },
       resolved: available,
@@ -410,7 +421,12 @@ export class OrderService {
       customerNote: input.customerNote ?? null,
       quoteVersion: input.quoteVersion,
     });
-    const claim = await this.#claim(userId, idempotencyKey, requestHash);
+    const claim = await this.#idempotency.claim<OrderResponse>(
+      ORDER_SCOPE,
+      userId,
+      idempotencyKey,
+      requestHash,
+    );
     if ('replay' in claim) return claim.replay;
 
     try {
@@ -422,7 +438,10 @@ export class OrderService {
         const duplicate = await this.#recentDuplicate(tx, userId, input.quoteVersion, now);
         let result: { status: number; body: OrderResponse };
         if (duplicate) {
-          result = { status: 200, body: { order: toOrder(duplicate), duplicate: true } };
+          result = {
+            status: 200,
+            body: { order: toOrder(duplicate, this.#paymentContext()), duplicate: true },
+          };
         } else {
           const checkout = await this.#checkout(tx, userId, input);
           const blocking = checkout.quote.problems[0];
@@ -434,92 +453,19 @@ export class OrderService {
           }
           const created = await this.#insertOrder(tx, userId, input, checkout, now);
           await clearCart(tx, cartId);
-          result = { status: 201, body: { order: toOrder(created), duplicate: false } };
+          result = {
+            status: 201,
+            body: { order: toOrder(created, this.#paymentContext()), duplicate: false },
+          };
         }
-        await tx.idempotencyKey.update({
-          where: { id: claim.id },
-          data: {
-            responseStatus: result.status,
-            responseBody: result.body,
-            lockedUntil: null,
-          },
-        });
+        await this.#idempotency.complete(tx, claim.id, result.status, result.body);
         return result;
       });
     } catch (error) {
       // Nada quedó confirmado: se libera la clave para que el mismo intento se pueda repetir.
-      await this.#db.idempotencyKey
-        .deleteMany({ where: { id: claim.id, responseStatus: null } })
-        .catch(() => undefined);
+      await this.#idempotency.release(claim.id);
       throw error;
     }
-  }
-
-  async #claim(
-    userId: string,
-    key: string,
-    requestHash: string,
-  ): Promise<{ id: string } | { replay: { status: number; body: OrderResponse } }> {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const now = this.#clock.now();
-      try {
-        const row = await this.#db.idempotencyKey.create({
-          data: {
-            scope: ORDER_SCOPE,
-            key,
-            userId,
-            requestHash,
-            lockedUntil: new Date(now.getTime() + ORDER_TIMING.idempotencyLockMs),
-            expiresAt: new Date(now.getTime() + ORDER_TIMING.idempotencyTtlMs),
-          },
-          select: { id: true },
-        });
-        return row;
-      } catch (error) {
-        if (!isUniqueViolation(error)) throw error;
-      }
-      const existing = await this.#db.idempotencyKey.findUnique({
-        where: { scope_key: { scope: ORDER_SCOPE, key } },
-      });
-      if (!existing) continue;
-      if (existing.expiresAt <= now) {
-        await this.#db.idempotencyKey.deleteMany({
-          where: { id: existing.id, expiresAt: existing.expiresAt },
-        });
-        continue;
-      }
-      // Otra cuenta con la misma clave, o la misma clave con otro cuerpo: 422 sin más detalle.
-      if (existing.userId !== userId || existing.requestHash !== requestHash) {
-        throw new AppError(422, 'IDEMPOTENCY_KEY_REUSED', 'Idempotency-Key reused with a different request');
-      }
-      if (existing.responseStatus !== null) {
-        return {
-          replay: {
-            status: existing.responseStatus,
-            body: existing.responseBody as unknown as OrderResponse,
-          },
-        };
-      }
-      if (existing.lockedUntil && existing.lockedUntil > now) {
-        throw new AppError(
-          409,
-          'IDEMPOTENCY_IN_PROGRESS',
-          'A request with this Idempotency-Key is in progress',
-        );
-      }
-      // La petición anterior no terminó (caída a mitad de camino): se toma la clave, una sola vez.
-      const taken = await this.#db.idempotencyKey.updateMany({
-        where: { id: existing.id, responseStatus: null, lockedUntil: existing.lockedUntil },
-        data: { lockedUntil: new Date(now.getTime() + ORDER_TIMING.idempotencyLockMs) },
-      });
-      if (taken.count === 1) return { id: existing.id };
-      throw new AppError(
-        409,
-        'IDEMPOTENCY_IN_PROGRESS',
-        'A request with this Idempotency-Key is in progress',
-      );
-    }
-    throw new AppError(409, 'IDEMPOTENCY_IN_PROGRESS', 'A request with this Idempotency-Key is in progress');
   }
 
   async #recentDuplicate(db: Db, userId: string, quoteVersion: string, now: Date): Promise<OrderRow | null> {
@@ -611,7 +557,8 @@ export class OrderService {
             actorRole: 'CUSTOMER',
           },
         },
-        // D-M5-1: sin pasarela ni contra entrega en M5. `DEMO_CARD` es el método previsto para M6.
+        // D-M5-1: el pago empieza en `REQUIRES_PAYMENT`. El método se fija al pagar (M6): la tarjeta
+        // demo deja `DEMO_CARD`; contra entrega lo cambia a `CASH_ON_DELIVERY` (D-M6-1).
         payment: { create: { method: 'DEMO_CARD', status: 'REQUIRES_PAYMENT', currency: settings.currency } },
       },
       select: { id: true },
@@ -623,7 +570,7 @@ export class OrderService {
   async get(userId: string, orderId: string): Promise<Order> {
     const row = await this.#db.order.findFirst({ where: { id: orderId, userId }, include: orderInclude });
     if (!row) throw new AppError(404, 'NOT_FOUND', 'Order not found');
-    return toOrder(row);
+    return toOrder(row, this.#paymentContext());
   }
 }
 

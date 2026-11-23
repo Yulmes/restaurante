@@ -12,6 +12,8 @@ export interface AppConfig {
   turnstileDefaults: { threshold: number; windowMinutes: number };
   /** D-M5-3: pedidos fuera de horario solo con el modo de demostración explícito (por defecto, no). */
   ordersAllowOutsideHours: boolean;
+  /** §7.4: la tarjeta demo solo se acepta con `DEMO_PAYMENTS_ENABLED=true` (por defecto, no). */
+  demoPaymentsEnabled: boolean;
 }
 
 export function appConfigFromEnv(env: Env): AppConfig {
@@ -26,6 +28,7 @@ export function appConfigFromEnv(env: Env): AppConfig {
       windowMinutes: env.TURNSTILE_WINDOW_MINUTES,
     },
     ordersAllowOutsideHours: env.ORDERS_ALLOW_OUTSIDE_HOURS,
+    demoPaymentsEnabled: env.DEMO_PAYMENTS_ENABLED,
   };
 }
 

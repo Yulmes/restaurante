@@ -13,6 +13,8 @@ import type { PrismaClient } from '../src/generated/prisma/client.ts';
 import type { Clock } from '../src/lib/clock.ts';
 import { FakeBotCheck } from '../src/modules/bot-check/bot-check.ts';
 import { MemoryEmailProvider } from '../src/modules/notifications/providers.ts';
+import type { PaymentGateway } from '../src/modules/payments/gateway.ts';
+import type { PaymentService } from '../src/modules/payments/service.ts';
 import { appUrl } from './db.ts';
 
 export const WEB_ORIGIN = 'http://web.test';
@@ -40,6 +42,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     emailFrom: 'Marea Baja <no-reply@marea-baja.test>',
     turnstileDefaults: { threshold: 50, windowMinutes: 60 },
     ordersAllowOutsideHours: false,
+    demoPaymentsEnabled: true,
     ...overrides,
   };
 }
@@ -47,6 +50,8 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
 export interface TestApi {
   app: ReturnType<typeof createApp>['app'];
   outbox: ReturnType<typeof createApp>['outbox'];
+  /** M6: el servicio de pagos (la reconciliación se corre a mano en las pruebas). */
+  payments: PaymentService;
   db: PrismaClient;
   clock: TestClock;
   email: MemoryEmailProvider;
@@ -54,13 +59,15 @@ export interface TestApi {
   close(): Promise<void>;
 }
 
-export function buildApi(options: { config?: Partial<AppConfig>; extraRoutes?: Router } = {}): TestApi {
+export function buildApi(
+  options: { config?: Partial<AppConfig>; extraRoutes?: Router; paymentGateway?: PaymentGateway } = {},
+): TestApi {
   const db = createPrismaClient(appUrl());
   const clock = new TestClock();
   const email = new MemoryEmailProvider();
   const logs: string[] = [];
   const logger = createLogger({ level: 'info' }, { write: (line: string) => logs.push(line) });
-  const { app, outbox } = createApp({
+  const { app, outbox, payments } = createApp({
     config: testConfig(options.config),
     db,
     logger,
@@ -69,8 +76,9 @@ export function buildApi(options: { config?: Partial<AppConfig>; extraRoutes?: R
     botCheck: new FakeBotCheck(),
     clientIp: (req) => req.get('x-test-ip') ?? '198.51.100.1',
     ...(options.extraRoutes ? { extraRoutes: options.extraRoutes } : {}),
+    ...(options.paymentGateway ? { paymentGateway: options.paymentGateway } : {}),
   });
-  return { app, outbox, db, clock, email, logs, close: () => db.$disconnect() };
+  return { app, outbox, payments, db, clock, email, logs, close: () => db.$disconnect() };
 }
 
 let ipCounter = 0;
