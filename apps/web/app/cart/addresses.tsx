@@ -62,8 +62,11 @@ export function AddressForm({
   const [general, setGeneral] = useState<string | null>(null);
   const form = useForm<AddressInput>({
     resolver: zodResolver(addressInputSchema),
-    mode: 'onBlur',
-    reValidateMode: 'onBlur',
+    // Se valida al guardar, no al salir de cada campo (D3 de la revisión de M5): si el aviso de
+    // error desaparecía con el blur que provoca el propio clic en "Guardar la dirección", el botón
+    // subía antes de soltar el mouse y ese primer clic se perdía. Las reglas no cambian.
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     shouldFocusError: false,
     defaultValues: {
       label: '',

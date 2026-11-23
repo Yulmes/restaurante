@@ -245,3 +245,138 @@ test('una cuenta sin verificar arma el pedido pero no puede confirmarlo (D3)', a
   expect(status).toBe(403);
   expect(await ordersOf(email)).toHaveLength(0);
 });
+
+// --- Correcciones visuales D1–D4 de la revisión de aceptación de M5 ---------------------------------
+
+/** Agrega dos ceviches con picante rocoto y palta (opciones con recargo) desde la página del plato. */
+async function addCevicheWithOptions(page: Page): Promise<void> {
+  await page.goto('/carta/ceviches/ceviche-clasico');
+  await page.getByText('Rocoto, para valientes').click();
+  await page.getByText('Palta', { exact: true }).click();
+  const add = page.getByRole('button', { name: /^Agregar · / });
+  await add.click();
+  await expect(page.getByText('Agregado a tu pedido.')).toBeVisible();
+  await add.click();
+  await expect(cartLink(page)).toHaveAccessibleName(/2 productos/);
+}
+
+interface HeaderLayout {
+  overflowX: number;
+  outside: string[];
+  cartLines: number;
+}
+
+/** Desborde de la página y controles de la barra que quedan fuera de la pantalla. */
+function headerLayout(page: Page): Promise<HeaderLayout> {
+  return page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const visible = [...document.querySelectorAll<HTMLElement>('header a, header button')].filter(
+      (el) => el.getClientRects().length > 0 && !el.closest('dialog'),
+    );
+    const outside = visible
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.left < -1 || r.right > vw + 1;
+      })
+      .map((el) => el.textContent.trim().slice(0, 30));
+    // En /pedido el enlace "ES" del selector de idioma también apunta a /pedido.
+    const cart = visible.find((el) => el.querySelector('[data-cart-part]'));
+    // Renglones del texto visible de cada parte del botón (la etiqueta y el importe).
+    const cartLines = cart
+      ? Math.max(
+          ...[...cart.querySelectorAll<HTMLElement>('[data-cart-part]')].map(
+            (p) => p.getClientRects().length,
+          ),
+        )
+      : 0;
+    return { overflowX: document.documentElement.scrollWidth - vw, outside, cartLines };
+  });
+}
+
+const cartButton = (page: Page) => page.locator('header a:visible:has([data-cart-part])').first();
+
+const HEADER_PAGES = ['/', '/carta', '/carta/ceviches/ceviche-clasico', '/pedido', '/pedido/finalizar'];
+
+test('D1 y D2: la barra no desborda a 390, 768, 1024 ni 1440 px, con el pedido vacío o con productos', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  for (const filled of [false, true]) {
+    if (filled) {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await addCevicheWithOptions(page);
+    }
+    // Cada página se carga una vez y se cambia el ancho sin recargar: con 40 cargas por motor, las
+    // dos ejecuciones superaban el freno global de solicitudes por IP de la API.
+    for (const path of HEADER_PAGES) {
+      await page.goto(path);
+      await page.locator('main h1').waitFor();
+      if (filled) await expect(cartButton(page)).toHaveAccessibleName(/2 productos, ₡/);
+      for (const width of [390, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        const layout = await headerLayout(page);
+        const where = `${path} a ${String(width)} px (${filled ? 'con productos' : 'vacío'})`;
+        expect(layout.overflowX, where).toBeLessThanOrEqual(0);
+        expect(layout.outside, where).toEqual([]);
+        // Cada parte del botón (etiqueta y cantidad; importe) en un solo renglón.
+        expect(layout.cartLines, where).toBe(1);
+        // La navegación sigue al alcance: en la barra o en el botón "Menú".
+        const menu = page.getByRole('button', { name: 'Menú' });
+        if (await menu.isVisible()) await expect(menu).toBeInViewport({ ratio: 1 });
+        else await expect(page.getByRole('navigation', { name: /principal/i }).first()).toBeVisible();
+      }
+    }
+  }
+});
+
+test('D3: después de un error, corregir el dato y hacer un solo clic guarda la dirección una sola vez', async ({
+  page,
+}) => {
+  const email = account('es-CR');
+  await page.goto('/cuenta/ingresar');
+  await signIn(page, email);
+  await expect(page).toHaveURL(/\/cuenta$/);
+  await page.getByRole('button', { name: 'Agregar una dirección' }).click();
+
+  const posts: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().endsWith('/api/account/addresses')) {
+      posts.push(request.url());
+    }
+  });
+  // Todo menos la referencia → error.
+  await page.locator('#profile-address-label').fill('Casa');
+  await page.locator('#profile-address-line1').fill('Avenida 9, casa 33');
+  await page.locator('#profile-address-district').selectOption('San Pedro');
+  await page.locator('#profile-address-canton').fill('Montes de Oca');
+  await page.locator('#profile-address-province').fill('San José');
+  const save = page.getByRole('button', { name: 'Guardar la dirección' });
+  await save.click();
+  await expect(page.locator('#profile-address-reference')).toHaveAttribute('aria-invalid', 'true');
+  expect(posts).toHaveLength(0);
+
+  // Se corrige el último dato y, sin salir del campo, un solo clic (de puntero) en "Guardar".
+  await page.locator('#profile-address-reference').fill('Portón negro');
+  await expect(page.locator('#profile-address-reference')).toBeFocused();
+  await save.click();
+  await expect(page.getByRole('status').filter({ hasText: 'Dirección guardada.' })).toBeVisible();
+  await expect(page.getByText('Avenida 9, casa 33, San Pedro, Montes de Oca, San José')).toBeVisible();
+  expect(posts).toHaveLength(1);
+});
+
+test('D4: en el celular, el recargo de una opción del carrito queda en un solo renglón', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await addCevicheWithOptions(page);
+  for (const width of [390, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/pedido');
+    const option = page.getByRole('listitem').filter({ hasText: 'Rocoto, para valientes' }).last();
+    await expect(option).toContainText(/\(\+\s?₡\s?600\)/);
+    const surcharges = option.locator('[data-option-surcharge]');
+    await expect(surcharges).toHaveCount(1);
+    expect(await surcharges.evaluate((el) => el.getClientRects().length), `${String(width)} px`).toBe(1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
+    ).toBeLessThanOrEqual(0);
+  }
+});

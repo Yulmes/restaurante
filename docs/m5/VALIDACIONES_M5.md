@@ -25,8 +25,8 @@
 | Integración con PostgreSQL | `npm run test:db` | ✅ 172 / 172 en 8 archivos (antes: 134). `pedido.db.test.ts`: 38 pruebas |
 | Esquema y migraciones | `npm run db:drift -w @marea-baja/api` | ✅ Sin diferencias. **Sin migraciones nuevas** |
 | Variables de entorno | `npm run env:check` | ✅ Con `ORDERS_ALLOW_OUTSIDE_HOURS` (por defecto `false`) |
-| E2E del pedido, Chromium | `npm run test:e2e:pedido -w @marea-baja/web` | ✅ 3 / 3 |
-| E2E del pedido, `Mobile Safari` | ídem (mismo comando) | ✅ 3 / 3 |
+| E2E del pedido, Chromium | `npm run test:e2e:pedido -w @marea-baja/web` | ✅ 6 / 6 (3 + 3 de regresión de D1–D4, desde el 23/11/2026) |
+| E2E del pedido, `Mobile Safari` | ídem (mismo comando) | ✅ 6 / 6 |
 | E2E del catálogo (M4) | `npm run test:e2e:catalog -w @marea-baja/web` | ✅ 19 / 19, con el build de producción (56 páginas) |
 | E2E del idioma del documento (M3) | `npm run test:e2e:produccion -w @marea-baja/web` | ✅ 9 / 9 |
 | E2E de identidad (M3) | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 |
@@ -81,7 +81,7 @@
 - **Consulta de pedidos:** el dueño lo ve; ajeno, inexistente o mal formado → 404 sin diferencias; sin sesión → 401.
 - **`/api/auth/session`:** 200 con `user: null` para el invitado; `/auth/me` conserva su 401.
 
-### E2E del pedido (`apps/web/e2e/pedido/pedido.spec.ts`, 3 pruebas × 2 proyectos)
+### E2E del pedido (`apps/web/e2e/pedido/pedido.spec.ts`, 6 pruebas × 2 proyectos)
 
 1. **Invitado → cuenta → retiro, en es-CR:**
    - carta → "Agregar" → hoja de producto → Rocoto → agregar;
@@ -98,10 +98,13 @@
    - nueva confirmación al total nuevo → confirmación con la dirección;
    - en la base: un pedido `DELIVERY` con envío de ₡1 200 y total de ₡11 100.
 3. **Cuenta sin verificar:** arma el pedido, el checkout pide verificar y `POST /api/orders` → 403, sin pedido.
+4. **D1 y D2 (barra):** inicio, carta, plato, carrito y checkout a 390, 768, 1024 y 1440 px, con el pedido vacío y con productos: sin desborde, sin controles fuera de la pantalla, cada parte del botón en un renglón y la navegación alcanzable.
+5. **D3 (dirección):** después de un error, corregir el último dato y hacer un solo clic guarda la dirección con un único `POST`.
+6. **D4 (recargo de una opción):** "(+₡600)" en un solo renglón a 390 y 768 px.
 
 ## WebKit (opción A, incremental)
 
-- **Pedido:** las 3 pruebas pasan en `Mobile Safari`.
+- **Pedido:** las 6 pruebas pasan en `Mobile Safari`.
 - **Límite:** es el **motor WebKit de Playwright con perfil de iPhone 13, ejecutado en Windows**. **No es Safari de iOS en un dispositivo real** y no se presenta como tal. La cobertura de dispositivos sigue en M9.
 - **Línea base de las suites anteriores en `Mobile Safari`:** misma configuración y solo el proyecto WebKit, con configuraciones temporales fuera del repositorio; no se modificaron las suites.
 
@@ -126,5 +129,5 @@ Las mismas suites pasan completas en Chromium con los cambios de M5 (ver "Result
 | Limpieza de `IdempotencyKey` vencidas | No hay job (ver ADR 0006) |
 | Textos editoriales `home.visitBody` y `visit.lead` | ✅ Actualizados el 22/11/2026 con la autorización del propietario (ver `REVISION_ACEPTACION_M5.md`) |
 | `npm audit`: `effect` (transitiva de Prisma) | Analizado en `REVISION_ACEPTACION_M5.md`: no está en el runtime; se recomienda aceptar el riesgo temporalmente y esperar una versión de Prisma 7 que lo corrija. Sin cambios de dependencias |
-| Defectos visuales D1–D4 (barra a 768 y 390 px, clic perdido al guardar una dirección, precio de la opción partido) | Documentados en `REVISION_ACEPTACION_M5.md`. No corregidos: requieren autorización |
+| Defectos visuales D1–D4 (barra a 768 y 390 px, clic perdido al guardar una dirección, precio de la opción partido) | ✅ Corregidos el 23/11/2026 (ver `REVISION_ACEPTACION_M5.md` §6). La línea base de WebKit de M1–M4 se repitió después: mismos resultados (35/6/1, 12/2, 15/4, 8/1) |
 | Expiración de pedidos `PENDING_PAYMENT` a los 30 min | `expiresAt` guardado; el job que cancela es de M7 |

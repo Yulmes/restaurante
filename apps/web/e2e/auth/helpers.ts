@@ -82,12 +82,12 @@ export function createVerifiedAccount(locale: 'es-CR' | 'en'): string {
 
 /**
  * Enlace del selector de idioma (ES · EN). Desde M4, en el celular vive dentro del menú (§3.5):
- * a menos de 768 px se abre la hoja del menú antes de buscarlo.
+ * a menos de 1024 px (D1 de M5) se abre la hoja del menú antes de buscarlo.
  */
 export async function languageLink(page: Page, code: 'ES' | 'EN'): Promise<Locator> {
   const width = page.viewportSize()?.width ?? 1280;
   const name = new RegExp(`^${code}`);
-  if (width >= 768) return page.locator('header').getByRole('link', { name }).first();
+  if (width >= 1024) return page.locator('header').getByRole('link', { name }).first();
   const dialog = page.getByRole('dialog');
   if (!(await dialog.isVisible())) await page.getByRole('button', { name: /^(Menú|Menu)$/ }).click();
   return dialog.getByRole('link', { name });

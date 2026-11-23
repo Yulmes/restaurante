@@ -117,3 +117,26 @@ En todas las pantallas y anchos: axe con 0 problemas serios o críticos. Teclado
 ## 5. WebKit
 
 Las E2E del pedido pasan en `Mobile Safari` (3/3; motor WebKit de Playwright, no un iPhone real). Las fallas heredadas de M1–M4 en WebKit siguen como se documentó en `VALIDACIONES_M5.md` y no se corrigieron.
+
+## 6. Corrección de D1–D4 (23/11/2026)
+
+> Nivel 1, autorizada por el propietario: solo D1–D4, en `m5-pedido` desde `374bee8`. Sin cambios en la API, el motor de precios, Prisma, las dependencias ni los textos editoriales.
+
+| ID | Causa | Corrección | Archivos | Prueba de regresión | Resultado |
+|---|---|---|---|---|---|
+| D1 | La barra completa (4 enlaces, Cuenta, ES · EN y el botón "Pedido" de M5) se mostraba desde `md` (768 px) y no entra en ese ancho | La barra completa aparece desde `lg` (1024 px); entre 768 y 1023 px se usa la misma barra del celular (marca, "Pedido" y "Menú", con la navegación, Cuenta e idioma en la hoja). No se quitó ni se ocultó nada: todo sigue en la hoja | `apps/web/app/site/SiteLayout.tsx` | "D1 y D2…" en `e2e/pedido/pedido.spec.ts`: 5 páginas (inicio, carta, plato, carrito y checkout) × 390, 768, 1024 y 1440 px, con el pedido vacío y con productos; sin desborde, sin controles fuera de la pantalla y la navegación alcanzable | ✅ Chromium y `Mobile Safari` |
+| D2 | El botón no tenía `whitespace-nowrap` y, en el celular, "Pedido · N · ₡X" no entraba junto a la marca y "Menú": el texto se partía y empujaba "Menú" | En menos de 640 px, el importe va en un segundo renglón propio, más chico, debajo de "Pedido · N"; ninguna parte se parte. Desde `sm`, una sola línea como antes. El nombre accesible no cambia ("Pedido: 2 productos, ₡20 800") | `apps/web/app/cart/CartButton.tsx` | La misma prueba: cada parte del botón en un renglón y "Menú" entero en la pantalla | ✅ Chromium y `Mobile Safari` |
+| D3 | El formulario validaba al salir de cada campo (`onBlur`). Al hacer clic en "Guardar la dirección" justo después de corregir un dato, el blur del propio clic borraba el aviso, el botón subía antes de soltar el mouse y el clic no llegaba al botón | El formulario de direcciones valida al guardar (`mode` y `reValidateMode: 'onSubmit'`). Las reglas (`addressInputSchema`), el resumen de errores, la validación de la API y el guardado no cambian | `apps/web/app/cart/addresses.tsx` | "D3…": error → corrección del último dato sin salir del campo → **un** clic → "Dirección guardada", la dirección en la lista y **un solo** `POST` | ✅ Chromium y `Mobile Safari`; antes de la corrección fallaba en los dos |
+| D4 | "(+" y el precio eran nodos sueltos dentro del texto de la opción y el renglón se cortaba entre ellos | "(+₡600)" va en un `span` con `whitespace-nowrap`: pasa entero al renglón siguiente | `apps/web/app/routes/pedido/carrito.tsx` | "D4…": a 390 y 768 px, el recargo ocupa un renglón y no hay desborde | ✅ Chromium y `Mobile Safari` |
+
+**Pruebas ajustadas:**
+- `e2e/auth/helpers.ts` (`languageLink`): el selector de idioma está en la barra desde 1024 px, ya no desde 768. Las suites usan 375 y 1280 px, así que su comportamiento no cambia.
+- La prueba "D1 y D2" carga cada página una vez y cambia el ancho sin recargar. En una primera versión, con 40 recargas por motor, la corrida de los dos proyectos superó el freno global de la API (300 solicitudes cada 5 min por IP) y el login de WebKit recibía 429. Fue un problema de la prueba, no de la app.
+
+**Evidencia:** capturas antes y después en Chromium y `Mobile Safari` (barra a 768 y 390 px vacía y con productos, carrito a 390 px y formulario de dirección tras recuperar el error). Quedaron en la carpeta temporal de la sesión (`…/scratchpad/m5/d1d4/antes` y `…/despues`) y **no se versionan**.
+
+**Límite observado (no corregido, fuera del alcance):** a 375 px el botón entra incluso con 19 productos y ₡197 600. A **360 px** con dos dígitos de cantidad, la barra desborda 8 px. Ese ancho no está entre los exigidos por M1 (375, 768, 1024 y 1440) ni por esta tarea.
+
+**Observación (no corregida):** los formularios de la cuenta de M3 (ingresar, registro, recuperar, restablecer y perfil) también validan con `onBlur`. Podrían perder un clic de la misma forma si un aviso desaparece justo antes del botón. No se tocaron: requieren autorización.
+
+**Evaluación:** D1–D4 quedan corregidos sin regresiones (ver `VALIDACIONES_M5.md`). La nota de la revisión pasa de **82 a 88/100**: se resolvieron las dos regresiones de la barra y el clic perdido. Siguen pendientes el CI remoto, el aviso de `npm audit` aceptado temporalmente y las fallas heredadas de WebKit.

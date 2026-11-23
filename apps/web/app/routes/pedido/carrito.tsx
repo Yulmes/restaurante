@@ -207,9 +207,13 @@ function CartLine({
                 </span>
                 {option.priceDeltaMinor > 0 ? (
                   <>
-                    {' (+'}
-                    <Price amountMinor={option.priceDeltaMinor} currency={currency} />
-                    {')'}
+                    {' '}
+                    {/* "(+₡600)" sin cortes de renglón (D4). */}
+                    <span data-option-surcharge className="whitespace-nowrap">
+                      {'(+'}
+                      <Price amountMinor={option.priceDeltaMinor} currency={currency} />
+                      {')'}
+                    </span>
                   </>
                 ) : null}
               </li>
