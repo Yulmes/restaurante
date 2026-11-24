@@ -1,6 +1,6 @@
 # Validaciones de M7 · Operación
 
-> **Estado (24/11/2026):** **implementación local terminada en la rama `m7-operacion`, pendiente de la revisión del propietario.** M7 **no está integrado ni cerrado**: sin push, sin PR, sin CI remoto y sin despliegue. Iniciado con la autorización de Nivel 2 del propietario (24/11/2026), sobre `main` en `c30de42`.
+> **Estado (24/11/2026):** **en integración por el PR #9 (`m7-operacion` → `main`), con autorización de Nivel 3 del propietario; pendiente de la autorización de merge.** M7 **no está integrado ni cerrado** hasta el merge. CI 7/7 en el PR ([run](https://github.com/Yulmes/restaurante/actions/runs/45506147978)), sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `c30de42`.
 >
 > **Decisiones de M7.** No hubo decisiones de negocio bloqueantes: todo lo implementado está en la propuesta (§7.1–7.4, §3.6, §2.4, §8.5, §8.6) o se deriva técnicamente de ella. Las derivaciones quedan registradas abajo y en el ADR 0008 para que el propietario las revise.
 
@@ -95,7 +95,7 @@ La propuesta (§12) define M7 como "Estados, Pase, seguimiento, historial de ped
 
 ## Pruebas
 
-Todas ejecutadas en local el 24/11/2026 sobre el árbol final de la rama (Windows, Docker con PostgreSQL 17 y Mailpit). **Sin ejecución en GitHub Actions** (requiere push, no autorizado).
+Todas ejecutadas en local el 24/11/2026 sobre el árbol final de la rama (Windows, Docker con PostgreSQL 17 y Mailpit), y repetidas completas sobre `846b02d` antes del push. El CI de GitHub Actions está en "Integración por PR", más abajo.
 
 | Suite | Resultado |
 |---|---|
@@ -174,7 +174,7 @@ Dos hallazgos de infraestructura de pruebas, corregidos sin relajar políticas:
 
 ## Evaluación
 
-**Puntaje propuesto: 91/100.** Implementación local completa y verificada, pendiente de la revisión del propietario y de la integración.
+**Puntaje propuesto: 92/100** (91 en la implementación local; +1 en pruebas por el CI 7/7 del PR). Pendiente de la autorización de merge.
 
 | Dimensión | Peso | Nota | Justificación |
 |---|---|---|---|
@@ -182,14 +182,26 @@ Dos hallazgos de infraestructura de pruebas, corregidos sin relajar políticas:
 | Corrección y reglas de negocio | 20 | 19 | Matriz de 512 casos, transiciones atadas al resultado del procesador, versión optimista y concurrencia probadas. Cierra R-M6-1 y R-M6-2. Queda R-M7-4 (marcas con el mismo milisegundo) |
 | Seguridad | 15 | 14 | RBAC e IDOR en la API, cuerpos estrictos, AuditLog con motivo, bandeja sin enlaces. Pendiente la revisión completa de M9 |
 | UX, accesibilidad e i18n | 15 | 12 | axe sin violaciones serias en las pantallas nuevas, 4 anchos sin desbordamiento, dos idiomas, 4 defectos visuales corregidos. Sin *finish gate* externo |
-| Pruebas | 15 | 13 | Unitarias, integración, E2E en dos motores y regresión local completa. Sin CI remoto (exige push) y sin repetir WebKit en M1–M4 |
-| Documentación y proceso | 10 | 9 | ADR 0008, este documento, CHANGELOG, TESTING, SECURITY, variables y planificación al día; commits locales separados. Falta registrar el CI remoto |
-| **Total** | **100** | **91** | |
+| Pruebas | 15 | 14 | Unitarias, integración, E2E en dos motores, regresión local completa y CI 7/7 en el PR. Sin repetir WebKit en M1–M4 (R-M5-2) |
+| Documentación y proceso | 10 | 9 | ADR 0008, este documento, CHANGELOG, TESTING, SECURITY, variables y planificación al día; commits separados; integración por PR con CI. Falta el cierre posterior al merge |
+| **Total** | **100** | **92** | |
 
-## Preparación para la integración
+## Integración por PR (24/11/2026)
 
-- Rama `m7-operacion` con commits locales sobre `c30de42`, sin push.
-- CI actualizado:
-  - el job **Pedido, pagos y operación** levanta Mailpit y ejecuta `test:e2e:operacion`;
-  - todavía no corrió en GitHub Actions.
-- Para integrar, en una autorización aparte de Nivel 3: push, PR a `main`, CI 7/7 y merge con merge commit.
+- **PR #9:** `m7-operacion` → `main`, sobre `c30de42` (sin cambios en `main` desde entonces). Commits:
+  - `a39096a`: API;
+  - `3d51ced`: web, E2E y CI;
+  - `846b02d`: documentación;
+  - y este registro del estado de integración.
+- **Push** sin force; el remoto quedó igual a la historia revisada.
+- **Validación local previa al push**, sobre `846b02d`, todo en verde:
+  - `check` 835;
+  - `test:db` 248;
+  - `drift` y `env:check`, también con `.env.example`;
+  - E2E de operación 5 + 5, pedido 12, pagos 6, catálogo 19, identidad 14, producción 9 y M1 41 + 1 omitida;
+  - build con 57 HTML.
+- **CI del PR sobre `846b02d`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45506147978)): **7/7 jobs aprobados en el primer intento, sin reintentos.**
+  - El job **Pedido, pagos y operación** levantó PostgreSQL y Mailpit. Resultados: pedido 12/12, pagos 6/6 y operación 5/5 en Chromium + 5/5 en `Mobile Safari`, con los asuntos verificados en Mailpit.
+  - Los otros seis jobs: formato, lint, tipos y tests; sistema de diseño y accesibilidad; servicios locales; base de datos; identidad; catálogo y SEO.
+- **Merge:** pendiente de la autorización expresa del propietario. Sin auto-merge y sin despliegue.
+- **R-M6-1 y R-M6-2** quedan resueltos recién con el merge.

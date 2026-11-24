@@ -1,6 +1,6 @@
 # ADR 0008 · Operación: estados del pedido, Pase, correos de estado y bandeja de demostración
 
-> **Estado:** propuesto con la implementación local de M7 (24/11/2026), pendiente de la revisión del propietario. No integrado en `main`.
+> **Estado:** propuesto con M7 (24/11/2026), en integración por el PR #9 con CI 7/7; pendiente de la autorización de merge. No integrado en `main`.
 >
 > **Contexto de decisiones previas:** §7.1 (máquina de estados y quién hace cada transición), §7.2–7.3 (capturar al confirmar, anular al cancelar, reembolso total al cancelar después), §3.6 y §2.4 (Pase y seguimiento), §8.5 (outbox, estados honestos, bandeja demo), §8.6 (AuditLog), D2 (dos idiomas), D3 (historial y seguimiento), D-M6-2 y D-M6-3 (lo que M6 dejó para M7).
 
