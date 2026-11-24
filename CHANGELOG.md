@@ -4,11 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
-### Agregado — M6 · Pagos (en revisión, no integrado)
+### Agregado — M6 · Pagos (revisión aprobada, en integración por PR)
 
 - **Interfaz `PaymentGateway`** y procesador simulado (`MockGateway`) con los escenarios de la tarjeta demo: aprobado, rechazado, fondos insuficientes, error del procesador, tiempo agotado y pendiente (§7.4). Sin dinero real ni datos de tarjeta.
 - **Autorizar** (`POST /api/orders/:id/payments/authorize`) con `Idempotency-Key`, intención registrada antes de llamar al procesador y bloqueo del pago. Aprobado → pedido en `PENDING_CONFIRMATION`.
-- **Pagar al recibir o al retirar** (`POST /api/orders/:id/payments/cash-on-delivery`, D-M6-1).
+- **Pagar al recibir o al retirar** (`POST /api/orders/:id/payments/cash-on-delivery`, D-M6-1), en retiro y en delivery (D-M6-4).
 - **Reconciliación** cada 5 s: tiempo agotado, pendiente y operaciones interrumpidas, sin cobrar dos veces.
 - **Staff y admin, sin interfaz (D-M6-2):** capturar y anular (STAFF/ADMIN) y reembolsar total o parcial (ADMIN) bajo `/api/admin/orders/:id/payment`, con AuditLog y límites.
 - **Web:** forma de pago y selector de escenarios en el paso 3 del checkout; en la confirmación, estado del pago, actualización sola mientras está en proceso y reintento tras un rechazo.

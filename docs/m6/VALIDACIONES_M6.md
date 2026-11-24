@@ -1,11 +1,12 @@
 # Validaciones de M6 · Pagos
 
-> **Fecha:** 23/11/2026, con la revisión de aceptación técnica del mismo día (sección al final). Son resultados de ejecuciones locales en la rama `m6-pagos` (base `bcebdcb`, M5 integrado). **M6 no está integrado ni cerrado:** espera la revisión del propietario y la decisión D-M6-4. **Sin ejecución en GitHub Actions** (requiere push, no autorizado).
+> **Fecha:** 23/11/2026, con la revisión de aceptación técnica del mismo día (sección al final). Son resultados de ejecuciones locales en la rama `m6-pagos` (base `bcebdcb`, M5 integrado). **Revisión aceptada por el propietario (24/11/2026), con D-M6-4 resuelta; M6 entra en integración por PR a `main`.** Hasta el merge no está integrado ni cerrado. El CI de GitHub Actions corre en el PR.
 > **Decisiones aplicadas:** §7.1–7.4, §8.4, §8.6 y §11 de la propuesta, más las decisiones del propietario al iniciar M6. Detalle técnico en el [ADR 0007](../adr/0007-pagos-gateway-simulado-y-reconciliacion.md).
 >
 > - **D-M6-1:** contra entrega incluida.
 > - **D-M6-2:** capturar, anular y reembolsar se exponen solo por API para staff y admin, sin interfaz.
 > - **D-M6-3:** el correo "Pedido recibido" queda para M7.
+> - **D-M6-4 (24/11/2026):** la contra entrega se ofrece en **retiro (`PICKUP`) y delivery (`DELIVERY`)**. Se mantiene la implementación revisada, sin cambios en reglas, interfaz, API ni pruebas. Vale solo para la contra entrega.
 
 ## Qué se implementó
 
@@ -129,7 +130,7 @@
 | `DEMO_PAYMENTS_ENABLED=true` en la demo pública | M10 (configuración del despliegue) |
 | Safari de iOS real | No probado (M9) |
 | Riesgos heredados R-M5-1 (`npm audit`) y R-M5-2 (WebKit M1–M4) | Siguen aceptados temporalmente y no resueltos; M6 no los cambia |
-| **D-M6-4:** contra entrega en retiro y/o delivery | **Decisión pendiente del propietario** (ver la sección final). No se cambió la regla actual (las dos modalidades) |
+| **D-M6-4:** contra entrega en retiro y/o delivery | ✅ **Resuelta (24/11/2026):** retiro y delivery, sin cambios en la implementación |
 | Reconciliación sin tope de reintentos (R-M6-3) | Aceptado para el procesador simulado; a revisar con un procesador real |
 
 ## Revisión de aceptación técnica (23/11/2026)
@@ -232,7 +233,11 @@ Ninguna corrección cambia reglas de negocio, contratos (`shared`), esquema, dep
 - **Capturas:** quedaron en la carpeta temporal de la sesión y no se versionan.
 - **Defectos visuales nuevos atribuibles a M6:** ninguno. El encabezado fijo que aparece a mitad de una captura de página completa a 768 px es el encabezado sticky de M1 dibujado por la herramienta, no un defecto.
 
-### D-M6-4 · Contra entrega en retiro y/o delivery (pendiente de decisión del propietario)
+### D-M6-4 · Contra entrega en retiro y/o delivery
+
+> ✅ **Decisión del propietario (24/11/2026):** alternativa **A**. La contra entrega se ofrece en **retiro (`PICKUP`) y delivery (`DELIVERY`)**. Se mantiene la implementación revisada, sin cambios en reglas, interfaz, API ni pruebas. La decisión no se extiende a otros métodos de pago ni a otras modalidades.
+
+Análisis presentado en la revisión:
 
 - **Hoy:** se ofrece en `PICKUP` y en `DELIVERY` como "Pagar al recibir o al retirar" (`view.ts` no mira la modalidad).
 - **La propuesta no lo define:**
@@ -253,8 +258,7 @@ No se cambió la regla. Las alternativas:
 
 - **Criterio de §12 (matriz de escenarios + concurrencia):** cumplido con pruebas ejecutadas; las tablas anteriores reflejan solo lo que se probó.
 - **Pendientes que no bloquean la revisión:**
-  - el CI en GitHub (requiere push);
-  - D-M6-4;
+  - el CI en GitHub (corre en el PR de integración);
   - lo previsto para M7, M8 y M10.
 - **Riesgo R-M6-1 (D-M6-2):** el pedido puede quedar desalineado con el pago hasta M7. No compromete la integridad del pago: la máquina de estados, las operaciones y el procesador siguen coherentes, y no se puede capturar ni anular fuera de `PENDING_CONFIRMATION`.
 - **Riesgo R-M6-2:** la reconciliación puede pasar un pedido vencido a `PENDING_CONFIRMATION` si el pago se inició antes del vencimiento. Lo cancela el job de M7.

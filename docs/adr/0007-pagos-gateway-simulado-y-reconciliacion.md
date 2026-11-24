@@ -6,6 +6,7 @@
 > - **D-M6-1:** se incluye el pago contra entrega, como dice la propuesta (§7.2, §7.4). Esto cierra la observación de `REVISION_ACEPTACION_M5.md` §3. El ADR 0006 decía "no hay contra entrega": era cierto para M5 y queda superado aquí.
 > - **D-M6-2:** capturar, anular y reembolsar se implementan en el servicio y en una API solo para staff y admin, sin interfaz. M7 los conecta con los estados del Pase y M8 agrega la pantalla de reembolsos.
 > - **D-M6-3:** el correo "Pedido recibido" queda para M7, junto con los demás correos de estado.
+> - **D-M6-4 (24/11/2026):** la contra entrega se ofrece en retiro y en delivery (§6 de este ADR), sin cambios en la implementación.
 
 ## Contexto
 
@@ -94,7 +95,7 @@ Las 38 pruebas de integración de M5 siguen pasando.
 
 - **Endpoint:** `POST /orders/:id/payments/cash-on-delivery`. Es idempotente por estado y no usa el procesador.
 - **Qué cambia:** el método del `Payment` pasa a `CASH_ON_DELIVERY`, el pago a `PENDING_COLLECTION` y el pedido a `PENDING_CONFIRMATION`.
-- **Retiro y delivery:** se ofrece en los dos, como "pagar al recibir o al retirar". La propuesta habla de "contra entrega" y el pedido termina en `DELIVERED` en ambos casos.
+- **Retiro y delivery (D-M6-4, confirmada por el propietario el 24/11/2026):** se ofrece en los dos, como "pagar al recibir o al retirar". La propuesta habla de "contra entrega" y el pedido termina en `DELIVERED` en ambos casos.
 - **Pendiente para M7:** marcar `COLLECTED` al entregar (staff).
 - **Interpretación:** el `Payment` se sigue creando con `DEMO_CARD` (M5), y el método se fija al pagar. De las dos opciones que dejó abiertas la revisión de M5, es la que no cambia el flujo de creación del pedido.
 
