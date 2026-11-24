@@ -4,7 +4,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
-### Agregado — M6 · Pagos (revisión aprobada, en integración por PR)
+### Agregado — M6 · Pagos (integrado en `main` mediante el PR #7)
 
 - **Interfaz `PaymentGateway`** y procesador simulado (`MockGateway`) con los escenarios de la tarjeta demo: aprobado, rechazado, fondos insuficientes, error del procesador, tiempo agotado y pendiente (§7.4). Sin dinero real ni datos de tarjeta.
 - **Autorizar** (`POST /api/orders/:id/payments/authorize`) con `Idempotency-Key`, intención registrada antes de llamar al procesador y bloqueo del pago. Aprobado → pedido en `PENDING_CONFIRMATION`.

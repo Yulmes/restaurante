@@ -8,7 +8,7 @@
 
 | # | Proyecto | Stack previsto | Estado |
 |---|---|---|---|
-| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M5 integrados en `main`; M5 cerrado (PR #6, merge `bcebdcb`, 23/11/2026). M6–M11 no iniciados.** |
+| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M6 integrados en `main`; M6 cerrado (PR #7, merge `5ed236f`, 24/11/2026). M7–M11 no iniciados.** |
 | 2 | E-commerce de ropa y accesorios | React, TypeScript, Java, Spring Boot, PostgreSQL | Futuro. No iniciado. |
 | 3 | Peluquería: reservas y gestión de citas | React, TypeScript, C#, ASP.NET Core, SQL Server | Futuro. No iniciado. |
 | 4 | SaaS multiusuario de gestión de proyectos | Next.js, TypeScript, NestJS, PostgreSQL, Redis | Futuro. No iniciado. |
@@ -33,7 +33,7 @@
   | M0 · Fundaciones, M1 · Sistema de diseño, M2 · Datos, M3 · Identidad | Integrados en `main` (PR #1 a #4) |
   | **M4 · Catálogo y SEO** | **Integrado en `main` y cerrado** (PR #5, merge `a710dba`, 18/11/2026; CI posterior al merge: 6/6 jobs aprobados). Incluye la API pública del catálogo, 56 páginas prerenderizadas en es-CR y en, SEO (meta, Open Graph, `hreflang`, JSON-LD, sitemap y robots), precios y disponibilidad en vivo, textos editoriales aprobados y la medición con Lighthouse (HTTP/1.1 y HTTP/2). También integra la corrección de M3 del idioma del documento (`m3-lang-documento`), con su suite E2E sobre el build, que corre en CI |
   | **M5 · Pedido** | **Integrado en `main` y cerrado** (PR #6, merge `bcebdcb`, 23/11/2026, con autorización de Nivel 3 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7 jobs aprobados, sin reintentos. Nota final: 90/100, con los defectos D1–D4 corregidos y dos riesgos heredados aceptados temporalmente, no resueltos (ver abajo). Sin despliegue. Carrito de invitado y de cuenta con fusión idempotente, motor de precios, checkout de 3 pasos, direcciones y pedido en `PENDING_PAYMENT` sin cobro. Detalle en `docs/m5/VALIDACIONES_M5.md` |
-  | **M6 · Pagos** | **Implementado en la rama `m6-pagos`; revisión de aceptación técnica aprobada (4 defectos corregidos) y D-M6-4 resuelta (contra entrega en retiro y delivery). En integración por PR a `main`; no se declara cerrado hasta el merge con el CI en verde.** Interfaz `PaymentGateway` con procesador simulado, escenarios de la tarjeta demo, idempotencia, reconciliación, contra entrega (D-M6-1), capturar, anular y reembolsar por API para staff y admin (D-M6-2). Detalle en `docs/m6/VALIDACIONES_M6.md` y ADR 0007 |
+  | **M6 · Pagos** | **Integrado en `main` y cerrado** (PR #7, merge commit `5ed236f`, 24/11/2026, con autorización de Nivel 3 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 91/100, integración aprobada, con la revisión de aceptación técnica (4 defectos corregidos) y D-M6-4 resuelta (contra entrega en retiro y delivery). Sin despliegue y sin activar `DEMO_PAYMENTS_ENABLED` en ningún entorno remoto. Riesgos aceptados R-M6-1 a R-M6-3 (ver abajo). Interfaz `PaymentGateway` con procesador simulado, escenarios de la tarjeta demo, idempotencia, reconciliación, contra entrega (D-M6-1), capturar, anular y reembolsar por API para staff y admin (D-M6-2). Detalle en `docs/m6/VALIDACIONES_M6.md` y ADR 0007 |
   | M7 a M11 | No iniciados |
 
 - **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** siguen pendientes; no se dan por cumplidos.
@@ -48,7 +48,12 @@
   - `npm audit`: GHSA-7589-6fvf-x4pw en `effect` 3.20.0, transitiva de Prisma 7.10.1. Se espera una Prisma 7.x que lo corrija.
   - Fallas heredadas de M1–M4 en WebKit (Playwright, perfil de iPhone): M9.
   - Detalle en `docs/m5/REVISION_ACEPTACION_M5.md` §7.
-- **Próximo paso:** integrar M6 por PR a `main` con el CI en verde y registrar su cierre. M7 empieza solo con autorización expresa.
+- **Riesgos aceptados al cerrar M6 (24/11/2026):** siguen pendientes; no se dan por resueltos. R-M5-1 y R-M5-2 también siguen abiertos.
+  - R-M6-1: capturar y anular no cambian el estado del pedido hasta M7.
+  - R-M6-2: la reconciliación puede confirmar el pago de un pedido vencido si el pago se inició antes del vencimiento. Queda pendiente de la cancelación de M7.
+  - R-M6-3: la reconciliación no tiene tope de reintentos ni espera creciente.
+  - Detalle en `docs/m6/VALIDACIONES_M6.md`.
+- **Próximo paso:** M7 · Operación empieza solo con autorización expresa del propietario.
 
 ## 2 · E-commerce (futuro)
 
