@@ -156,9 +156,12 @@ export class MockGateway implements PaymentGateway {
   ): Promise<GatewayResult> {
     try {
       return await this.#db.$transaction(async (tx) => {
+        // Primero el bloqueo y después la marca: dos llamadas simultáneas con la misma clave se
+        // ordenan en el bloqueo, y la segunda ve la marca de la primera (mismo resultado) en vez de
+        // ver la transacción ya cambiada y rechazarla.
+        await tx.$queryRaw`SELECT "id" FROM "MockGatewayTransaction" WHERE "ref" = ${ref} FOR UPDATE`;
         const done = await tx.mockGatewayTransaction.findUnique({ where: { idempotencyKey } });
         if (done) return { outcome: 'SUCCEEDED', ref: done.ref } as const;
-        await tx.$queryRaw`SELECT "id" FROM "MockGatewayTransaction" WHERE "ref" = ${ref} FOR UPDATE`;
         const parent = await tx.mockGatewayTransaction.findUnique({ where: { ref } });
         if (!parent) return { outcome: 'DECLINED', code: 'processor_error', ref: null } as const;
         const applied = await apply(tx, parent);

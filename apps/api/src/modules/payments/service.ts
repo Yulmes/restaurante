@@ -132,11 +132,26 @@ export class PaymentService {
     );
     if ('replay' in claim) return claim.replay;
 
-    let intent: { opId: string; opKey: string; amountMinor: number; currency: 'CRC' | 'USD'; code: string };
+    let intent: {
+      opId: string;
+      opKey: string;
+      amountMinor: number;
+      currency: 'CRC' | 'USD';
+      code: string;
+    } | null;
     try {
       intent = await this.#db.$transaction(async (tx) => {
         const now = this.#clock.now();
         const payment = await this.#lock(tx, orderId, userId);
+        // Una clave por intento del cliente: tras un rechazo, el siguiente intento usa otra.
+        const opKey = `${payment.id}:authorize:${key}`;
+        // El mismo intento ya se registró (la respuesta se perdió y la clave se liberó): no se
+        // abre otra operación; se responde el estado actual, que la reconciliación termina.
+        const previous = await tx.paymentOperation.findUnique({
+          where: { idempotencyKey: opKey },
+          select: { id: true },
+        });
+        if (previous) return null;
         this.#assertPayable(payment, now);
         if (payment.method !== 'DEMO_CARD') throw notAllowed();
         assertTransition(payment.status, 'PROCESSING');
@@ -144,8 +159,6 @@ export class PaymentService {
           where: { id: payment.id },
           data: { status: 'PROCESSING', version: { increment: 1 } },
         });
-        // Una clave por intento del cliente: tras un rechazo, el siguiente intento usa otra.
-        const opKey = `${payment.id}:authorize:${key}`;
         const op = await tx.paymentOperation.create({
           data: {
             paymentId: payment.id,
@@ -179,19 +192,25 @@ export class PaymentService {
       throw error;
     }
 
+    if (!intent) {
+      const body = { order: await this.#orderView(this.#db, orderId) };
+      await this.#idempotency.complete(this.#db, claim.id, 200, body);
+      return { status: 200, body };
+    }
+    const opened = intent;
     const result = await this.#call(() =>
       this.#gateway.authorize({
-        amountMinor: intent.amountMinor,
-        currency: intent.currency,
-        reference: intent.code,
-        idempotencyKey: intent.opKey,
+        amountMinor: opened.amountMinor,
+        currency: opened.currency,
+        reference: opened.code,
+        idempotencyKey: opened.opKey,
         scenario,
       }),
     );
 
     try {
       return await this.#db.$transaction(async (tx) => {
-        await this.#applyAuthorize(tx, intent.opId, result, { userId, role: 'CUSTOMER' });
+        await this.#applyAuthorize(tx, opened.opId, result, { userId, role: 'CUSTOMER' });
         const body = { order: await this.#orderView(tx, orderId) };
         await this.#idempotency.complete(tx, claim.id, 200, body);
         return { status: 200, body };
@@ -268,7 +287,7 @@ export class PaymentService {
         idempotencyKey: intent.opKey,
       }),
     );
-    return this.#finishAdminOperation(orderId, result, (tx) =>
+    return this.#finishAdminOperation(orderId, intent.opId, (tx) =>
       this.#applyCapture(tx, intent.opId, result, actor, requestId),
     );
   }
@@ -315,7 +334,7 @@ export class PaymentService {
     const result = await this.#call(() =>
       this.#gateway.void({ ref: intent.ref, idempotencyKey: intent.opKey }),
     );
-    return this.#finishAdminOperation(orderId, result, (tx) =>
+    return this.#finishAdminOperation(orderId, intent.opId, (tx) =>
       this.#applyVoid(tx, intent.opId, result, actor, reason, requestId),
     );
   }
@@ -336,10 +355,23 @@ export class PaymentService {
     );
     if ('replay' in claim) return claim.replay;
 
-    let intent: { opId: string; opKey: string; ref: string };
+    const refundKey = `${actor.userId}:${key}`;
+    let intent: { opId: string; opKey: string; ref: string; resumed: boolean };
     try {
       intent = await this.#db.$transaction(async (tx) => {
         const payment = await this.#lock(tx, orderId);
+        // El mismo reembolso ya se registró (la respuesta se perdió y la clave se liberó): no se crea
+        // otro; se responde según cómo terminó su operación (o la termina la reconciliación).
+        const previous = await tx.refund.findUnique({
+          where: { idempotencyKey: refundKey },
+          select: { id: true },
+        });
+        if (previous) {
+          const op = await tx.paymentOperation.findUniqueOrThrow({
+            where: { idempotencyKey: `refund:${previous.id}` },
+          });
+          return { opId: op.id, opKey: op.idempotencyKey, ref: payment.gatewayRef ?? '', resumed: true };
+        }
         if (
           payment.method !== 'DEMO_CARD' ||
           (payment.status !== 'CAPTURED' && payment.status !== 'PARTIALLY_REFUNDED') ||
@@ -363,7 +395,7 @@ export class PaymentService {
             paymentId: payment.id,
             amountMinor: input.amountMinor,
             reason: input.reason,
-            idempotencyKey: `${actor.userId}:${key}`,
+            idempotencyKey: refundKey,
             actorUserId: actor.userId,
             createdAt: this.#clock.now(),
           },
@@ -375,19 +407,26 @@ export class PaymentService {
           `refund:${refund.id}`,
           input.amountMinor,
         );
-        return { opId: op.id, opKey: op.idempotencyKey, ref: payment.gatewayRef };
+        return { opId: op.id, opKey: op.idempotencyKey, ref: payment.gatewayRef, resumed: false };
       });
     } catch (error) {
       await this.#idempotency.release(claim.id);
       throw error;
     }
 
-    const result = await this.#call(() =>
-      this.#gateway.refund({ ref: intent.ref, amountMinor: input.amountMinor, idempotencyKey: intent.opKey }),
-    );
+    const result: GatewayResult = intent.resumed
+      ? { outcome: 'UNKNOWN' }
+      : await this.#call(() =>
+          this.#gateway.refund({
+            ref: intent.ref,
+            amountMinor: input.amountMinor,
+            idempotencyKey: intent.opKey,
+          }),
+        );
     try {
-      const response = await this.#finishAdminOperation(orderId, result, (tx) =>
-        this.#applyRefund(tx, intent.opId, result, actor, requestId),
+      // Retomado: no se vuelve a llamar ni a aplicar nada; se informa cómo quedó la operación.
+      const response = await this.#finishAdminOperation(orderId, intent.opId, (tx) =>
+        intent.resumed ? Promise.resolve() : this.#applyRefund(tx, intent.opId, result, actor, requestId),
       );
       const status = response.status === 200 ? 201 : response.status;
       await this.#idempotency.complete(this.#db, claim.id, status, response.body);
@@ -758,7 +797,9 @@ export class PaymentService {
 
   /**
    * Abre la operación de staff/admin con su clave determinística. Una en curso → 409; una fallida
-   * se reabre con la misma clave (el procesador es idempotente por clave).
+   * se reabre con la misma clave (el procesador es idempotente por clave). Capturar y anular se
+   * excluyen entre sí: con una de las dos en curso (`REQUESTED`/`UNKNOWN`), la otra → 409, así la
+   * segunda nunca llega al procesador a competir con la primera.
    */
   async #openOperation(
     tx: Tx,
@@ -768,6 +809,12 @@ export class PaymentService {
     amountMinor: number,
   ) {
     const now = this.#clock.now();
+    if (type !== 'REFUND') {
+      const busy = await tx.paymentOperation.count({
+        where: { paymentId, type: { in: ['CAPTURE', 'VOID'] }, status: { in: ['REQUESTED', 'UNKNOWN'] } },
+      });
+      if (busy > 0) throw inProgress();
+    }
     const existing = await tx.paymentOperation.findUnique({ where: { idempotencyKey } });
     if (existing) {
       if (existing.status !== 'FAILED') throw inProgress();
@@ -789,20 +836,28 @@ export class PaymentService {
     });
   }
 
-  /** Aplica el resultado; un rechazo del procesador → 502, sin resultado → 202 (lo termina la reconciliación). */
+  /**
+   * Aplica el resultado y responde según cómo quedó **la operación** (no la llamada): si la
+   * reconciliación la terminó antes, se informa ese resultado. Rechazada → 502; sin resultado → 202
+   * (la termina la reconciliación); hecha → 200.
+   */
   async #finishAdminOperation(
     orderId: string,
-    result: GatewayResult,
+    opId: string,
     apply: (tx: Tx) => Promise<void>,
   ): Promise<{ status: number; body: { payment: AdminPayment } }> {
-    const payment = await this.#db.$transaction(async (tx) => {
+    const { payment, status } = await this.#db.$transaction(async (tx) => {
       await apply(tx);
-      return this.#adminView(tx, orderId);
+      const op = await tx.paymentOperation.findUniqueOrThrow({
+        where: { id: opId },
+        select: { status: true },
+      });
+      return { payment: await this.#adminView(tx, orderId), status: op.status };
     });
-    if (result.outcome === 'DECLINED') {
+    if (status === 'FAILED') {
       throw new AppError(502, 'GATEWAY_ERROR', 'The payment processor rejected the operation');
     }
-    return { status: result.outcome === 'SUCCEEDED' ? 200 : 202, body: { payment } };
+    return { status: status === 'SUCCEEDED' ? 200 : 202, body: { payment } };
   }
 
   /** Errores inesperados del procesador cuentan como "sin respuesta": decide la reconciliación. */
@@ -839,7 +894,7 @@ export class PaymentService {
     });
   }
 
-  async #orderView(tx: Tx, orderId: string): Promise<Order> {
+  async #orderView(tx: Tx | PrismaClient, orderId: string): Promise<Order> {
     const row = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: orderInclude });
     return toOrder(row, { now: this.#clock.now(), demoCardEnabled: this.#config.demoPaymentsEnabled });
   }

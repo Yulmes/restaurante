@@ -17,7 +17,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { PaymentGateway } from '../src/modules/payments/gateway.ts';
+import type { GatewayResult, PaymentGateway, RetrieveResult } from '../src/modules/payments/gateway.ts';
 import { MockGateway } from '../src/modules/payments/mock-gateway.ts';
 import { setUserRoles } from '../src/modules/users/roles.ts';
 import { buildApi, Browser, registerUser, signIn, type TestApi } from './http.ts';
@@ -643,5 +643,546 @@ describe('restricciones de la base (§6.3)', () => {
         data: { amountAuthorizedMinor: 10, amountCapturedMinor: 10, amountRefundedMinor: 11 },
       }),
     ).rejects.toThrow();
+  });
+});
+
+// ─── Revisión de aceptación de M6: concurrencia e idempotencia ampliadas ───────────────────────
+
+type GatewayOp = 'authorize' | 'capture' | 'void' | 'refund';
+
+/**
+ * Procesador simulado con "compuertas": la próxima llamada a una operación se detiene hasta que la
+ * prueba la suelta. Sirve para reproducir, sin depender del azar, una petición en vuelo mientras
+ * llega otra, una respuesta perdida o la reconciliación trabajando en paralelo. `release()` sin
+ * argumento deja pasar la llamada al procesador real (respuesta tardía); con un resultado, lo
+ * devuelve sin llegar al procesador (la llamada nunca llegó).
+ */
+class GatedGateway implements PaymentGateway {
+  readonly real: MockGateway;
+  retrieveFails = false;
+  readonly #holds = new Map<GatewayOp, { enter: () => void; gate: Promise<GatewayResult | undefined> }>();
+
+  constructor(target: TestApi) {
+    this.real = new MockGateway({ db: target.db, clock: target.clock });
+  }
+
+  hold(op: GatewayOp): { entered: Promise<void>; release: (result?: GatewayResult) => void } {
+    let enter: () => void = () => undefined;
+    let release: (result?: GatewayResult) => void = () => undefined;
+    const entered = new Promise<void>((resolve) => {
+      enter = resolve;
+    });
+    const gate = new Promise<GatewayResult | undefined>((resolve) => {
+      release = resolve;
+    });
+    this.#holds.set(op, { enter, gate });
+    return { entered, release };
+  }
+
+  async #through(op: GatewayOp, call: () => Promise<GatewayResult>): Promise<GatewayResult> {
+    const held = this.#holds.get(op);
+    if (held) {
+      this.#holds.delete(op);
+      held.enter();
+      const forced = await held.gate;
+      if (forced) return forced;
+    }
+    return call();
+  }
+
+  authorize(input: Parameters<PaymentGateway['authorize']>[0]): Promise<GatewayResult> {
+    return this.#through('authorize', () => this.real.authorize(input));
+  }
+  capture(input: Parameters<PaymentGateway['capture']>[0]): Promise<GatewayResult> {
+    return this.#through('capture', () => this.real.capture(input));
+  }
+  void(input: Parameters<PaymentGateway['void']>[0]): Promise<GatewayResult> {
+    return this.#through('void', () => this.real.void(input));
+  }
+  refund(input: Parameters<PaymentGateway['refund']>[0]): Promise<GatewayResult> {
+    return this.#through('refund', () => this.real.refund(input));
+  }
+  retrieve(key: string): Promise<RetrieveResult> {
+    if (this.retrieveFails) return Promise.reject(new Error('procesador caído durante la reconciliación'));
+    return this.real.retrieve(key);
+  }
+}
+
+function gatedApi() {
+  const gateway = new GatedGateway(api);
+  const own = buildApi({ paymentGateway: gateway });
+  own.clock.set(OPEN);
+  return { own, gateway };
+}
+
+async function roleIn(target: TestApi, roles: ('STAFF' | 'ADMIN')[]) {
+  const who = await customer(target);
+  await setUserRoles(target.db, {
+    email: who.email,
+    roles: ['CUSTOMER', ...roles],
+    actor: null,
+    reason: 'prueba M6',
+  });
+  return { ...who, browser: await signIn(target, who.email) };
+}
+
+const NO_RESPONSE: GatewayResult = { outcome: 'UNKNOWN' };
+
+describe('concurrencia: autorizar (revisión de aceptación)', () => {
+  it('dos peticiones con la MISMA clave a la vez: la segunda recibe 409 en curso y luego repite la respuesta original', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { browser } = await customer(own);
+      const order = await placeOrder(browser);
+      const key = randomUUID();
+      const hold = gateway.hold('authorize');
+      const first = authorize(browser, order.id, 'APPROVED', key);
+      await hold.entered;
+      const second = await authorize(browser, order.id, 'APPROVED', key);
+      expect(second.status).toBe(409);
+      expect(errorCode(second.body)).toBe('IDEMPOTENCY_IN_PROGRESS');
+      hold.release();
+      const done = await first;
+      expect(done.status).toBe(200);
+      const replay = await authorize(browser, order.id, 'APPROVED', key);
+      expect(replay.status).toBe(200);
+      expect(replay.body).toEqual(done.body);
+      const row = await paymentRow(order.id, own.db);
+      expect(row.operations).toHaveLength(1);
+      expect(row.attempts).toHaveLength(1);
+      expect(await mockTransactions(order.id, own.db)).toHaveLength(1);
+    } finally {
+      await own.close();
+    }
+  });
+
+  it('con el pago PENDING en curso, otro intento con otra clave → 409 PAYMENT_IN_PROGRESS', async () => {
+    const { browser } = await customer();
+    const order = await placeOrder(browser);
+    await authorize(browser, order.id, 'PENDING');
+    const again = await authorize(browser, order.id, 'APPROVED');
+    expect(again.status).toBe(409);
+    expect(errorCode(again.body)).toBe('PAYMENT_IN_PROGRESS');
+    const cash = await browser.post(`/api/orders/${order.id}/payments/cash-on-delivery`);
+    expect(cash.status).toBe(409);
+    expect(await mockTransactions(order.id)).toHaveLength(1);
+  });
+
+  it.each([
+    ['DECLINED', 'REQUIRES_PAYMENT', 'FAILED'],
+    ['APPROVED', 'AUTHORIZED', 'SUCCEEDED'],
+  ] as const)(
+    'respuesta perdida (%s): la reconciliación resuelve y el reintento con la misma clave devuelve ese resultado, sin otra operación',
+    async (scenario, status, result) => {
+      const { own, gateway } = gatedApi();
+      try {
+        const { browser } = await customer(own);
+        const order = await placeOrder(browser);
+        const key = randomUUID();
+        const hold = gateway.hold('authorize');
+        const lost = authorize(browser, order.id, scenario, key);
+        await hold.entered;
+        // La petición quedó colgada: pasan el bloqueo de la clave y el margen de la reconciliación.
+        own.clock.advance(31_000);
+        await own.payments.reconcile();
+        expect((await paymentRow(order.id, own.db)).status).toBe(status);
+
+        const retry = await authorize(browser, order.id, scenario, key);
+        expect(retry.status, JSON.stringify(retry.body)).toBe(200);
+        expect(orderBody.parse(retry.body).order.payment).toMatchObject({
+          status,
+          lastAttempt: { result, scenario },
+        });
+        hold.release(NO_RESPONSE);
+        expect((await lost).status).toBe(200);
+
+        const row = await paymentRow(order.id, own.db);
+        expect(row.status).toBe(status);
+        expect(row.operations).toHaveLength(1);
+        expect(row.attempts).toHaveLength(1);
+        expect(await mockTransactions(order.id, own.db)).toHaveLength(1);
+      } finally {
+        await own.close();
+      }
+    },
+  );
+
+  it('la reconciliación y la petición original terminan la misma operación: se aplica una sola vez', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { browser } = await customer(own);
+      const order = await placeOrder(browser);
+      const hold = gateway.hold('authorize');
+      const slow = authorize(browser, order.id, 'APPROVED');
+      await hold.entered;
+      own.clock.advance(31_000);
+      await own.payments.reconcile();
+      hold.release(); // la respuesta tardía llega al procesador con la misma clave
+      const res = await slow;
+      expect(orderBody.parse(res.body).order.payment.status).toBe('AUTHORIZED');
+      const row = await paymentRow(order.id, own.db);
+      expect(row.operations).toMatchObject([{ status: 'SUCCEEDED' }]);
+      expect(await mockTransactions(order.id, own.db)).toHaveLength(1);
+      const history = await own.db.orderStatusHistory.findMany({
+        where: { orderId: order.id, toStatus: 'PENDING_CONFIRMATION' },
+      });
+      expect(history).toHaveLength(1);
+      expect(history[0]?.actorUserId).toBeNull();
+    } finally {
+      await own.close();
+    }
+  });
+
+  it('dos reconciliaciones simultáneas sobre el mismo tiempo agotado: una sola autorización y un solo historial', async () => {
+    const { browser } = await customer();
+    const order = await placeOrder(browser);
+    await authorize(browser, order.id, 'TIMEOUT');
+    await Promise.all([api.payments.reconcile(), api.payments.reconcile(), api.payments.reconcile()]);
+    const row = await paymentRow(order.id);
+    expect(row.status).toBe('AUTHORIZED');
+    expect(row.operations).toMatchObject([{ status: 'SUCCEEDED' }]);
+    expect(await mockTransactions(order.id)).toHaveLength(1);
+    const history = await api.db.orderStatusHistory.count({
+      where: { orderId: order.id, toStatus: 'PENDING_CONFIRMATION' },
+    });
+    expect(history).toBe(1);
+    // Una operación ya resuelta no se vuelve a tomar.
+    const before = (await paymentRow(order.id)).operations[0]?.attempts;
+    await api.payments.reconcile();
+    expect((await paymentRow(order.id)).operations[0]?.attempts).toBe(before);
+  });
+
+  it('si el procesador falla durante la reconciliación, no cambia nada y la próxima vuelta lo resuelve', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { browser } = await customer(own);
+      const order = await placeOrder(browser);
+      await authorize(browser, order.id, 'TIMEOUT');
+      gateway.retrieveFails = true;
+      await expect(own.payments.reconcile()).resolves.toBeDefined();
+      const stuck = await paymentRow(order.id, own.db);
+      expect(stuck.status).toBe('PROCESSING');
+      expect(stuck.operations).toMatchObject([{ status: 'UNKNOWN' }]);
+      gateway.retrieveFails = false;
+      await own.payments.reconcile();
+      expect((await paymentRow(order.id, own.db)).status).toBe('AUTHORIZED');
+      expect(await mockTransactions(order.id, own.db)).toHaveLength(1);
+    } finally {
+      await own.close();
+    }
+  });
+});
+
+describe('concurrencia: el procesador simulado es idempotente por clave', () => {
+  it.each(['capture', 'void', 'refund'] as const)(
+    '%s simultáneo con la misma clave: todas las llamadas reciben el mismo resultado y se aplica una sola vez',
+    async (op) => {
+      const mock = new MockGateway({ db: api.db, clock: api.clock });
+      const auth = await mock.authorize({
+        amountMinor: 10_000,
+        currency: 'CRC',
+        reference: 'PRUEBA',
+        idempotencyKey: `prueba:${randomUUID()}`,
+        scenario: 'APPROVED',
+      });
+      if (auth.outcome !== 'SUCCEEDED') throw new Error('sin autorización');
+      if (op === 'refund') {
+        await mock.capture({ ref: auth.ref, amountMinor: 10_000, idempotencyKey: `prueba:${randomUUID()}` });
+      }
+      const key = `prueba:${op}:${randomUUID()}`;
+      const call = () =>
+        op === 'capture'
+          ? mock.capture({ ref: auth.ref, amountMinor: 10_000, idempotencyKey: key })
+          : op === 'void'
+            ? mock.void({ ref: auth.ref, idempotencyKey: key })
+            : mock.refund({ ref: auth.ref, amountMinor: 4_000, idempotencyKey: key });
+      const results = await Promise.all([call(), call(), call()]);
+      expect(results.map((r) => r.outcome)).toEqual(['SUCCEEDED', 'SUCCEEDED', 'SUCCEEDED']);
+      expect(new Set(results.map((r) => ('ref' in r ? r.ref : null))).size).toBe(1);
+      const parent = await api.db.mockGatewayTransaction.findUniqueOrThrow({ where: { ref: auth.ref } });
+      const expected = { capture: 'CAPTURED', void: 'VOIDED', refund: 'PARTIALLY_REFUNDED' } as const;
+      expect(parent.state).toBe(expected[op]);
+      if (op === 'refund') expect(parent.refundedMinor).toBe(4_000);
+      expect(await api.db.mockGatewayTransaction.count({ where: { idempotencyKey: key } })).toBe(1);
+    },
+  );
+});
+
+describe('concurrencia: capturar y anular (revisión de aceptación)', () => {
+  async function authorizedIn(target: TestApi) {
+    const { browser } = await customer(target);
+    const order = await placeOrder(browser);
+    await authorize(browser, order.id, 'APPROVED');
+    return order;
+  }
+
+  it.each([
+    ['capture', 'void'],
+    ['void', 'capture'],
+  ] as const)(
+    'con %s en vuelo, %s → 409 PAYMENT_IN_PROGRESS; el procesador y el pago terminan coherentes',
+    async (first, second) => {
+      const { own, gateway } = gatedApi();
+      try {
+        const order = await authorizedIn(own);
+        const staff = await roleIn(own, ['STAFF']);
+        const admin = await roleIn(own, ['ADMIN']);
+        const hold = gateway.hold(first);
+        const inFlight = staff.browser.post(`/api/admin/orders/${order.id}/payment/${first}`);
+        await hold.entered;
+        const blocked = await admin.browser.post(`/api/admin/orders/${order.id}/payment/${second}`);
+        expect(blocked.status).toBe(409);
+        expect(errorCode(blocked.body)).toBe('PAYMENT_IN_PROGRESS');
+        hold.release();
+        expect((await inFlight).status).toBe(200);
+
+        const row = await paymentRow(order.id, own.db);
+        const expected = first === 'capture' ? 'CAPTURED' : 'VOIDED';
+        expect(row.status).toBe(expected);
+        const mock = await own.db.mockGatewayTransaction.findUniqueOrThrow({
+          where: { ref: row.gatewayRef ?? '' },
+        });
+        expect(mock.state).toBe(expected);
+        expect(row.operations.filter((o) => o.type !== 'AUTHORIZE')).toHaveLength(1);
+        const audit = await own.db.auditLog.findMany({
+          where: { entityId: row.id, action: { in: ['payment.captured', 'payment.voided'] } },
+        });
+        const action = first === 'capture' ? 'payment.captured' : 'payment.voided';
+        expect(audit.map((a) => [a.action, a.actorUserId])).toEqual([[action, staff.userId]]);
+      } finally {
+        await own.close();
+      }
+    },
+  );
+
+  it('captura y anulación simultáneas (staff y admin): gana una sola, sin 502 y coherente con el procesador', async () => {
+    const order = await authorizedIn(api);
+    const staff = await staffOrAdmin(['STAFF']);
+    const admin = await staffOrAdmin(['ADMIN']);
+    await staff.browser.refreshCsrf();
+    await admin.browser.refreshCsrf();
+    const results = await Promise.all([
+      staff.browser.post(`/api/admin/orders/${order.id}/payment/capture`),
+      admin.browser.post(`/api/admin/orders/${order.id}/payment/void`),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    const row = await paymentRow(order.id);
+    const mock = await api.db.mockGatewayTransaction.findUniqueOrThrow({
+      where: { ref: row.gatewayRef ?? '' },
+    });
+    expect(['CAPTURED', 'VOIDED']).toContain(row.status);
+    expect(mock.state).toBe(row.status);
+    const audit = await api.db.auditLog.count({
+      where: { entityId: row.id, action: { in: ['payment.captured', 'payment.voided'] } },
+    });
+    expect(audit).toBe(1);
+  });
+
+  it('staff y admin capturan a la vez: una sola captura y una sola entrada de AuditLog', async () => {
+    const order = await authorizedIn(api);
+    const staff = await staffOrAdmin(['STAFF']);
+    const admin = await staffOrAdmin(['ADMIN']);
+    await staff.browser.refreshCsrf();
+    await admin.browser.refreshCsrf();
+    const results = await Promise.all([
+      staff.browser.post(`/api/admin/orders/${order.id}/payment/capture`),
+      admin.browser.post(`/api/admin/orders/${order.id}/payment/capture`),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    const row = await paymentRow(order.id);
+    expect(row.amountCapturedMinor).toBe(order.totals.totalMinor);
+    expect(await api.db.auditLog.count({ where: { entityId: row.id, action: 'payment.captured' } })).toBe(1);
+  });
+
+  it('repetir una captura o una anulación ya hechas → 409, sin otra operación ni otra auditoría', async () => {
+    const admin = await staffOrAdmin(['ADMIN']);
+    const captured = await authorizedIn(api);
+    expect((await admin.browser.post(`/api/admin/orders/${captured.id}/payment/capture`)).status).toBe(200);
+    const again = await admin.browser.post(`/api/admin/orders/${captured.id}/payment/capture`);
+    expect(again.status).toBe(409);
+    expect(errorCode(again.body)).toBe('PAYMENT_NOT_ALLOWED');
+    expect((await admin.browser.post(`/api/admin/orders/${captured.id}/payment/void`)).status).toBe(409);
+
+    const voided = await authorizedIn(api);
+    expect((await admin.browser.post(`/api/admin/orders/${voided.id}/payment/void`)).status).toBe(200);
+    expect((await admin.browser.post(`/api/admin/orders/${voided.id}/payment/void`)).status).toBe(409);
+    for (const order of [captured, voided]) {
+      const row = await paymentRow(order.id);
+      expect(row.operations.filter((o) => o.type !== 'AUTHORIZE')).toHaveLength(1);
+      const audit = await api.db.auditLog.count({
+        where: { entityId: row.id, action: { in: ['payment.captured', 'payment.voided'] } },
+      });
+      expect(audit).toBe(1);
+    }
+  });
+});
+
+describe('concurrencia: reembolsos (revisión de aceptación)', () => {
+  async function capturedIn(target: TestApi) {
+    const { browser } = await customer(target);
+    const order = await placeOrder(browser);
+    await authorize(browser, order.id, 'APPROVED');
+    const admin = await roleIn(target, ['ADMIN']);
+    expect((await admin.browser.post(`/api/admin/orders/${order.id}/payment/capture`)).status).toBe(200);
+    return { order, admin };
+  }
+  const refundOf = (admin: { browser: Browser }, orderId: string, amountMinor: number, key: string) =>
+    admin.browser.post(
+      `/api/admin/orders/${orderId}/payment/refunds`,
+      { amountMinor, reason: 'Prueba de concurrencia' },
+      { 'Idempotency-Key': key },
+    );
+
+  it('misma clave a la vez → 409 en curso; luego la respuesta original; misma clave con otro monto → 422', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { order, admin } = await capturedIn(own);
+      const key = randomUUID();
+      const hold = gateway.hold('refund');
+      const first = refundOf(admin, order.id, 50_000, key);
+      await hold.entered;
+      const dup = await refundOf(admin, order.id, 50_000, key);
+      expect(dup.status).toBe(409);
+      expect(errorCode(dup.body)).toBe('IDEMPOTENCY_IN_PROGRESS');
+      hold.release();
+      const done = await first;
+      expect(done.status).toBe(201);
+      const replay = await refundOf(admin, order.id, 50_000, key);
+      expect(replay.status).toBe(201);
+      expect(replay.body).toEqual(done.body);
+      const other = await refundOf(admin, order.id, 60_000, key);
+      expect(other.status).toBe(422);
+      expect(errorCode(other.body)).toBe('IDEMPOTENCY_KEY_REUSED');
+      const row = await paymentRow(order.id, own.db);
+      expect(row.refunds).toHaveLength(1);
+      expect(row.amountRefundedMinor).toBe(50_000);
+    } finally {
+      await own.close();
+    }
+  });
+
+  it('un reembolso en vuelo cuenta para el límite: otro que juntos se pasarían → 422', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { order, admin } = await capturedIn(own);
+      const total = order.totals.totalMinor;
+      const hold = gateway.hold('refund');
+      const big = refundOf(admin, order.id, total, randomUUID());
+      await hold.entered;
+      const extra = await refundOf(admin, order.id, 1, randomUUID());
+      expect(extra.status).toBe(422);
+      expect(errorCode(extra.body)).toBe('REFUND_EXCEEDS_CAPTURED');
+      hold.release();
+      expect((await big).status).toBe(201);
+      expect(await paymentRow(order.id, own.db)).toMatchObject({
+        status: 'REFUNDED',
+        amountRefundedMinor: total,
+      });
+    } finally {
+      await own.close();
+    }
+  });
+
+  it('respuesta perdida: la reconciliación hace el reembolso y el reintento con la misma clave lo devuelve, sin duplicarlo', async () => {
+    const { own, gateway } = gatedApi();
+    try {
+      const { order, admin } = await capturedIn(own);
+      const key = randomUUID();
+      const hold = gateway.hold('refund');
+      const lost = refundOf(admin, order.id, 70_000, key);
+      await hold.entered;
+      own.clock.advance(31_000);
+      await own.payments.reconcile();
+      expect((await paymentRow(order.id, own.db)).amountRefundedMinor).toBe(70_000);
+
+      const retry = await refundOf(admin, order.id, 70_000, key);
+      expect(retry.status, JSON.stringify(retry.body)).toBe(201);
+      expect(adminPaymentResponseSchema.parse(retry.body).payment).toMatchObject({
+        status: 'PARTIALLY_REFUNDED',
+        amountRefundedMinor: 70_000,
+      });
+      hold.release(NO_RESPONSE);
+      expect((await lost).status).toBe(201);
+
+      const row = await paymentRow(order.id, own.db);
+      expect(row.amountRefundedMinor).toBe(70_000);
+      expect(row.refunds).toHaveLength(1);
+      expect(row.operations.filter((o) => o.type === 'REFUND')).toHaveLength(1);
+      expect(await own.db.auditLog.count({ where: { entityId: row.id, action: 'payment.refunded' } })).toBe(
+        1,
+      );
+    } finally {
+      await own.close();
+    }
+  });
+
+  it('no se reembolsa un pago anulado ni uno contra entrega', async () => {
+    const admin = await staffOrAdmin(['ADMIN']);
+    const { browser } = await customer();
+    const voided = await placeOrder(browser);
+    await authorize(browser, voided.id, 'APPROVED');
+    await admin.browser.post(`/api/admin/orders/${voided.id}/payment/void`);
+    const cash = await placeOrder(browser);
+    await browser.post(`/api/orders/${cash.id}/payments/cash-on-delivery`);
+    for (const order of [voided, cash]) {
+      const res = await refundOf(admin, order.id, 100, randomUUID());
+      expect(res.status).toBe(409);
+      expect(errorCode(res.body)).toBe('PAYMENT_NOT_ALLOWED');
+    }
+  });
+});
+
+describe('acceso, switch y exposición de datos (revisión de aceptación)', () => {
+  it('invitado → 401 y sin CSRF → 403 en las rutas de staff/admin; pedido inexistente o id inválido → 404', async () => {
+    const { browser } = await customer();
+    const order = await placeOrder(browser);
+    await authorize(browser, order.id, 'APPROVED');
+    const guest = new Browser(api);
+    expect((await guest.get(`/api/admin/orders/${order.id}/payment`)).status).toBe(401);
+    expect((await guest.post(`/api/admin/orders/${order.id}/payment/capture`)).status).toBe(401);
+    const admin = await staffOrAdmin(['ADMIN']);
+    const noCsrf = await admin.browser.agent
+      .post(`/api/admin/orders/${order.id}/payment/capture`)
+      .set('x-test-ip', admin.browser.ip);
+    expect(noCsrf.status).toBe(403);
+    expect((await paymentRow(order.id)).status).toBe('AUTHORIZED');
+    expect((await authorize(browser, randomUUID(), 'APPROVED')).status).toBe(404);
+    expect((await authorize(browser, 'no-es-un-uuid', 'APPROVED')).status).toBe(404);
+    expect((await admin.browser.post('/api/admin/orders/no-es-un-uuid/payment/capture')).status).toBe(404);
+  });
+
+  it('con DEMO_PAYMENTS_ENABLED=false la contra entrega sigue funcionando y el cuerpo no puede encender la tarjeta', async () => {
+    const off = buildApi({ config: { demoPaymentsEnabled: false } });
+    off.clock.set(OPEN);
+    try {
+      const { browser } = await customer(off);
+      const order = await placeOrder(browser);
+      const sneaky = await browser.post(
+        `/api/orders/${order.id}/payments/authorize`,
+        { scenario: 'APPROVED', demoPaymentsEnabled: true },
+        { 'Idempotency-Key': randomUUID() },
+      );
+      expect([400, 403]).toContain(sneaky.status);
+      expect((await paymentRow(order.id, off.db)).status).toBe('REQUIRES_PAYMENT');
+      const cash = await browser.post(`/api/orders/${order.id}/payments/cash-on-delivery`);
+      expect(cash.status).toBe(200);
+      expect(orderBody.parse(cash.body).order.payment).toMatchObject({
+        method: 'CASH_ON_DELIVERY',
+        status: 'PENDING_COLLECTION',
+      });
+    } finally {
+      await off.close();
+    }
+  });
+
+  it('las respuestas de pagos no exponen referencias del procesador, claves ni datos de tarjeta', async () => {
+    const { browser } = await customer();
+    const order = await placeOrder(browser);
+    const res = await authorize(browser, order.id, 'APPROVED');
+    const admin = await staffOrAdmin(['ADMIN']);
+    const view = await admin.browser.get(`/api/admin/orders/${order.id}/payment`);
+    for (const body of [res.body, view.body]) {
+      expect(JSON.stringify(body)).not.toMatch(/mock_|mockop_|gatewayRef|idempotencyKey|cvv|cardNumber/i);
+    }
   });
 });

@@ -23,6 +23,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Textos del checkout y de la confirmación: el pago ya no dice "no habilitado"; dice que es un entorno de demostración sin dinero real.
 - El job de CI **Pedido** pasa a **Pedido y pagos** y ejecuta también `test:e2e:pagos`.
 
+### Corregido — M6, revisión de aceptación técnica
+
+- **Procesador simulado:** dos llamadas simultáneas con la misma clave (capturar, anular o reembolsar) reciben el mismo resultado; antes una podía recibir un rechazo aunque la operación se hubiera hecho.
+- **`/authorize` y `/refunds`:** repetir un intento con la misma `Idempotency-Key` después de una respuesta perdida devuelve su resultado; antes podía responder 500.
+- **Capturar y anular** se excluyen entre sí mientras una está en curso (409 `PAYMENT_IN_PROGRESS`, antes 502). La respuesta de staff y admin refleja el estado final de la operación.
+- **Pruebas:** 22 de integración nuevas (concurrencia, idempotencia, reconciliación, acceso y datos expuestos). La matriz está en `docs/m6/VALIDACIONES_M6.md`.
+
 ### Agregado — M5 · Pedido (integrado en `main` mediante el PR #6)
 
 - **Carrito:** de invitado en el navegador (solo referencias) y de la cuenta en PostgreSQL, con la regla C5 (total sin tope de 20 y líneas internas de hasta 20). La fusión al iniciar sesión es idempotente por `mergeKey` (cada clave registrada).

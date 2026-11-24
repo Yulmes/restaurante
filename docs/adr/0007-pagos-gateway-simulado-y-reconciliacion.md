@@ -27,6 +27,7 @@ Alcanza el esquema de M2. `db:drift` sigue sin diferencias.
 - **`MockGateway`:** guarda sus "transacciones" en `MockGatewayTransaction`. El servicio de pagos **nunca lee esa tabla** (§6.1).
   - Una autorización es una fila, identificada por la clave de idempotencia de la operación.
   - Cada captura, anulación o reembolso deja una fila "marca" con su propia clave. Repetir la clave devuelve el mismo resultado sin volver a aplicar la operación.
+  - **Orden dentro del procesador (revisión de aceptación):** primero bloquea la transacción padre y después busca la marca. Si dos llamadas con la misma clave llegan a la vez, la segunda espera el bloqueo y encuentra la marca de la primera. Antes buscaba la marca primero: la segunda veía la autorización ya capturada o anulada y respondía un rechazo.
 - **Escenarios (§7.4):**
 
 | Escenario | Respuesta | Qué queda en el procesador |
@@ -56,6 +57,8 @@ Cada operación tiene tres fases, en este orden:
 | Capturar | `paymentId:capture` |
 | Anular | `paymentId:void` |
 | Reembolsar | `refund:<refundId>` |
+
+**Intento retomado (revisión de aceptación):** si la respuesta de `/authorize` se perdió y el cliente repite el intento con la misma `Idempotency-Key` cuando la clave HTTP ya se liberó, la operación del procesador de ese intento ya existe. Entonces no se abre otra: se responde el estado actual del pedido, que la reconciliación termina. Antes ese reintento respondía 500 (clave única de `PaymentOperation`) o 409. Con `/refunds` pasa lo mismo: el `Refund` ya registrado con esa clave no se duplica, y la respuesta sale de cómo terminó su operación.
 
 **Resultado para el pedido:** con la autorización aprobada, el pedido pasa de `PENDING_PAYMENT` a `PENDING_CONFIRMATION` (§7.1), con su `OrderStatusHistory`: el actor es el cliente, o ninguno si lo hizo la reconciliación. Con la contra entrega pasa lo mismo, sin procesador.
 
@@ -104,7 +107,8 @@ Las 38 pruebas de integración de M5 siguen pasando.
 | `POST /admin/orders/:id/payment/void` | STAFF, ADMIN | Autorización (vía procesador) o contra entrega pendiente (sin procesador) |
 | `POST /admin/orders/:id/payment/refunds` | Solo ADMIN | `Idempotency-Key`, monto y motivo; Σ reembolsos ≤ capturado |
 
-- **Respuestas:** un rechazo del procesador responde 502 `GATEWAY_ERROR`; una operación sin resultado, 202 (la termina la reconciliación).
+- **Respuestas:** salen del estado final de **la operación**, no de la llamada: rechazada → 502 `GATEWAY_ERROR`; sin resultado → 202 (la termina la reconciliación); hecha → 200 (201 en `/refunds`). Si la reconciliación la terminó antes que la petición, se informa ese resultado.
+- **Capturar y anular se excluyen entre sí:** con una de las dos en curso (`REQUESTED`/`UNKNOWN`), la otra → 409 `PAYMENT_IN_PROGRESS` y no llega al procesador. Antes la segunda competía en el procesador y terminaba en 502.
 - **Estado del pedido:** **ninguna de estas rutas lo cambia** en M6. M7 encadena "confirmar → capturar" y "cancelar → anular". Mientras tanto puede quedar un pedido en `PENDING_CONFIRMATION` con el pago `CAPTURED` o `VOIDED`. Es aceptable porque no hay interfaz que lo muestre.
 - **Reembolsos simultáneos:** Σ reembolsos ≤ capturado cuenta también los reembolsos en curso (`REQUESTED`/`UNKNOWN`) bajo el bloqueo del pago, así que dos reembolsos simultáneos no se pueden pasar del total.
 - **Reembolso rechazado:** se borra su fila `Refund` (no ocurrió).
