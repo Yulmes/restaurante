@@ -200,3 +200,15 @@ Las cuentas de las E2E del pedido se crean en la base E2E con `apps/api/scripts/
 | E2E en Chromium y `Mobile Safari`: rechazo y reintento, contra entrega en inglés, pendiente que cambia solo a autorizado, sin campos de tarjeta, axe | `apps/web/e2e/pagos/pagos.spec.ts` (`npm run test:e2e:pagos -w @marea-baja/web`) | §7.4, D-M6-1 |
 
 La suite de pagos tiene su propia API y su propia web (`playwright.pagos.config.ts`, puertos 3410 y 5188) para no compartir con la del pedido el freno global de ráfagas de la API (ADR 0007, §11). Detalle en `docs/m6/VALIDACIONES_M6.md`.
+
+## Qué cubre M7
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| Máquina de estados del pedido: matriz completa de 512 casos (estado × estado × rol × modalidad), estados finales, siguiente paso del Pase | `apps/api/src/modules/orders/machine.test.ts` | §7.1, §11 |
+| Correos de pedidos en es-CR y en (layout MJML versionado, código, enlace, escape, monto y modalidad), versión de la bandeja sin enlaces, `DeliverableRecipients` y `DemoInboxProvider` | `apps/api/src/modules/notifications/notifications.test.ts` | §8.5, D2 |
+| `ORDER_CONFIRMATION_TIMEOUT_MINUTES`, `EMAIL_DELIVERABLE_TO` y `EMAIL_PROVIDER=demo` | `apps/api/src/config/env.test.ts` | §7.1, §8.5 |
+| 29 pruebas contra PostgreSQL: Pase y RBAC, confirmar → capturar (rechazo, sin respuesta y reconciliación), versión optimista y confirmaciones simultáneas, avance por modalidad, contra entrega `COLLECTED`, cancelaciones (staff, admin con reembolso total o del resto, rechazo y reintento, en curso), cancelación del cliente e IDOR, barridos (vencido, sin confirmar, autorizado tarde), historial paginado, correos en el idioma de cada cuenta, bandeja, `DEMO_ONLY`, CSRF, límites y AuditLog | `apps/api/test/operacion.db.test.ts` | §7.1–7.3, §8.4–8.6, D3 |
+| E2E escenario 2 en Chromium y `Mobile Safari`: el staff confirma y avanza en el Pase (también con el atajo A), el cliente lo sigue en la línea de marea, el historial y la bandeja; cancelaciones del staff, del admin y del cliente; en inglés; correos en Mailpit; acceso denegado a clientes; axe | `apps/web/e2e/operacion/operacion.spec.ts` (`npm run test:e2e:operacion -w @marea-baja/web`) | §11, §3.6, §8.5 |
+
+La suite de operación tiene su propia API y su propia web (`playwright.operacion.config.ts`, puertos 3420 y 5198) y necesita Mailpit. Las cuentas de staff y admin se crean con `apps/api/scripts/e2e-user.ts --role STAFF|ADMIN`. Detalle en `docs/m7/VALIDACIONES_M7.md`.
