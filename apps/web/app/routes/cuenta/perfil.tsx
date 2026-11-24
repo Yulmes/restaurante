@@ -87,11 +87,45 @@ function Profile({ user }: { user: PublicUser }) {
           </p>
         )}
       </div>
+      <OrdersSection user={user} />
       <DetailsForm user={user} localeLabel={(locale) => tc(`language.name.${locale}`)} />
       <AddressesSection />
       <PasswordForm />
       <SessionsSection />
     </AccountShell>
+  );
+}
+
+/** M7: historial de pedidos (D3), bandeja de demostración (§8.5) y, para el personal, el Pase. */
+function OrdersSection({ user }: { user: PublicUser }) {
+  const { t } = useT('account');
+  const to = useLocalizedPath();
+  const staff = user.roles.includes('STAFF') || user.roles.includes('ADMIN');
+  return (
+    <section aria-labelledby="orders-title" className="flex flex-col gap-3 border-t border-border pt-6">
+      <h2 id="orders-title" className="t-h2">
+        {t('profile.ordersTitle')}
+      </h2>
+      <ul className="flex flex-col gap-2">
+        <li>
+          <Link to={to('/cuenta/pedidos')} className="t-ui underline underline-offset-4">
+            {t('profile.ordersLink')}
+          </Link>
+        </li>
+        <li>
+          <Link to={to('/cuenta/bandeja')} className="t-ui underline underline-offset-4">
+            {t('profile.inboxLink')}
+          </Link>
+        </li>
+        {staff ? (
+          <li>
+            <Link to={to('/admin/pase')} className="t-ui underline underline-offset-4">
+              {t('profile.passLink')}
+            </Link>
+          </li>
+        ) : null}
+      </ul>
+    </section>
   );
 }
 

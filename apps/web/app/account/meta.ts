@@ -7,7 +7,8 @@ type MetaKey =
   | 'verify.metaTitle'
   | 'forgot.metaTitle'
   | 'reset.metaTitle'
-  | 'profile.metaTitle';
+  | 'profile.metaTitle'
+  | 'inbox.metaTitle';
 
 /** Las páginas de la cuenta no se indexan (§4.2: `/cuenta/*` usa el fallback SPA con noindex). */
 export function accountMeta(pathname: string, key: MetaKey) {

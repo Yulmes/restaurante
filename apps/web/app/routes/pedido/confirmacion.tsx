@@ -10,6 +10,7 @@ import { Button, buttonClassName } from '../../components/ui/Button.tsx';
 import { Price } from '../../components/ui/Price.tsx';
 import { pathForLocale } from '../../i18n/locale.ts';
 import { useLocale, useT } from '../../i18n/use-locale.ts';
+import { ACTIVE_STATUSES, CancelOrderPanel, OrderTracker } from '../../orders/tracking.tsx';
 import type { Route } from './+types/confirmacion';
 
 export function meta({ location }: Route.MetaArgs) {
@@ -20,28 +21,43 @@ const responseSchema = z.object({ order: orderSchema });
 
 /** Mientras el pago está en proceso (pendiente o tiempo agotado), la pantalla se actualiza sola. */
 const PROCESSING_POLL_MS = 2_000;
+/** M7: mientras el local lo trabaja, el seguimiento se actualiza solo. */
+const TRACKING_POLL_MS = 15_000;
+
+export type OrderPageMode = 'confirmation' | 'tracking';
 
 /**
  * Pedido registrado (M5) y su pago (M6). La pantalla deja claro que es una demostración: no se
  * procesa dinero real. Si el pago está en proceso se actualiza sola; si la tarjeta demo se rechazó,
  * se puede reintentar mientras el pedido sigue reservado. Solo el dueño del pedido lo ve (la API
  * responde 404 a cualquier otra cuenta).
+ *
+ * M7: la misma página sirve al seguimiento (`/cuenta/pedidos/:id`): estado sobre la línea de
+ * marea, cancelación antes de la confirmación y actualización sola mientras el pedido avanza.
  */
 export default function Confirmacion() {
+  return <OrderPage mode="confirmation" />;
+}
+
+export function OrderPage({ mode }: { mode: OrderPageMode }) {
   const { t } = useT('order');
   const locale = useLocale();
   const { id = '' } = useParams();
+  const title = mode === 'tracking' ? t('tracking.title') : t('confirmation.title');
   const order = useQuery({
     queryKey: ['order', id],
     queryFn: async () => (await apiGet(`/api/orders/${encodeURIComponent(id)}`, responseSchema)).order,
     retry: false,
-    refetchInterval: (query) =>
-      query.state.data?.payment.status === 'PROCESSING' ? PROCESSING_POLL_MS : false,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.payment.status === 'PROCESSING') return PROCESSING_POLL_MS;
+      return data && ACTIVE_STATUSES.includes(data.status) ? TRACKING_POLL_MS : false;
+    },
   });
 
   if (order.isPending) {
     return (
-      <OrderShell title={t('confirmation.title')}>
+      <OrderShell title={title}>
         <p role="status" className="t-body text-text-muted">
           {t('confirmation.loading')}
         </p>
@@ -52,7 +68,7 @@ export default function Confirmacion() {
     const missing =
       order.error instanceof ApiError && (order.error.status === 404 || order.error.status === 401);
     return (
-      <OrderShell title={missing ? t('confirmation.notFound') : t('confirmation.title')}>
+      <OrderShell title={missing ? t('confirmation.notFound') : title}>
         {missing ? null : (
           <p role="alert" className="t-body text-danger">
             {t('confirmation.error')}
@@ -64,21 +80,29 @@ export default function Confirmacion() {
       </OrderShell>
     );
   }
-  return <OrderDetail order={order.data} />;
+  return <OrderDetail order={order.data} mode={mode} />;
 }
 
-function OrderDetail({ order }: { order: Order }) {
+function OrderDetail({ order, mode }: { order: Order; mode: OrderPageMode }) {
   const { t } = useT('order');
   const locale = useLocale();
   const address = order.deliveryAddress;
   return (
-    <OrderShell title={t('confirmation.title')} intro={t('confirmation.lead', { code: order.code })}>
+    <OrderShell
+      title={mode === 'tracking' ? t('tracking.title') : t('confirmation.title')}
+      intro={
+        mode === 'tracking'
+          ? t('tracking.lead', { code: order.code })
+          : t('confirmation.lead', { code: order.code })
+      }
+    >
       <p
         role="status"
         className="max-w-2xl border-l-4 border-border-strong bg-surface-raised px-4 py-3 t-body"
       >
         {t('confirmation.demo')}
       </p>
+      <OrderTracker order={order} />
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
           <dl className="grid gap-x-6 gap-y-3 t-body sm:grid-cols-[auto_1fr]">
@@ -119,6 +143,7 @@ function OrderDetail({ order }: { order: Order }) {
             </dd>
           </dl>
           <PaymentPanel order={order} />
+          <CancelOrderPanel order={order} />
           <section aria-labelledby="order-items" className="flex flex-col gap-2">
             <h2 id="order-items" className="t-h3">
               {t('confirmation.items')}
@@ -155,6 +180,12 @@ function OrderDetail({ order }: { order: Order }) {
               showDelivery={order.fulfillmentType === 'DELIVERY'}
             />
           </div>
+          <Link
+            to={pathForLocale('/cuenta/pedidos', locale)}
+            className="t-ui self-start underline underline-offset-4"
+          >
+            {t('tracking.allOrders')}
+          </Link>
           <Link to={pathForLocale('/carta', locale)} className={`${buttonClassName('secondary')} self-start`}>
             {t('confirmation.backToMenu')}
           </Link>
@@ -204,6 +235,9 @@ function PaymentPanel({ order }: { order: Order }) {
   )
     message = t('confirmation.expired');
 
+  // M7: con el pago ya cobrado, anulado o reembolsado no queda nada que decir ni hacer aquí (el
+  // estado del pago se ve en el resumen); la sección vacía no se muestra.
+  if (!message && !failure && methods.length === 0) return null;
   return (
     <section aria-labelledby="order-payment" className="flex flex-col gap-4 border-t border-border pt-6">
       <h2 id="order-payment" className="t-h3">

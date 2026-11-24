@@ -224,5 +224,138 @@
       "tooMany": "You've reached the maximum number of saved addresses.",
       "invalid": "Check this field."
     }
+  },
+  "tracking": {
+    "metaTitle": "Order tracking · Marea Baja",
+    "title": "Order tracking",
+    "lead": "Order {{code}}.",
+    "heading": "Where your order is",
+    "now": "Now: {{status}}",
+    "since": "Since {{time}}",
+    "live": "This page updates on its own.",
+    "steps": {
+      "PENDING_CONFIRMATION": "Received",
+      "CONFIRMED": "Confirmed",
+      "PREPARING": "Being prepared",
+      "READY_FOR_PICKUP": "Ready for pickup",
+      "OUT_FOR_DELIVERY": "On its way",
+      "DELIVERED": "Delivered"
+    },
+    "stepDone": "{{step}}: at {{time}}",
+    "stepCurrent": "{{step}}: now, since {{time}}",
+    "stepPending": "{{step}}: not yet",
+    "waitingPayment": "The order is still waiting for payment. Once you pay, the restaurant receives it.",
+    "cancelled": "Order cancelled · {{time}}",
+    "cancelledNoTime": "The order was cancelled.",
+    "cancelTitle": "Cancel the order",
+    "cancelHint": "You can cancel it until the restaurant confirms it. The hold on the demo card is released; no real money moves.",
+    "cancelOpen": "Cancel the order",
+    "cancelReason": "Reason (optional)",
+    "cancelConfirm": "Yes, cancel the order",
+    "cancelKeep": "No, keep it",
+    "cancelDone": "You cancelled the order.",
+    "cancelPending": "The release is in progress. This page updates on its own.",
+    "cancelErrors": {
+      "notAllowed": "The restaurant has already confirmed the order, so it can no longer be cancelled here.",
+      "inProgress": "A payment operation is in progress. Wait a moment and try again.",
+      "rateLimited": "Too many attempts. Wait a few minutes.",
+      "network": "Can’t reach the server. The order wasn’t cancelled; try again.",
+      "generic": "We couldn’t cancel the order. Please try again."
+    },
+    "allOrders": "See all my orders"
+  },
+  "history": {
+    "metaTitle": "My orders · Marea Baja",
+    "title": "My orders",
+    "intro": "Your demo orders, newest first.",
+    "loading": "Loading your orders…",
+    "error": "We couldn’t load your orders. Please try again.",
+    "empty": "You haven’t ordered yet. Corvina from Puntarenas came in today.",
+    "emptyAction": "See the ceviches",
+    "more": "See older orders",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "open": "Order {{code}}",
+    "fulfillment": {
+      "PICKUP": "Pickup",
+      "DELIVERY": "Delivery"
+    }
+  },
+  "pass": {
+    "metaTitle": "Pass · Marea Baja",
+    "title": "Pass",
+    "intro": "Orders that need work. In each column, the one that has waited longest comes first.",
+    "loading": "Loading the Pass…",
+    "error": "We couldn’t refresh the Pass. It will try again on its own.",
+    "forbidden": "The Pass is for restaurant staff only.",
+    "updated": "Updated: {{time}}",
+    "shortcuts": "Shortcuts with an order focused: J and K to move between orders, A to advance it and C to cancel it.",
+    "columns": {
+      "PENDING_CONFIRMATION": "To confirm",
+      "CONFIRMED": "Confirmed",
+      "PREPARING": "Being prepared",
+      "READY": "Ready / On its way"
+    },
+    "count_one": "{{count}} order",
+    "count_other": "{{count}} orders",
+    "empty": "Nothing right now.",
+    "ageNow": "just now",
+    "ageMinutes": "{{minutes}} min ago",
+    "ageHours": "{{hours}} h {{minutes}} min ago",
+    "fulfillment": {
+      "PICKUP": "Pickup",
+      "DELIVERY": "Delivery"
+    },
+    "customer": "For {{name}}",
+    "phone": "Phone {{phone}}",
+    "note": "Note: {{note}}",
+    "address": "{{address}}. Landmark: {{reference}}",
+    "total": "Total {{total}}",
+    "method": {
+      "DEMO_CARD": "Demo card",
+      "CASH_ON_DELIVERY": "Cash on delivery"
+    },
+    "operation": {
+      "CAPTURE_IN_PROGRESS": "Charge in progress: it resolves on its own.",
+      "CAPTURE_FAILED": "The demo processor declined the charge. You can retry the confirmation.",
+      "VOID_IN_PROGRESS": "Release in progress: it resolves on its own.",
+      "VOID_FAILED": "The demo processor declined the release. You can retry.",
+      "REFUND_IN_PROGRESS": "Refund in progress: it resolves on its own.",
+      "REFUND_FAILED": "The demo processor declined the refund. You can retry."
+    },
+    "advance": {
+      "CONFIRMED": "Confirm and charge",
+      "PREPARING": "Start preparing",
+      "READY_FOR_PICKUP": "Mark ready",
+      "OUT_FOR_DELIVERY": "Mark on its way",
+      "DELIVERED": "Mark delivered"
+    },
+    "advanceCash": {
+      "CONFIRMED": "Confirm",
+      "DELIVERED": "Delivered and paid"
+    },
+    "cancel": "Cancel",
+    "cancelTitle": "Cancel order {{code}}",
+    "cancelReason": "Reason for cancelling",
+    "cancelVoid": "The hold on the demo card is released.",
+    "cancelRefund": "What was charged on the demo card is refunded.",
+    "cancelCash": "Nothing was charged: the cash-on-delivery payment is voided.",
+    "cancelConfirm": "Cancel the order",
+    "cancelKeep": "Back",
+    "results": {
+      "moved": "Order {{code}}: {{status}}.",
+      "pending": "Order {{code}}: the demo processor hasn’t answered yet; it resolves on its own."
+    },
+    "errors": {
+      "conflict": "Someone else changed order {{code}}. We refreshed the Pass.",
+      "gateway": "The demo processor declined the operation for order {{code}}. You can retry.",
+      "inProgress": "Order {{code}} has a payment operation in progress. Wait a moment.",
+      "notAllowed": "Order {{code}} no longer allows that change. We refreshed the Pass.",
+      "forbidden": "Only an admin can cancel order {{code}} once it’s confirmed.",
+      "reason": "Write the reason for cancelling.",
+      "rateLimited": "Too many changes in a row. Wait a few minutes.",
+      "network": "Can’t reach the server. Order {{code}} didn’t change.",
+      "generic": "We couldn’t change order {{code}}. Please try again."
+    }
   }
 }

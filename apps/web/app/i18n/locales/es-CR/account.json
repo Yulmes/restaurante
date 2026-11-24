@@ -116,6 +116,27 @@
     "sessionsTitle": "Sesiones",
     "signOut": "Cerrar sesión",
     "signOutAll": "Cerrar todas las sesiones",
-    "signOutAllHint": "En este y en todos tus dispositivos."
+    "signOutAllHint": "En este y en todos tus dispositivos.",
+    "ordersTitle": "Pedidos y avisos",
+    "ordersLink": "Mis pedidos",
+    "inboxLink": "Bandeja de demostración",
+    "passLink": "Abrir el Pase (personal del local)"
+  },
+  "inbox": {
+    "metaTitle": "Bandeja de demostración · Marea Baja",
+    "title": "Bandeja de demostración",
+    "intro": "Los correos que la demostración generó para tu cuenta, con su estado real de envío.",
+    "loading": "Cargando la bandeja…",
+    "error": "No pudimos cargar la bandeja. Volvé a intentarlo.",
+    "empty": "Todavía no hay correos para tu cuenta.",
+    "status": {
+      "DEMO_ONLY": "Notificación de demostración — este correo no se envió",
+      "SENT": "Enviado a {{email}} · aceptado por el proveedor",
+      "QUEUED": "Pendiente de envío",
+      "FAILED": "No se pudo enviar"
+    },
+    "received": "Generado el {{date}}",
+    "linkHidden": "El enlace de un solo uso no se muestra en la bandeja: solo llega en el correo.",
+    "openOrder": "Ver el pedido"
   }
 }
