@@ -9,6 +9,8 @@ apps/api/src/generated/
 *.md
 docs/
 
-# Plantilla de correo (ADR 0004): MJML es sensible a espacios y el HTML es generado.
+# Plantillas de correo (ADR 0004; la de pedidos, M7): MJML es sensible a espacios y el HTML es generado.
 apps/api/src/modules/notifications/templates/layout.mjml
 apps/api/src/modules/notifications/templates/layout.html
+apps/api/src/modules/notifications/templates/order-layout.mjml
+apps/api/src/modules/notifications/templates/order-layout.html

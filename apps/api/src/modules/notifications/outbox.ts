@@ -4,8 +4,13 @@ import type { Prisma, PrismaClient } from '../../generated/prisma/client.ts';
 import type { Clock } from '../../lib/clock.ts';
 import { MINUTE } from '../../lib/clock.ts';
 import type { EmailProvider } from './providers.ts';
-import { renderEmail, type EmailData } from './templates/render.ts';
-import { EMAIL_TEMPLATES, type EmailTemplate } from './templates/messages.ts';
+import {
+  isEmailTemplate,
+  isOrderTemplate,
+  renderEmail,
+  type EmailData,
+  type EmailTemplate,
+} from './templates/render.ts';
 
 /**
  * Outbox de correos (§8.5). El correo se inserta en `EmailOutbox` **en la misma transacción**
@@ -13,7 +18,13 @@ import { EMAIL_TEMPLATES, type EmailTemplate } from './templates/messages.ts';
  * commit, con reintentos exponenciales (máximo 5 intentos).
  *
  * El enlace con el token de un solo uso viaja en `payload` solo hasta el envío: al quedar en
- * `SENT` o `FAILED`, el enlace se borra de la fila (en la base el token solo existe como hash).
+ * `SENT`, `DEMO_ONLY` o `FAILED`, el enlace se borra de la fila (en la base el token solo existe
+ * como hash). Los correos de pedidos (M7) conservan su `payload` (nombre, código del pedido, enlace
+ * a la página del pedido, monto del reembolso): no tiene secretos y la bandeja de demostración lo
+ * necesita para mostrar el correo.
+ *
+ * Estados honestos (§8.5): `SENT` solo si el proveedor lo aceptó; `DEMO_ONLY` si el destinatario
+ * no puede recibir correo real y no se intentó enviarlo; `FAILED` con el error tras 5 intentos.
  */
 export const OUTBOX_MAX_ATTEMPTS = 5;
 
@@ -37,7 +48,7 @@ export async function enqueueEmail(db: Db, email: OutboxEmail, now: Date): Promi
       to: email.to,
       locale: prismaLocale(email.locale),
       template: email.template,
-      payload: { name: email.data.name, actionUrl: email.data.actionUrl },
+      payload: payloadOf(email.data),
       nextAttemptAt: now,
       createdAt: now,
     },
@@ -49,20 +60,54 @@ export function retryDelayMs(attempt: number): number {
   return 2 ** Math.max(0, attempt - 1) * MINUTE;
 }
 
-function isTemplate(value: string): value is EmailTemplate {
-  return (EMAIL_TEMPLATES as readonly string[]).includes(value);
+function payloadOf(data: EmailData): Prisma.InputJsonObject {
+  return {
+    name: data.name,
+    actionUrl: data.actionUrl,
+    ...(data.orderCode ? { orderCode: data.orderCode } : {}),
+    ...(data.amount ? { amount: data.amount } : {}),
+    ...(data.fulfillmentType ? { fulfillmentType: data.fulfillmentType } : {}),
+  };
 }
 
-function readPayload(payload: unknown): EmailData | null {
-  if (typeof payload !== 'object' || payload === null) return null;
-  const { name, actionUrl } = payload as Record<string, unknown>;
-  return typeof name === 'string' && typeof actionUrl === 'string' ? { name, actionUrl } : null;
+/** Lee el `payload` guardado. Lo que falta o tiene otro tipo se ignora. */
+export function readPayload(payload: unknown): Partial<EmailData> {
+  if (typeof payload !== 'object' || payload === null) return {};
+  const raw = payload as Record<string, unknown>;
+  const text = (key: string) => (typeof raw[key] === 'string' ? raw[key] : undefined);
+  const fulfillment = text('fulfillmentType');
+  const data: Partial<EmailData> = {};
+  const name = text('name');
+  const actionUrl = text('actionUrl');
+  const orderCode = text('orderCode');
+  const amount = text('amount');
+  if (name !== undefined) data.name = name;
+  if (actionUrl !== undefined) data.actionUrl = actionUrl;
+  if (orderCode !== undefined) data.orderCode = orderCode;
+  if (amount !== undefined) data.amount = amount;
+  if (fulfillment === 'PICKUP' || fulfillment === 'DELIVERY') data.fulfillmentType = fulfillment;
+  return data;
+}
+
+function completePayload(payload: unknown): EmailData | null {
+  const data = readPayload(payload);
+  return data.name !== undefined && data.actionUrl !== undefined
+    ? { ...data, name: data.name, actionUrl: data.actionUrl }
+    : null;
+}
+
+/** Al cerrar el correo: los de enlace de un solo uso pierden el enlace; los de pedidos lo conservan. */
+function closedPayload(template: string, payload: unknown): Prisma.InputJsonObject {
+  if (!isOrderTemplate(template)) return {};
+  const data = completePayload(payload);
+  return data ? payloadOf(data) : {};
 }
 
 export interface OutboxResult {
   sent: number;
   retried: number;
   failed: number;
+  demoOnly: number;
 }
 
 /**
@@ -73,7 +118,7 @@ export async function processOutbox(
   deps: { db: PrismaClient; provider: EmailProvider; clock: Clock; logger: Logger },
   limit = 20,
 ): Promise<OutboxResult> {
-  const result: OutboxResult = { sent: 0, retried: 0, failed: 0 };
+  const result: OutboxResult = { sent: 0, retried: 0, failed: 0, demoOnly: 0 };
   for (let i = 0; i < limit; i += 1) {
     const now = deps.clock.now();
     const claimed = await deps.db.$transaction(async (tx) => {
@@ -96,14 +141,19 @@ export async function processOutbox(
     });
     if (!claimed) break;
 
-    const data = readPayload(claimed.payload);
-    const outcome =
-      data && isTemplate(claimed.template)
-        ? await deps.provider.send({
-            to: claimed.to,
-            ...renderEmail(claimed.template, fromPrismaLocale(claimed.locale), data),
-          })
-        : { accepted: false, error: 'Plantilla o datos inválidos' };
+    const data = completePayload(claimed.payload);
+    let outcome: Awaited<ReturnType<EmailProvider['send']>>;
+    try {
+      outcome =
+        data && isEmailTemplate(claimed.template)
+          ? await deps.provider.send({
+              to: claimed.to,
+              ...renderEmail(claimed.template, fromPrismaLocale(claimed.locale), data),
+            })
+          : { accepted: false, error: 'Plantilla o datos inválidos' };
+    } catch {
+      outcome = { accepted: false, error: 'Plantilla o datos inválidos' };
+    }
 
     const finished = deps.clock.now();
     if (outcome.accepted) {
@@ -114,14 +164,30 @@ export async function processOutbox(
           sentAt: finished,
           providerMessageId: outcome.providerMessageId ?? null,
           lastError: null,
-          payload: {},
+          payload: closedPayload(claimed.template, claimed.payload),
         },
       });
       result.sent += 1;
+    } else if (outcome.demoOnly && data) {
+      // §8.5: el destinatario no puede recibir correo real; no se intentó enviarlo.
+      await deps.db.emailOutbox.update({
+        where: { id: claimed.id },
+        data: {
+          status: 'DEMO_ONLY',
+          sentAt: finished,
+          lastError: null,
+          payload: closedPayload(claimed.template, claimed.payload),
+        },
+      });
+      result.demoOnly += 1;
     } else if (claimed.attempts >= OUTBOX_MAX_ATTEMPTS || !data) {
       await deps.db.emailOutbox.update({
         where: { id: claimed.id },
-        data: { status: 'FAILED', lastError: outcome.error?.slice(0, 500) ?? null, payload: {} },
+        data: {
+          status: 'FAILED',
+          lastError: outcome.error?.slice(0, 500) ?? null,
+          payload: closedPayload(claimed.template, claimed.payload),
+        },
       });
       deps.logger.warn({ outboxId: claimed.id, template: claimed.template }, 'email failed permanently');
       result.failed += 1;

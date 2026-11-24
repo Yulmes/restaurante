@@ -11,8 +11,9 @@ import { maskEmail } from '../../config/logger.ts';
  *    enmascaran.
  * 3. La tabla es de solo inserción (trigger y permisos de M2); este módulo solo hace INSERT.
  *
- * En M3 se audita el cambio de roles (RBAC); en M6, las capturas, anulaciones y reembolsos. Las
- * listas de productos, configuración y pedidos se agregan con sus servicios (M7, M8).
+ * En M3 se audita el cambio de roles (RBAC); en M6, las capturas, anulaciones y reembolsos; en M7,
+ * los cambios de estado del pedido hechos por staff o admin y el cobro contra entrega. Las
+ * listas de productos y configuración se agregan con sus servicios (M8).
  */
 export const AUDIT_WHITELIST = {
   user: ['email', 'name', 'locale', 'roles', 'emailVerified', 'blocked'],
@@ -26,6 +27,8 @@ export const AUDIT_WHITELIST = {
     'amountRefundedMinor',
     'amountMinor',
   ],
+  /** M7: cambios de estado y cancelaciones hechos por staff o admin (§7.1, §8.6). */
+  order: ['code', 'status', 'version'],
 } as const satisfies Record<string, readonly string[]>;
 
 export type AuditEntityType = keyof typeof AUDIT_WHITELIST;

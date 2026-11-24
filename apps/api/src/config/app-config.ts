@@ -14,6 +14,8 @@ export interface AppConfig {
   ordersAllowOutsideHours: boolean;
   /** §7.4: la tarjeta demo solo se acepta con `DEMO_PAYMENTS_ENABLED=true` (por defecto, no). */
   demoPaymentsEnabled: boolean;
+  /** M7: a cuánto tiempo sin confirmar se cancela un pedido y se anula su pago (§7.1, 20 min). */
+  orderConfirmationTimeoutMs: number;
 }
 
 export function appConfigFromEnv(env: Env): AppConfig {
@@ -29,6 +31,7 @@ export function appConfigFromEnv(env: Env): AppConfig {
     },
     ordersAllowOutsideHours: env.ORDERS_ALLOW_OUTSIDE_HOURS,
     demoPaymentsEnabled: env.DEMO_PAYMENTS_ENABLED,
+    orderConfirmationTimeoutMs: env.ORDER_CONFIRMATION_TIMEOUT_MINUTES * 60_000,
   };
 }
 

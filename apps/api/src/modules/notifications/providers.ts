@@ -4,7 +4,11 @@
  *   entrega por la misma vía que SMTP sin sumar una biblioteca SMTP (ADR 0004).
  * - `ResendProvider`: API HTTPS de Resend. En esta fase solo prueba la integración (D6, C9).
  * - `MemoryEmailProvider`: pruebas automáticas.
- * `DemoInboxProvider` y el estado `DEMO_ONLY` llegan con la bandeja de demostración (M7).
+ * - `DemoInboxProvider` (M7): no envía nada; el correo queda `DEMO_ONLY` y se lee en la bandeja de
+ *   demostración del perfil (§8.5).
+ * - `DeliverableRecipients` (M7): delante de otro proveedor, deja `DEMO_ONLY` a los destinatarios
+ *   que no pueden recibir correo real (sin dominio verificado, Resend solo entrega al correo de la
+ *   cuenta del propietario, C9) y manda el resto.
  */
 export interface EmailMessage {
   to: string;
@@ -17,6 +21,8 @@ export interface SendResult {
   accepted: boolean;
   providerMessageId?: string;
   error?: string;
+  /** M7: no se envió a propósito (destinatario sin correo real): el outbox lo deja `DEMO_ONLY`. */
+  demoOnly?: boolean;
 }
 
 export interface EmailProvider {
@@ -139,5 +145,37 @@ export class MemoryEmailProvider implements EmailProvider {
     if (this.failing) return Promise.resolve({ accepted: false, error: 'Proveedor simulado caído' });
     this.sent.push(message);
     return Promise.resolve({ accepted: true, providerMessageId: `memory-${String(this.sent.length)}` });
+  }
+}
+
+/** M7: no envía nada. Cada correo queda `DEMO_ONLY` y se lee en la bandeja de demostración. */
+export class DemoInboxProvider implements EmailProvider {
+  readonly name = 'demo';
+
+  send(): Promise<SendResult> {
+    return Promise.resolve({ accepted: false, demoOnly: true });
+  }
+}
+
+/**
+ * M7: solo manda a los destinatarios de la lista (`EMAIL_DELIVERABLE_TO`); el resto queda
+ * `DEMO_ONLY` sin llamar al proveedor. Sin lista, todo va al proveedor (Mailpit en local y en CI).
+ */
+export class DeliverableRecipients implements EmailProvider {
+  readonly name: string;
+  readonly #inner: EmailProvider;
+  readonly #allowed: ReadonlySet<string>;
+
+  constructor(inner: EmailProvider, allowed: readonly string[]) {
+    this.#inner = inner;
+    this.name = inner.name;
+    this.#allowed = new Set(allowed.map((email) => email.trim().toLowerCase()));
+  }
+
+  send(message: EmailMessage): Promise<SendResult> {
+    if (!this.#allowed.has(message.to.trim().toLowerCase())) {
+      return Promise.resolve({ accepted: false, demoOnly: true });
+    }
+    return this.#inner.send(message);
   }
 }

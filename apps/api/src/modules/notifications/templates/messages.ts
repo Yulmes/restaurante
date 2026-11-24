@@ -1,11 +1,12 @@
 import type { Locale } from '@marea-baja/shared';
 
 /**
- * Textos de los correos de M3 en es-CR y en (D2, §8.5). Los correos de pedidos llegan en M7.
- * `{name}` se reemplaza por el nombre del usuario (escapado en el HTML).
+ * Textos de los correos de M3 (enlace de un solo uso) en es-CR y en (D2, §8.5). Los correos de
+ * pedidos (M7) están en `order-messages.ts`. `{name}` se reemplaza por el nombre del usuario
+ * (escapado en el HTML).
  */
-export const EMAIL_TEMPLATES = ['email-verification', 'password-reset'] as const;
-export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
+export const TOKEN_EMAIL_TEMPLATES = ['email-verification', 'password-reset'] as const;
+export type TokenEmailTemplate = (typeof TOKEN_EMAIL_TEMPLATES)[number];
 
 export interface EmailTexts {
   subject: string;
@@ -31,7 +32,7 @@ export const COMMON_TEXTS: Record<Locale, { fallbackLabel: string; footer: strin
   },
 };
 
-export const EMAIL_TEXTS: Record<EmailTemplate, Record<Locale, EmailTexts>> = {
+export const EMAIL_TEXTS: Record<TokenEmailTemplate, Record<Locale, EmailTexts>> = {
   'email-verification': {
     'es-CR': {
       subject: 'Confirmá tu correo · Marea Baja',

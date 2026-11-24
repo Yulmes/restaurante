@@ -315,6 +315,13 @@ export const PAYMENT_STATUSES = [
   'COLLECTED',
 ] as const;
 
+/** M7: una marca de la línea de marea: a qué estado pasó y cuándo (sin el actor). */
+export const orderTimelineEntrySchema = z.object({
+  status: z.enum(ORDER_STATUSES),
+  at: z.iso.datetime(),
+});
+export type OrderTimelineEntry = z.infer<typeof orderTimelineEntrySchema>;
+
 export const orderSchema = z.object({
   id: z.uuid(),
   code: z.string(),
@@ -356,6 +363,13 @@ export const orderSchema = z.object({
   customerNote: z.string().nullable(),
   /** M6: estado, método, métodos disponibles y último intento de la tarjeta demo. */
   payment: customerPaymentSchema,
+  /**
+   * M7: marcas de la línea de marea (§3.6, seguimiento). Las respuestas guardadas antes de M7
+   * (idempotencia de 24 h) no traen estos campos.
+   */
+  timeline: z.array(orderTimelineEntrySchema).default([]),
+  /** M7: el cliente puede cancelarlo ahora (solo antes de que el local lo confirme, §7.1). */
+  cancellable: z.boolean().default(false),
 });
 export type Order = z.infer<typeof orderSchema>;
 
