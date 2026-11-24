@@ -188,3 +188,15 @@ Las E2E del catálogo cambian el precio de un plato con `apps/api/scripts/e2e-ca
 | E2E en Chromium y `Mobile Safari`: invitado → hoja de producto → carrito → login con fusión → checkout → pedido (doble clic sin duplicar); delivery en inglés con cambio de precio; cuenta sin verificar; axe del carrito, del checkout y de la confirmación | `apps/web/e2e/pedido/pedido.spec.ts` | D3, D-M5-2, WebKit (opción A) |
 
 Las cuentas de las E2E del pedido se crean en la base E2E con `apps/api/scripts/e2e-user.ts` (`--unverified` para una sin verificar). Detalle y línea base de WebKit en `docs/m5/VALIDACIONES_M5.md`.
+
+## Qué cubre M6
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| Máquina de estados del pago: matriz completa de 81 transiciones (válidas e inválidas) y estado tras un reembolso | `apps/api/src/modules/payments/machine.test.ts` | §7.2, §11 |
+| Vista del pago para el cliente: cuándo se puede pagar, métodos disponibles y último intento | `apps/api/src/modules/payments/view.test.ts` | §7.4, D-M6-1 |
+| `DEMO_PAYMENTS_ENABLED` | `apps/api/src/config/env.test.ts` | §7.4 |
+| 47 pruebas contra PostgreSQL (22 de la revisión de aceptación, con un procesador "con compuertas" que detiene una llamada para reproducir peticiones en vuelo y respuestas perdidas): matriz de escenarios, idempotencia, concurrencia (`Promise.all`), reconciliación del tiempo agotado, del pendiente, de una llamada interrumpida y en paralelo, contra entrega, capturar, anular, reembolsos (Σ ≤ capturado, también simultáneos), RBAC, IDOR, CSRF, vencimiento, límites, AuditLog y `CHECK` | `apps/api/test/pagos.db.test.ts` | §7.2–7.4, §8.4, §8.6 |
+| E2E en Chromium y `Mobile Safari`: rechazo y reintento, contra entrega en inglés, pendiente que cambia solo a autorizado, sin campos de tarjeta, axe | `apps/web/e2e/pagos/pagos.spec.ts` (`npm run test:e2e:pagos -w @marea-baja/web`) | §7.4, D-M6-1 |
+
+La suite de pagos tiene su propia API y su propia web (`playwright.pagos.config.ts`, puertos 3410 y 5188) para no compartir con la del pedido el freno global de ráfagas de la API (ADR 0007, §11). Detalle en `docs/m6/VALIDACIONES_M6.md`.

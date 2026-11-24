@@ -71,7 +71,7 @@
     "rounding": "Redondeo",
     "total": "Total",
     "pickupSummary": "Retiro en el local",
-    "paymentDemo": "Esta es una demostración: el pago todavía no está habilitado. Al confirmar, tu pedido queda registrado sin ningún cobro.",
+    "paymentDemo": "Entorno de demostración: no se procesa dinero real. Elegí cómo simular el pago; no se piden datos de tarjeta.",
     "confirm": "Confirmar pedido · {{total}}",
     "confirmBlocked": "Resolvé lo indicado arriba para confirmar.",
     "priceChanged": "Los importes cambiaron desde que los revisaste. Mirá el total actualizado y confirmá de nuevo.",
@@ -102,14 +102,43 @@
       "inProgress": "Tu pedido se está procesando. Esperá un momento y volvé a intentarlo.",
       "rateLimited": "Hiciste demasiados intentos. Esperá unos minutos.",
       "invalid": "Revisá los datos del pedido."
-    }
+    },
+    "methodLegend": "Forma de pago",
+    "method": {
+      "DEMO_CARD": "Tarjeta demo",
+      "CASH_ON_DELIVERY": "Pagar al recibir o al retirar"
+    },
+    "methodHint": {
+      "DEMO_CARD": "Simulá el resultado con un escenario. No se cobra nada real.",
+      "CASH_ON_DELIVERY": "Pagás cuando te entregamos el pedido. En esta demostración no hay cobro real."
+    },
+    "demoCard": "Tarjeta de demostración",
+    "demoCardNumber": "DEMO •••• 0000",
+    "scenarioLegend": "Escenario de la tarjeta demo",
+    "scenario": {
+      "APPROVED": "Aprobado",
+      "DECLINED": "Rechazado",
+      "INSUFFICIENT_FUNDS": "Fondos insuficientes",
+      "PROCESSOR_ERROR": "Error del procesador",
+      "TIMEOUT": "Tiempo agotado",
+      "PENDING": "Pendiente"
+    },
+    "scenarioHint": {
+      "APPROVED": "El banco demo autoriza el pago.",
+      "DECLINED": "El banco demo rechaza la tarjeta.",
+      "INSUFFICIENT_FUNDS": "El banco demo rechaza el pago por falta de fondos.",
+      "PROCESSOR_ERROR": "El procesador demo falla y no cobra nada.",
+      "TIMEOUT": "El procesador demo no responde a tiempo; la conciliación descubre que sí autorizó y no cobra dos veces.",
+      "PENDING": "El pago queda pendiente unos 20 segundos y vas a ver cómo cambia el estado."
+    },
+    "cardDisabled": "La tarjeta demo no está disponible en este entorno."
   },
   "confirmation": {
     "metaTitle": "Pedido registrado · Marea Baja",
     "title": "Pedido registrado",
     "loading": "Cargando el pedido…",
     "lead": "Registramos tu pedido {{code}}.",
-    "demo": "Esto es una demostración: el pago no está habilitado, no se cobró nada y el pedido no se prepara.",
+    "demo": "Entorno de demostración: no se procesa dinero real y el pedido no se prepara.",
     "statusLabel": "Estado",
     "paymentLabel": "Pago",
     "fulfillmentLabel": "Entrega",
@@ -133,7 +162,7 @@
       "CANCELLED": "Cancelado"
     },
     "paymentStatus": {
-      "REQUIRES_PAYMENT": "Pendiente: el pago no está habilitado en esta demostración",
+      "REQUIRES_PAYMENT": "Pendiente de pago",
       "PROCESSING": "En proceso",
       "AUTHORIZED": "Autorizado",
       "CAPTURED": "Cobrado",
@@ -142,6 +171,28 @@
       "VOIDED": "Anulado",
       "PENDING_COLLECTION": "Pendiente de cobro",
       "COLLECTED": "Cobrado"
+    },
+    "payTitle": "Pago del pedido",
+    "payCard": "Pagar con la tarjeta demo · {{total}}",
+    "payCash": "Pagar al recibir o al retirar",
+    "reservedUntil": "Tu pedido sigue reservado hasta las {{time}}",
+    "failure": {
+      "card_declined": "El banco demo rechazó la tarjeta. Podés probar otro escenario.",
+      "insufficient_funds": "El banco demo rechazó el pago por fondos insuficientes. Podés probar otro escenario.",
+      "processor_error": "El procesador demo tuvo un error y no cobró nada. Podés volver a intentarlo."
+    },
+    "processing": "Estamos esperando la respuesta del procesador demo. Esta pantalla se actualiza sola.",
+    "authorized": "Pago demo autorizado. Se cobraría cuando el local confirme el pedido; no se movió dinero real.",
+    "pendingCollection": "Elegiste pagar al recibir o al retirar. En esta demostración no hay cobro real.",
+    "expired": "La reserva de este pedido venció y ya no se puede pagar.",
+    "payErrors": {
+      "network": "No hay conexión con el servidor. El pago no se envió; volvé a intentarlo.",
+      "inProgress": "El pago ya se está procesando. Esperá un momento.",
+      "notAllowed": "Este pedido ya no admite ese pago. Revisá su estado.",
+      "expired": "La reserva del pedido venció y ya no se puede pagar.",
+      "rateLimited": "Hiciste demasiados intentos de pago. Esperá unos minutos.",
+      "disabled": "La tarjeta demo no está disponible en este entorno.",
+      "generic": "No pudimos procesar el pago. Volvé a intentarlo."
     }
   },
   "addresses": {

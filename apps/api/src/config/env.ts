@@ -50,6 +50,16 @@ export const envSchema = z
       .enum(['true', 'false'], { error: 'debe ser true o false' })
       .default('false')
       .transform((value) => value === 'true'),
+
+    // ─── M6 · Pagos (§7.4) ────────────────────────────────────────────────────
+    /**
+     * Habilita la tarjeta demo con el selector de escenarios. Sin esto, `/authorize` responde 403
+     * (contra entrega sigue disponible). No hay pasarela real: el procesador es simulado.
+     */
+    DEMO_PAYMENTS_ENABLED: z
+      .enum(['true', 'false'], { error: 'debe ser true o false' })
+      .default('false')
+      .transform((value) => value === 'true'),
   })
   .superRefine((env, ctx) => {
     const production = env.NODE_ENV === 'production';

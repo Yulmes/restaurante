@@ -215,7 +215,7 @@ jobs:
         run: docker compose down --volumes
 
   order:
-    name: Pedido (carrito, checkout y E2E en Chromium y WebKit)
+    name: Pedido y pagos (carrito, checkout, pago demo y E2E en Chromium y WebKit)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -262,6 +262,11 @@ jobs:
       # carrito → fusión al iniciar sesión → checkout → pedido, en es-CR y en, y axe.
       - name: Carrito, fusión, checkout y pedido (Chromium y Mobile Safari)
         run: npm run test:e2e:pedido -w @marea-baja/web
+
+      # M6: pago demo con su propia API (freno de ráfagas aparte). Escenarios de la tarjeta demo,
+      # rechazo y reintento, pendiente resuelto por la reconciliación y contra entrega.
+      - name: Pago demo (Chromium y Mobile Safari)
+        run: npm run test:e2e:pagos -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

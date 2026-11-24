@@ -19,6 +19,7 @@
     "preview:h2": "node scripts/serve-build.ts --http2",
     "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts",
     "test:e2e:pedido": "playwright test -c playwright.pedido.config.ts",
+    "test:e2e:pagos": "playwright test -c playwright.pagos.config.ts",
     "lighthouse": "node scripts/lighthouse.ts",
     "lighthouse:h2": "node scripts/lighthouse.ts --http2",
     "fonts:colon": "node scripts/subset-colon-font.ts",

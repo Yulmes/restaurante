@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { phoneSchema } from '../auth/schemas.ts';
 import { localizedTextSchema } from '../catalog/schemas.ts';
 import { localeSchema } from '../i18n/locales.ts';
+import { customerPaymentSchema, paymentMethodSchema } from '../payments/schemas.ts';
 
 /**
  * Contratos del pedido (M5): carrito, cotización, direcciones, checkout y pedidos (§6, §7.3, §7.5).
@@ -260,6 +261,8 @@ export const checkoutQuoteSchema = z.object({
   orderingAllowed: z.boolean(),
   pickupEnabled: z.boolean(),
   deliveryEnabled: z.boolean(),
+  /** M6: métodos de pago que la API acepta (la tarjeta demo depende de `DEMO_PAYMENTS_ENABLED`). */
+  paymentMethods: z.array(paymentMethodSchema).default([]),
   problems: z.array(checkoutProblemSchema),
 });
 export type CheckoutQuote = z.infer<typeof checkoutQuoteSchema>;
@@ -351,7 +354,8 @@ export const orderSchema = z.object({
     .nullable(),
   contactPhone: z.string().nullable(),
   customerNote: z.string().nullable(),
-  payment: z.object({ status: z.enum(PAYMENT_STATUSES) }),
+  /** M6: estado, método, métodos disponibles y último intento de la tarjeta demo. */
+  payment: customerPaymentSchema,
 });
 export type Order = z.infer<typeof orderSchema>;
 

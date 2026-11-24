@@ -1,6 +1,6 @@
 # Validaciones de M5 · Pedido
 
-> **Fecha:** 22/11/2026. Son resultados de ejecuciones locales en la rama `m5-pedido` (base `a710dba`, M4 integrado). **M5 no está integrado ni cerrado:** espera la revisión del propietario. **Sin ejecución en GitHub Actions** (requiere push, no autorizado).
+> **Fecha:** 22/11/2026. Son resultados de ejecuciones locales en la rama `m5-pedido` (base `a710dba`, M4 integrado). Al escribirse, M5 no estaba integrado. **Actualización del 23/11/2026:** M5 quedó integrado en `main` y cerrado (PR #6, merge `bcebdcb`), con el CI de GitHub Actions aprobado antes y después del merge (ver la fila "CI").
 > Decisiones aplicadas: D3, D4, D5, C5 y §6.2, §7.3, §7.5 de la propuesta; D-M5-1 a D-M5-5 y WebKit incremental (opción A), aprobadas por el propietario para este hito. Detalle técnico en el [ADR 0006](../adr/0006-pedido-carrito-precios-e-idempotencia.md).
 
 ## Qué se implementó
@@ -31,8 +31,8 @@
 | E2E del idioma del documento (M3) | `npm run test:e2e:produccion -w @marea-baja/web` | ✅ 9 / 9 |
 | E2E de identidad (M3) | `npm run test:e2e:auth -w @marea-baja/web` | ✅ 14 / 14 |
 | E2E del sistema de diseño (M1) | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (igual que antes) |
-| Dependencias de producción | `npm audit --omit=dev` | ⚠️ 3 avisos altos **heredados, no de M5**: `effect` ≤ 3.22.0 (ReDoS, GHSA-7589-6fvf-x4pw), transitiva de `@prisma/config`/`prisma`. `package-lock.json` no cambió desde M4; la única corrección que ofrece npm es bajar Prisma a 6.12 (cambio incompatible). Requiere decisión |
-| CI | `.github/workflows/ci.yml`, job **Pedido** | Se ejecuta en el PR #6 de integración (23/11/2026); resultado en el informe de integración |
+| Dependencias de producción | `npm audit --omit=dev` | ⚠️ 3 avisos altos **heredados, no de M5**: `effect` ≤ 3.22.0 (ReDoS, GHSA-7589-6fvf-x4pw), transitiva de `@prisma/config`/`prisma`. `package-lock.json` no cambió desde M4; la única corrección que ofrece npm es bajar Prisma a 6.12 (cambio incompatible). Aceptado temporalmente como R-M5-1 el 23/11/2026, no resuelto (`REVISION_ACEPTACION_M5.md` §7) |
+| CI | `.github/workflows/ci.yml` (7 jobs, incluido **Pedido**) | ✅ PR #6 (`d3ac474`): 7/7, sin reintentos; la primera corrida (`42e963c`) tuvo un reintento de la prueba D4, corregido en la prueba. **Después del merge en `main` (`bcebdcb`): 7/7, sin reintentos** ([run](https://github.com/Yulmes/restaurante/actions/runs/45126868582)): calidad 200, base de datos 172, diseño 41 y 1 omitida, identidad 14, catálogo 19 + 9, pedido 12 (Chromium y `Mobile Safari`) y servicios |
 
 ### Integración (38 pruebas, `apps/api/test/pedido.db.test.ts`)
 
@@ -121,7 +121,7 @@ Las mismas suites pasan completas en Chromium con los cambios de M5 (ver "Result
 
 | Tema | Estado |
 |---|---|
-| CI en GitHub Actions (job **Pedido**) | Se ejecuta en el PR #6 de integración (23/11/2026) |
+| CI en GitHub Actions (job **Pedido**) | ✅ Aprobado en el PR #6 y después del merge en `main` (7/7, sin reintentos) |
 | Safari de iOS real | No probado (M9) |
 | Fallas heredadas de WebKit en M1–M4 | Documentadas arriba, no corregidas (requieren autorización) |
 | Capturas del checkout a 768 y 1024 px | No hechas (M9) |

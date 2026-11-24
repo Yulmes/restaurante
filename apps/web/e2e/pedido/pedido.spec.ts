@@ -133,11 +133,13 @@ test('invitado: arma el pedido, inicia sesión, se fusiona, confirma el retiro y
   await expect.poll(() => cartUnits(email)).toBe(2);
   expect(await page.evaluate(() => localStorage.getItem('marea-baja:pedido'))).toBeNull();
 
-  // 10–13. Entrega (retiro) → datos → pago (demo) → confirmar. Un doble clic no duplica.
+  // 10–13. Entrega (retiro) → datos → pago (tarjeta demo, "Aprobado" por defecto, M6) → confirmar.
+  // Un doble clic no duplica el pedido ni el pago.
   await page.getByRole('button', { name: 'Continuar' }).click();
   await page.getByLabel('Teléfono de contacto').fill('8888 1234');
   await page.getByRole('button', { name: 'Continuar' }).click();
-  await expect(page.getByText('el pago todavía no está habilitado')).toBeVisible();
+  await expect(page.getByText('Elegí cómo simular el pago')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Aprobado/ })).toBeChecked();
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: /Confirmar pedido/ }).dblclick();
 
@@ -145,15 +147,16 @@ test('invitado: arma el pedido, inicia sesión, se fusiona, confirma el retiro y
   await expect(page).toHaveURL(/\/pedido\/confirmacion\/[0-9a-f-]{36}$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Pedido registrado' })).toBeVisible();
   await expect(page.getByText(/Registramos tu pedido MB-[A-Z2-9]{6}/)).toBeVisible();
-  await expect(page.getByText('no se cobró nada')).toBeVisible();
+  await expect(page.getByText('no se procesa dinero real y el pedido no se prepara')).toBeVisible();
+  await expect(page.getByText('Pago demo autorizado')).toBeVisible();
   await expectNoAxeViolations(page);
 
   // 15–17. Persistencia, estado del pago y sin duplicados.
   const orders = await ordersOf(email);
   expect(orders).toHaveLength(1);
   expect(orders[0]).toMatchObject({
-    status: 'PENDING_PAYMENT',
-    payment: 'REQUIRES_PAYMENT',
+    status: 'PENDING_CONFIRMATION',
+    payment: 'AUTHORIZED',
     fulfillmentType: 'PICKUP',
     units: 2,
     totalMinor: 2 * (890000 + 60000),
