@@ -1,12 +1,28 @@
 # Validaciones de M6 · Pagos
 
-> **Fecha:** 23/11/2026, con la revisión de aceptación técnica del mismo día (sección al final). Son resultados de ejecuciones locales en la rama `m6-pagos` (base `bcebdcb`, M5 integrado). **Revisión aceptada por el propietario (24/11/2026), con D-M6-4 resuelta; M6 entra en integración por PR a `main`.** Hasta el merge no está integrado ni cerrado. El CI de GitHub Actions corre en el PR.
+> **Fecha:** 23/11/2026, con la revisión de aceptación técnica del mismo día (sección al final). Son resultados de ejecuciones locales en la rama `m6-pagos` (base `bcebdcb`, M5 integrado). **M6 está integrado en `main` y cerrado (24/11/2026):** PR #7, merge `5ed236f`, CI 7/7 antes y después del merge (ver "Integración y cierre").
 > **Decisiones aplicadas:** §7.1–7.4, §8.4, §8.6 y §11 de la propuesta, más las decisiones del propietario al iniciar M6. Detalle técnico en el [ADR 0007](../adr/0007-pagos-gateway-simulado-y-reconciliacion.md).
 >
 > - **D-M6-1:** contra entrega incluida.
 > - **D-M6-2:** capturar, anular y reembolsar se exponen solo por API para staff y admin, sin interfaz.
 > - **D-M6-3:** el correo "Pedido recibido" queda para M7.
 > - **D-M6-4 (24/11/2026):** la contra entrega se ofrece en **retiro (`PICKUP`) y delivery (`DELIVERY`)**. Se mantiene la implementación revisada, sin cambios en reglas, interfaz, API ni pruebas. Vale solo para la contra entrega.
+
+## Integración y cierre (24/11/2026)
+
+- **Estado:** M6 está **integrado en `main` y cerrado**. La revisión de aceptación técnica fue aprobada y D-M6-4 quedó resuelta.
+- **PR:** #7, rama `m6-pagos` (último commit `7807018`), integrada con un merge commit, el método de los PR anteriores.
+- **Merge en `main`:** `5ed236f`. `main` y `origin/main` quedaron sincronizados.
+- **CI:** 7/7 jobs aprobados en el PR ([run](https://github.com/Yulmes/restaurante/actions/runs/45443070131)) y 7/7 después del merge en `main` ([run](https://github.com/Yulmes/restaurante/actions/runs/45444469044)). Los dos pasaron en el primer intento, sin reintentos.
+  - En el PR, el job **Pedido y pagos** dio 12/12 en la E2E del pedido y 6/6 en la de pagos.
+  - El job **Base de datos** pasó con las 47 pruebas de `pagos.db.test.ts`.
+- **Despliegue:** ninguno. `DEMO_PAYMENTS_ENABLED` no se activó en ningún entorno remoto.
+- **Evaluación final:** **91/100, integración aprobada.**
+- **Riesgos aceptados al cerrar:** siguen pendientes; no se dan por resueltos ni mitigados.
+  - **R-M6-1:** capturar y anular no cambian el estado del pedido hasta M7.
+  - **R-M6-2:** la reconciliación puede confirmar el pago de un pedido vencido si el pago se inició antes del vencimiento. Queda pendiente de la cancelación de M7.
+  - **R-M6-3:** la reconciliación no tiene tope de reintentos ni espera creciente.
+  - **R-M5-1 y R-M5-2**, heredados (aviso de `npm audit` y fallas de WebKit en M1–M4).
 
 ## Qué se implementó
 
@@ -53,7 +69,7 @@
 | E2E del sistema de diseño (M1) | `npm run test:e2e -w @marea-baja/web` | ✅ 41 pasan y 1 se omite (igual que antes) |
 | Build de producción | `npm run build -w @marea-baja/web` | ✅ 57 HTML (56 páginas y el fallback) |
 | Dependencias | — | Sin cambios: `package-lock.json` igual. El único cambio de `package.json` es el script `test:e2e:pagos`. El aviso heredado R-M5-1 sigue igual |
-| CI | `.github/workflows/ci.yml`, job **Pedido y pagos** | ⏳ Actualizado, sin ejecución remota |
+| CI | `.github/workflows/ci.yml`, job **Pedido y pagos** | ✅ 7/7 jobs en el PR #7 y 7/7 en `main` después del merge, sin reintentos |
 
 ### Integración (`apps/api/test/pagos.db.test.ts`: 25 iniciales; las 22 de la revisión están en las tablas de la sección final)
 
@@ -121,7 +137,7 @@
 
 | Tema | Estado |
 |---|---|
-| CI en GitHub Actions (job **Pedido y pagos**) | Sin ejecución remota (requiere push) |
+| CI en GitHub Actions (job **Pedido y pagos**) | ✅ Ejecutado: 7/7 en el PR #7 y 7/7 en `main` (`5ed236f`) |
 | Marcar `COLLECTED` al entregar (contra entrega) | M7 (staff, Pase) |
 | Capturar al confirmar y anular al cancelar (estado del pedido) | M7 (D-M6-2). Hoy, por API sin interfaz y sin cambiar el pedido |
 | Pantalla de reembolsos | M8 (D-M6-2) |
@@ -258,7 +274,8 @@ No se cambió la regla. Las alternativas:
 
 - **Criterio de §12 (matriz de escenarios + concurrencia):** cumplido con pruebas ejecutadas; las tablas anteriores reflejan solo lo que se probó.
 - **Pendientes que no bloquean la revisión:**
-  - el CI en GitHub (corre en el PR de integración);
   - lo previsto para M7, M8 y M10.
 - **Riesgo R-M6-1 (D-M6-2):** el pedido puede quedar desalineado con el pago hasta M7. No compromete la integridad del pago: la máquina de estados, las operaciones y el procesador siguen coherentes, y no se puede capturar ni anular fuera de `PENDING_CONFIRMATION`.
 - **Riesgo R-M6-2:** la reconciliación puede pasar un pedido vencido a `PENDING_CONFIRMATION` si el pago se inició antes del vencimiento. Lo cancela el job de M7.
+- **Riesgo R-M6-3:** la reconciliación no tiene tope de reintentos ni espera creciente (ver "Reconciliación").
+- **Resultado final:** 91/100, integración aprobada (PR #7, merge `5ed236f`, CI 7/7 antes y después del merge).

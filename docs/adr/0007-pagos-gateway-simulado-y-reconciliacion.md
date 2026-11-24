@@ -1,6 +1,6 @@
 # ADR 0007 · Pagos: gateway simulado, idempotencia y reconciliación
 
-> **Estado:** aceptado para M6 (23/11/2026), pendiente de la revisión del propietario.
+> **Estado:** aceptado (23/11/2026) e integrado en `main` con M6 (PR #7, merge `5ed236f`, 24/11/2026).
 > **Contexto de negocio (no cambia nada aprobado):** §7.1–7.4, §8.4, §8.6 y §11 de la propuesta, más las decisiones del propietario al iniciar M6:
 >
 > - **D-M6-1:** se incluye el pago contra entrega, como dice la propuesta (§7.2, §7.4). Esto cierra la observación de `REVISION_ACEPTACION_M5.md` §3. El ADR 0006 decía "no hay contra entrega": era cierto para M5 y queda superado aquí.
