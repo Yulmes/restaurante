@@ -116,6 +116,27 @@
     "sessionsTitle": "Sessions",
     "signOut": "Sign out",
     "signOutAll": "Sign out of all sessions",
-    "signOutAllHint": "On this and all your devices."
+    "signOutAllHint": "On this and all your devices.",
+    "ordersTitle": "Orders and notices",
+    "ordersLink": "My orders",
+    "inboxLink": "Demo inbox",
+    "passLink": "Open the Pass (restaurant staff)"
+  },
+  "inbox": {
+    "metaTitle": "Demo inbox · Marea Baja",
+    "title": "Demo inbox",
+    "intro": "The emails the demo generated for your account, with their real delivery status.",
+    "loading": "Loading the inbox…",
+    "error": "We couldn’t load the inbox. Please try again.",
+    "empty": "There are no emails for your account yet.",
+    "status": {
+      "DEMO_ONLY": "Demo notification — this email was not sent",
+      "SENT": "Sent to {{email}} · accepted by the provider",
+      "QUEUED": "Waiting to be sent",
+      "FAILED": "Could not be sent"
+    },
+    "received": "Generated on {{date}}",
+    "linkHidden": "One-time links aren’t shown in the inbox: they only arrive by email.",
+    "openOrder": "View the order"
   }
 }

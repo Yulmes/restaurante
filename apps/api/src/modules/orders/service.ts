@@ -120,6 +120,8 @@ const orderInclude = {
   taxLines: { orderBy: { id: 'asc' } },
   deliveryZone: { select: { name: true, etaMinutes: true } },
   payment: paymentViewInclude,
+  // M7: marcas de la línea de marea del seguimiento (sin el actor).
+  statusHistory: { orderBy: { createdAt: 'asc' }, select: { toStatus: true, createdAt: true } },
 } as const satisfies Prisma.OrderInclude;
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
@@ -186,6 +188,9 @@ export function toOrder(row: OrderRow, payment: PaymentContext): Order {
     contactPhone: row.contactPhone,
     customerNote: row.customerNote,
     payment: customerPayment(row, payment),
+    timeline: row.statusHistory.map((h) => ({ status: h.toStatus, at: h.createdAt.toISOString() })),
+    // §7.1: el cliente solo cancela antes de que el local confirme.
+    cancellable: row.status === 'PENDING_CONFIRMATION',
   };
 }
 

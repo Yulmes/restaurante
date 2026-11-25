@@ -14,6 +14,9 @@ import { AddressService } from './modules/addresses/service.ts';
 import { authRouter } from './modules/auth/routes.ts';
 import { cartRouter } from './modules/cart/routes.ts';
 import { CartService } from './modules/cart/service.ts';
+import { notificationRouter } from './modules/notifications/inbox.ts';
+import { operationRouter } from './modules/orders/operation-routes.ts';
+import { OperationsService } from './modules/orders/operations.ts';
 import { orderRouter } from './modules/orders/routes.ts';
 import { OrderService } from './modules/orders/service.ts';
 import { catalogRouter } from './modules/catalog/routes.ts';
@@ -54,6 +57,8 @@ export interface App {
   outbox: OutboxWorker;
   limiter: RateLimiter;
   payments: PaymentService;
+  /** M7: Pase, cambios de estado, historial y barridos de pedidos. */
+  operations: OperationsService;
 }
 
 export function createApp(deps: AppDeps): App {
@@ -80,6 +85,14 @@ export function createApp(deps: AppDeps): App {
     clock: deps.clock,
     config: deps.config,
     gateway: deps.paymentGateway ?? new MockGateway({ db: deps.db, clock: deps.clock }),
+    afterCommit: () => void outbox.kick(),
+  });
+  const operations = new OperationsService({
+    db: deps.db,
+    clock: deps.clock,
+    config: deps.config,
+    payments,
+    afterCommit: () => void outbox.kick(),
   });
 
   const app = express();
@@ -128,9 +141,11 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', addressRouter(addresses, limiter));
   app.use('/api', orderRouter(orders, limiter, deps.config));
   app.use('/api', paymentRouter(payments, limiter, deps.config));
+  app.use('/api', operationRouter(operations, limiter));
+  app.use('/api', notificationRouter(deps.db));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return { app, outbox, limiter, catalog, payments };
+  return { app, outbox, limiter, catalog, payments, operations };
 }

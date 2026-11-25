@@ -45,6 +45,8 @@ export function namespacesForPath(pathname: string): Namespace[] {
   // M5: la cuenta incluye las direcciones (textos del pedido); el pedido, también los de la cuenta.
   if (section === 'cuenta') return ['common', 'site', 'account', 'order'];
   if (section === 'pedido') return ['common', 'site', 'order'];
+  // M7: el Pase usa los textos del pedido (estados, pagos y el propio Pase).
+  if (section === 'admin') return ['common', 'site', 'order'];
   if (section === '_design') return ['common', 'site', 'design'];
   return ['common', 'site'];
 }

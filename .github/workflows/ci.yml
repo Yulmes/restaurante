@@ -215,9 +215,9 @@ jobs:
         run: docker compose down --volumes
 
   order:
-    name: Pedido y pagos (carrito, checkout, pago demo y E2E en Chromium y WebKit)
+    name: Pedido, pagos y operación (carrito, checkout, pago demo, Pase y E2E en Chromium y WebKit)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -230,11 +230,12 @@ jobs:
 
       - run: npm ci
 
-      # Sin correo real: las cuentas de prueba se crean ya verificadas en la base E2E.
-      - name: Levantar PostgreSQL
+      # Sin correo real: las cuentas de prueba se crean ya verificadas en la base E2E. Mailpit recibe
+      # los correos de estado de la suite de operación (M7).
+      - name: Levantar PostgreSQL y Mailpit
         run: |
           cp .env.example .env
-          docker compose up -d --wait --wait-timeout 120 postgres
+          docker compose up -d --wait --wait-timeout 120 postgres mailpit
 
       # WebKit de Playwright con perfil de iPhone (`Mobile Safari`): no es Safari de iOS real.
       - name: Instalar Chromium y WebKit para Playwright
@@ -267,6 +268,11 @@ jobs:
       # rechazo y reintento, pendiente resuelto por la reconciliación y contra entrega.
       - name: Pago demo (Chromium y Mobile Safari)
         run: npm run test:e2e:pagos -w @marea-baja/web
+
+      # M7 (escenario 2): el staff confirma, avanza y cancela en el Pase; el cliente sigue el pedido
+      # en la línea de marea, su historial y la bandeja de demostración; correos en Mailpit.
+      - name: Operación y Pase (Chromium y Mobile Safari)
+        run: npm run test:e2e:operacion -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

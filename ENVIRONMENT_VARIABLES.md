@@ -20,7 +20,8 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `LOG_LEVEL` | No | `fatal` … `trace`, `silent` | Por defecto `info` en producción y `debug` en desarrollo |
 | `PUBLIC_WEB_URL` | Sí | `http://127.0.0.1:5173` | Origen exacto de la web. Se exige en `Origin` (CSRF, §8.3) y se usa en los enlaces de los correos. En producción debe ser `https://` |
 | `APP_SECRET` | Sí | Al menos 32 caracteres | Clave de los tokens CSRF de invitados y del hash de las IP en los límites. **Secreto**: en producción, uno aleatorio y largo, distinto en cada entorno |
-| `EMAIL_PROVIDER` | No (por defecto `mailpit`) | `mailpit`, `resend`, `memory` | `memory` solo para pruebas. En producción debe ser `resend` (D6) |
+| `EMAIL_PROVIDER` | No (por defecto `mailpit`) | `mailpit`, `resend`, `memory`, `demo` | `memory` solo para pruebas. `demo` (M7) no envía nada: todo queda `DEMO_ONLY` en la bandeja de demostración. En producción debe ser `resend` (D6) |
+| `EMAIL_DELIVERABLE_TO` | No (por defecto vacía) | `dueno@example.com,otra@example.com` | M7 (§8.5, C9, ADR 0008): destinatarios que pueden recibir correo real. Los demás quedan `DEMO_ONLY` sin intentar el envío (Resend sin dominio solo entrega al correo de la cuenta del propietario). Vacía: todo va al proveedor. Correos inválidos → la API no arranca |
 | `EMAIL_FROM` | Sí | `Marea Baja <no-reply@marea-baja.test>` | Remitente. Sin dominio propio (D6), Resend solo acepta su remitente de pruebas (`onboarding@resend.dev`) |
 | `MAILPIT_URL` | No (por defecto `http://127.0.0.1:8025`) | URL | API HTTP de Mailpit para enviar en desarrollo (ADR 0004) |
 | `RESEND_API_KEY` | Con `EMAIL_PROVIDER=resend` | `re_…` | **Secreto.** La crea el propietario con su cuenta de Resend (D14) |
@@ -30,6 +31,7 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `TURNSTILE_WINDOW_MINUTES` | No (por defecto `60`) | Entero positivo | Ventana del umbral. Manda `RestaurantSettings` (semilla: 60) |
 | `ORDERS_ALLOW_OUTSIDE_HOURS` | No (por defecto `false`) | `true`, `false` | M5 (D-M5-3): con `true`, la API acepta pedidos fuera del horario del local (modo de demostración). Por defecto los bloquea. El navegador no la puede cambiar. Las E2E del pedido la activan para no depender de la hora |
 | `DEMO_PAYMENTS_ENABLED` | No (por defecto `false`) | `true`, `false` | M6 (§7.4, ADR 0007): con `true`, la API acepta la tarjeta demo con el selector de escenarios (procesador simulado, sin dinero real ni datos de tarjeta). Con `false`, `/authorize` responde 403 `DEMO_PAYMENTS_DISABLED` y solo se ofrece pagar al recibir o al retirar. El `.env.example` y las E2E la activan; la demo pública (M10) también deberá activarla |
+| `ORDER_CONFIRMATION_TIMEOUT_MINUTES` | No (por defecto `20`) | Entero entre 1 y 1440 | M7 (§7.1, ADR 0008): minutos sin confirmar tras los que el barrido cancela el pedido y anula su pago |
 
 ### Web
 

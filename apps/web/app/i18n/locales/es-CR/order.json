@@ -224,5 +224,138 @@
       "tooMany": "Llegaste al máximo de direcciones guardadas.",
       "invalid": "Revisá este dato."
     }
+  },
+  "tracking": {
+    "metaTitle": "Seguimiento del pedido · Marea Baja",
+    "title": "Seguimiento del pedido",
+    "lead": "Pedido {{code}}.",
+    "heading": "Dónde está tu pedido",
+    "now": "Ahora: {{status}}",
+    "since": "Desde las {{time}}",
+    "live": "Esta pantalla se actualiza sola.",
+    "steps": {
+      "PENDING_CONFIRMATION": "Recibido",
+      "CONFIRMED": "Confirmado",
+      "PREPARING": "En preparación",
+      "READY_FOR_PICKUP": "Listo para retirar",
+      "OUT_FOR_DELIVERY": "En camino",
+      "DELIVERED": "Entregado"
+    },
+    "stepDone": "{{step}}: a las {{time}}",
+    "stepCurrent": "{{step}}: ahora, desde las {{time}}",
+    "stepPending": "{{step}}: todavía no",
+    "waitingPayment": "El pedido sigue esperando el pago. Cuando lo pagues, el local lo recibe.",
+    "cancelled": "Pedido cancelado · {{time}}",
+    "cancelledNoTime": "El pedido se canceló.",
+    "cancelTitle": "Cancelar el pedido",
+    "cancelHint": "Podés cancelarlo mientras el local no lo confirme. Se libera la reserva de la tarjeta demo; no se mueve dinero real.",
+    "cancelOpen": "Cancelar el pedido",
+    "cancelReason": "Motivo (opcional)",
+    "cancelConfirm": "Sí, cancelar el pedido",
+    "cancelKeep": "No, mantenerlo",
+    "cancelDone": "Cancelaste el pedido.",
+    "cancelPending": "La anulación quedó en proceso. Esta pantalla se actualiza sola.",
+    "cancelErrors": {
+      "notAllowed": "El local ya confirmó el pedido: desde acá ya no se puede cancelar.",
+      "inProgress": "Hay una operación de pago en curso. Esperá un momento y volvé a intentarlo.",
+      "rateLimited": "Hiciste demasiados intentos. Esperá unos minutos.",
+      "network": "No hay conexión con el servidor. El pedido no se canceló; volvé a intentarlo.",
+      "generic": "No pudimos cancelar el pedido. Volvé a intentarlo."
+    },
+    "allOrders": "Ver todos mis pedidos"
+  },
+  "history": {
+    "metaTitle": "Mis pedidos · Marea Baja",
+    "title": "Mis pedidos",
+    "intro": "Tus pedidos de la demostración, del más nuevo al más viejo.",
+    "loading": "Cargando tus pedidos…",
+    "error": "No pudimos cargar tus pedidos. Volvé a intentarlo.",
+    "empty": "Todavía no hiciste pedidos. Hoy entró corvina de Puntarenas.",
+    "emptyAction": "Ver los ceviches",
+    "more": "Ver pedidos anteriores",
+    "items_one": "{{count}} producto",
+    "items_other": "{{count}} productos",
+    "open": "Pedido {{code}}",
+    "fulfillment": {
+      "PICKUP": "Retiro",
+      "DELIVERY": "Delivery"
+    }
+  },
+  "pass": {
+    "metaTitle": "Pase · Marea Baja",
+    "title": "Pase",
+    "intro": "Los pedidos que esperan trabajo. En cada columna, primero el que lleva más tiempo.",
+    "loading": "Cargando el Pase…",
+    "error": "No pudimos actualizar el Pase. Se vuelve a intentar solo.",
+    "forbidden": "El Pase es solo para el personal del local.",
+    "updated": "Actualizado: {{time}}",
+    "shortcuts": "Atajos con un pedido enfocado: J y K para moverse entre pedidos, A para avanzarlo y C para cancelarlo.",
+    "columns": {
+      "PENDING_CONFIRMATION": "Por confirmar",
+      "CONFIRMED": "Confirmado",
+      "PREPARING": "En preparación",
+      "READY": "Listo / En camino"
+    },
+    "count_one": "{{count}} pedido",
+    "count_other": "{{count}} pedidos",
+    "empty": "Nada por ahora.",
+    "ageNow": "recién",
+    "ageMinutes": "hace {{minutes}} min",
+    "ageHours": "hace {{hours}} h {{minutes}} min",
+    "fulfillment": {
+      "PICKUP": "Retiro",
+      "DELIVERY": "Delivery"
+    },
+    "customer": "Para {{name}}",
+    "phone": "Tel. {{phone}}",
+    "note": "Nota: {{note}}",
+    "address": "{{address}}. Referencia: {{reference}}",
+    "total": "Total {{total}}",
+    "method": {
+      "DEMO_CARD": "Tarjeta demo",
+      "CASH_ON_DELIVERY": "Contra entrega"
+    },
+    "operation": {
+      "CAPTURE_IN_PROGRESS": "Cobro en curso: se resuelve solo.",
+      "CAPTURE_FAILED": "El procesador demo rechazó el cobro. Podés reintentar la confirmación.",
+      "VOID_IN_PROGRESS": "Anulación en curso: se resuelve sola.",
+      "VOID_FAILED": "El procesador demo rechazó la anulación. Podés reintentar.",
+      "REFUND_IN_PROGRESS": "Reembolso en curso: se resuelve solo.",
+      "REFUND_FAILED": "El procesador demo rechazó el reembolso. Podés reintentar."
+    },
+    "advance": {
+      "CONFIRMED": "Confirmar y cobrar",
+      "PREPARING": "Empezar a preparar",
+      "READY_FOR_PICKUP": "Marcar listo",
+      "OUT_FOR_DELIVERY": "Marcar en camino",
+      "DELIVERED": "Marcar entregado"
+    },
+    "advanceCash": {
+      "CONFIRMED": "Confirmar",
+      "DELIVERED": "Entregado y cobrado"
+    },
+    "cancel": "Cancelar",
+    "cancelTitle": "Cancelar el pedido {{code}}",
+    "cancelReason": "Motivo de la cancelación",
+    "cancelVoid": "Se libera la reserva de la tarjeta demo.",
+    "cancelRefund": "Se devuelve lo cobrado con la tarjeta demo.",
+    "cancelCash": "No hay nada cobrado: el pago contra entrega se anula.",
+    "cancelConfirm": "Cancelar el pedido",
+    "cancelKeep": "Volver",
+    "results": {
+      "moved": "Pedido {{code}}: {{status}}.",
+      "pending": "Pedido {{code}}: el procesador demo todavía no respondió; se resuelve solo."
+    },
+    "errors": {
+      "conflict": "Otra persona cambió el pedido {{code}}. Actualizamos el Pase.",
+      "gateway": "El procesador demo rechazó la operación del pedido {{code}}. Podés reintentar.",
+      "inProgress": "El pedido {{code}} tiene una operación de pago en curso. Esperá un momento.",
+      "notAllowed": "El pedido {{code}} ya no admite ese cambio. Actualizamos el Pase.",
+      "forbidden": "Solo un admin puede cancelar el pedido {{code}} una vez confirmado.",
+      "reason": "Escribí el motivo de la cancelación.",
+      "rateLimited": "Demasiados cambios seguidos. Esperá unos minutos.",
+      "network": "No hay conexión con el servidor. El pedido {{code}} no cambió.",
+      "generic": "No pudimos cambiar el pedido {{code}}. Volvé a intentarlo."
+    }
   }
 }

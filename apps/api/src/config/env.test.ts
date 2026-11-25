@@ -45,6 +45,8 @@ describe('loadEnv', () => {
       TURNSTILE_WINDOW_MINUTES: 60,
       ORDERS_ALLOW_OUTSIDE_HOURS: false,
       DEMO_PAYMENTS_ENABLED: false,
+      EMAIL_DELIVERABLE_TO: [],
+      ORDER_CONFIRMATION_TIMEOUT_MINUTES: 20,
     });
   });
 
@@ -63,6 +65,27 @@ describe('loadEnv', () => {
     expect(problemsOf({ ...BASE, DEMO_PAYMENTS_ENABLED: '1' })).toEqual([
       'DEMO_PAYMENTS_ENABLED: debe ser true o false',
     ]);
+  });
+
+  it('M7 (§7.1): el plazo de confirmación es 20 min por defecto, configurable entre 1 y 1440', () => {
+    expect(
+      loadEnv({ ...BASE, ORDER_CONFIRMATION_TIMEOUT_MINUTES: '5' }).ORDER_CONFIRMATION_TIMEOUT_MINUTES,
+    ).toBe(5);
+    expect(problemsOf({ ...BASE, ORDER_CONFIRMATION_TIMEOUT_MINUTES: '0' })).toHaveLength(1);
+    expect(problemsOf({ ...BASE, ORDER_CONFIRMATION_TIMEOUT_MINUTES: 'veinte' })).toHaveLength(1);
+  });
+
+  it('M7 (§8.5): EMAIL_DELIVERABLE_TO es una lista de correos y EMAIL_PROVIDER acepta demo', () => {
+    expect(
+      loadEnv({ ...BASE, EMAIL_DELIVERABLE_TO: ' Dueno@Example.com , otra@example.com ' })
+        .EMAIL_DELIVERABLE_TO,
+    ).toEqual(['dueno@example.com', 'otra@example.com']);
+    expect(problemsOf({ ...BASE, EMAIL_DELIVERABLE_TO: 'no-es-un-correo' })).toHaveLength(1);
+    expect(loadEnv({ ...BASE, EMAIL_PROVIDER: 'demo' }).EMAIL_PROVIDER).toBe('demo');
+    // En producción el proveedor sigue siendo Resend (D6); `demo` no se acepta.
+    expect(problemsOf({ ...BASE, NODE_ENV: 'production', EMAIL_PROVIDER: 'demo' })).toContain(
+      'EMAIL_PROVIDER: en producción debe ser resend',
+    );
   });
 
   it('acepta el esquema postgres:// además de postgresql://', () => {

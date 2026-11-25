@@ -20,6 +20,7 @@
     "test:e2e:catalog": "playwright test -c playwright.catalog.config.ts",
     "test:e2e:pedido": "playwright test -c playwright.pedido.config.ts",
     "test:e2e:pagos": "playwright test -c playwright.pagos.config.ts",
+    "test:e2e:operacion": "playwright test -c playwright.operacion.config.ts --project=chromium && playwright test -c playwright.operacion.config.ts --project=\"Mobile Safari\"",
     "lighthouse": "node scripts/lighthouse.ts",
     "lighthouse:h2": "node scripts/lighthouse.ts --http2",
     "fonts:colon": "node scripts/subset-colon-font.ts",

@@ -8,7 +8,13 @@ import { localeFromPathname } from '../i18n/locale.ts';
 import { useT } from '../i18n/use-locale.ts';
 import { SiteFooter, SiteHeader } from '../site/SiteLayout.tsx';
 
-type MetaKey = 'cart.metaTitle' | 'checkout.metaTitle' | 'confirmation.metaTitle';
+type MetaKey =
+  | 'cart.metaTitle'
+  | 'checkout.metaTitle'
+  | 'confirmation.metaTitle'
+  | 'tracking.metaTitle'
+  | 'history.metaTitle'
+  | 'pass.metaTitle';
 
 /** Las páginas del pedido no se indexan: usan el fallback SPA con noindex (§4.2), como la cuenta. */
 export function orderMeta(pathname: string, key: MetaKey) {

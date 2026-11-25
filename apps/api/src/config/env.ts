@@ -29,10 +29,26 @@ export const envSchema = z
     APP_SECRET: z.string().min(32, { error: 'debe tener al menos 32 caracteres' }),
 
     // ─── M3 · Correo (§8.5, D6) ───────────────────────────────────────────────
-    EMAIL_PROVIDER: z.enum(['mailpit', 'resend', 'memory']).default('mailpit'),
+    /** M7: `demo` no envía nada (todo queda `DEMO_ONLY` en la bandeja de demostración). */
+    EMAIL_PROVIDER: z.enum(['mailpit', 'resend', 'memory', 'demo']).default('mailpit'),
     EMAIL_FROM: z.string().min(3),
     MAILPIT_URL: httpUrl.default('http://127.0.0.1:8025'),
     RESEND_API_KEY: z.string().min(1).optional(),
+    /**
+     * M7 (§8.5, C9): destinatarios que pueden recibir correo real, separados por comas. Sin dominio
+     * verificado, Resend solo entrega al correo de la cuenta del propietario: el resto queda
+     * `DEMO_ONLY` sin intentar el envío. Vacío: todo va al proveedor (Mailpit en local y en CI).
+     */
+    EMAIL_DELIVERABLE_TO: z
+      .string()
+      .optional()
+      .transform((value) =>
+        (value ?? '')
+          .split(',')
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.email({ error: 'debe ser una lista de correos separados por comas' }))),
 
     // ─── M3 · Turnstile condicional (D8, §8.4) ────────────────────────────────
     BOT_CHECK_PROVIDER: z.enum(['turnstile', 'fake']).default('fake'),
@@ -60,6 +76,15 @@ export const envSchema = z
       .enum(['true', 'false'], { error: 'debe ser true o false' })
       .default('false')
       .transform((value) => value === 'true'),
+
+    // ─── M7 · Operación (§7.1) ────────────────────────────────────────────────
+    /** Minutos sin confirmar tras los que un pedido se cancela y se anula su pago (20 por defecto). */
+    ORDER_CONFIRMATION_TIMEOUT_MINUTES: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(24 * 60)
+      .default(20),
   })
   .superRefine((env, ctx) => {
     const production = env.NODE_ENV === 'production';

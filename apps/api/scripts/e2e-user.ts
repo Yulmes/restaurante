@@ -1,7 +1,7 @@
 /**
  * Solo para las E2E: crea una cuenta de cliente ya verificada en la base `<base>_e2e`.
  *
- *   node scripts/e2e-user.ts --email a@example.com --password "…" --locale en [--unverified]
+ *   node scripts/e2e-user.ts --email a@example.com --password "…" --locale en [--unverified] [--role STAFF|ADMIN]
  *
  * Las E2E registran cuentas por la interfaz, pero el límite real de 5 registros por hora por IP
  * (§8.4) impide crear más desde el mismo navegador de pruebas. Este script no cambia ese límite:
@@ -20,6 +20,8 @@ const { values } = parseArgs({
     locale: { type: 'string' },
     // M5: cuenta sin verificar, para probar que el checkout exige el correo verificado (D3).
     unverified: { type: 'boolean', default: false },
+    // M7: rol extra (STAFF o ADMIN) para las pruebas del Pase.
+    role: { type: 'string' },
   },
 });
 const url = process.env['DATABASE_URL'] ?? '';
@@ -33,9 +35,16 @@ if (!values.email?.endsWith('@example.com') || !values.password) {
   process.exit(1);
 }
 
+const extraRole = values.role;
+if (extraRole !== undefined && extraRole !== 'STAFF' && extraRole !== 'ADMIN') {
+  console.error('--role debe ser STAFF o ADMIN.');
+  process.exit(1);
+}
+
 const db = createPrismaClient(url);
 try {
   const customer = await db.role.findUniqueOrThrow({ where: { key: 'CUSTOMER' } });
+  const extra = extraRole ? await db.role.findUniqueOrThrow({ where: { key: extraRole } }) : null;
   await db.user.create({
     data: {
       email: values.email.toLowerCase(),
@@ -43,7 +52,7 @@ try {
       passwordHash: await hashPassword(values.password),
       locale: locale === 'es-CR' ? 'es_CR' : 'en',
       emailVerifiedAt: values.unverified ? null : new Date(),
-      roles: { create: { roleId: customer.id } },
+      roles: { create: [{ roleId: customer.id }, ...(extra ? [{ roleId: extra.id }] : [])] },
     },
   });
 } finally {

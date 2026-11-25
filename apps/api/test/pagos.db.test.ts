@@ -499,8 +499,13 @@ describe('staff y admin: capturar, anular y reembolsar (D-M6-2)', () => {
     const row = await paymentRow(order.id);
     expect(row.status).toBe('CAPTURED');
     expect(row.amountCapturedMinor).toBe(order.totals.totalMinor);
-    // M6 no cambia el estado del pedido: eso lo conecta M7 (D-M6-2).
-    expect(row.order.status).toBe('PENDING_CONFIRMATION');
+    // M7 (D-M6-2, cierra R-M6-1): con la captura hecha, el pedido pasa a CONFIRMED en la misma
+    // transacción, una sola vez.
+    expect(row.order.status).toBe('CONFIRMED');
+    const history = await api.db.orderStatusHistory.findMany({
+      where: { orderId: order.id, toStatus: 'CONFIRMED' },
+    });
+    expect(history).toHaveLength(1);
     const mock = await api.db.mockGatewayTransaction.findUniqueOrThrow({
       where: { ref: row.gatewayRef ?? '' },
     });

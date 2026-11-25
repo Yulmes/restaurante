@@ -4,6 +4,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M7 · Operación (en integración por el PR #9, sin merge)
+
+- **Máquina de estados del pedido** (§7.1) con la matriz completa por rol y modalidad, y un único punto de transición: versión optimista, historial, AuditLog de staff/admin y correos en la misma transacción.
+- **Pase** (`/admin/pase`, API `GET /api/admin/pass` y `PATCH /api/admin/orders/:id/status`): columnas por estado, antigüedad, avance con un clic, cancelación con motivo y atajos de teclado.
+  - Confirmar captura la tarjeta demo.
+  - Cancelar antes de confirmar anula el pago.
+  - Cancelar después (solo admin) reembolsa lo cobrado.
+- **Seguimiento** (`/cuenta/pedidos/:id`) sobre la línea de marea, **historial** (`/cuenta/pedidos`, D3) y **cancelación del cliente** antes de la confirmación (`POST /api/orders/:id/cancel`).
+- **Contra entrega:** al entregar, el cobro queda `COLLECTED`.
+- **Barridos** cada minuto:
+  - pedidos sin pagar a los 30 min;
+  - sin confirmar a los 20 min (`ORDER_CONFIRMATION_TIMEOUT_MINUTES`);
+  - autorizados después de vencer.
+- **Correos de estado** en es-CR y en (recibido, confirmado, en preparación, listo / en camino, entregado, cancelado, reembolso) y "nuevo pedido por confirmar" al staff.
+- **`DEMO_ONLY` y bandeja de demostración** (`/cuenta/bandeja`, `GET /api/me/notifications`), con `EMAIL_PROVIDER=demo` y `EMAIL_DELIVERABLE_TO`.
+- **Pruebas:**
+  - matriz de 512 transiciones;
+  - 29 de integración;
+  - E2E del escenario 2 en Chromium y `Mobile Safari` (`test:e2e:operacion`, también en CI).
+- **Documentos:** ADR 0008 y `docs/m7/VALIDACIONES_M7.md`.
+
+### Cambiado — M7
+
+- **Pagos (cierra R-M6-1):** capturar, anular y reembolsar la cancelación mueven el pedido al terminar la operación, también por reconciliación. Los endpoints de M6 se conservan.
+- **R-M6-2:** un pago autorizado después del vencimiento se anula en el barrido siguiente.
+- **Pedido (`GET /api/orders/:id`):** trae `timeline` y `cancellable`. La confirmación muestra el seguimiento y oculta la sección de pago cuando ya no hay nada que hacer.
+- **CI:** el job **Pedido y pagos** pasa a **Pedido, pagos y operación**. Levanta Mailpit y ejecuta `test:e2e:operacion`.
+- **Pruebas de integración:** un solo proveedor de correo en memoria por archivo, porque las API de prueba comparten la base y su outbox.
+
 ### Agregado — M6 · Pagos (integrado en `main` mediante el PR #7)
 
 - **Interfaz `PaymentGateway`** y procesador simulado (`MockGateway`) con los escenarios de la tarjeta demo: aprobado, rechazado, fondos insuficientes, error del procesador, tiempo agotado y pendiente (§7.4). Sin dinero real ni datos de tarjeta.

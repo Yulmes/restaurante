@@ -143,6 +143,16 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 - **Límites (§8.4):** autorizar, 30 / h por IP y 10 / h por pedido; staff y admin, 30 / 10 min por usuario, con entrada `payment.rate_limited` en el AuditLog al exceder.
 - **AuditLog:** `payment.captured`, `payment.voided` y `payment.refunded`, en la misma transacción, con la lista blanca `payment` (código del pedido, estado, método y montos).
 
+## Operación (M7)
+
+- **Estados solo desde el servidor:** el Pase envía el estado de destino y la versión que vio; la API comprueba la transición en la máquina (§7.1) y el rol. Transición inexistente → 409 `ORDER_TRANSITION_NOT_ALLOWED`; existente sin permiso (staff que cancela un confirmado) → 403. Versión vieja → 409 `ORDER_VERSION_CONFLICT`. Cuerpo estricto: ningún monto ni estado de pago.
+- **Confirmar, cancelar y reembolsar** pasan por el procesador; el pedido cambia recién con la operación hecha, en la misma transacción. Con una operación de pago en curso, nada avanza (409).
+- **RBAC:** el Pase y los cambios de estado, STAFF o ADMIN; cancelar después de confirmar, solo ADMIN. El cliente solo cancela sus pedidos antes de la confirmación (ajeno → 404) y solo ve su historial y su bandeja. La web oculta lo que no corresponde; la protección está en la API.
+- **AuditLog:** `order.status_changed`, `order.cancelled` (con motivo obligatorio), `payment.collected` y `order.rate_limited`, en la misma transacción, con la lista blanca `order` (código, estado y versión).
+- **Límites:** cambios de estado de staff/admin, 30 / 10 min por usuario (compartido con M6); cancelación del cliente, 10 / h por cuenta.
+- **Bandeja de demostración:** nunca devuelve enlaces. Los de un solo uso no salen de la base y se borran al cerrar el correo (también al quedar `DEMO_ONLY`). Los correos de estado no llevan dirección, teléfono ni datos de pago.
+- **Datos para el staff:** el Pase muestra el nombre, el teléfono y la dirección de entrega del pedido (necesarios para operar), sin correo ni datos del procesador.
+
 ## Pendiente en otros hitos
 
 - **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): M10. Hasta entonces la API usa la IP del socket.

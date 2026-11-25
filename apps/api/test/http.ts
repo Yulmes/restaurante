@@ -14,6 +14,7 @@ import type { Clock } from '../src/lib/clock.ts';
 import { FakeBotCheck } from '../src/modules/bot-check/bot-check.ts';
 import { MemoryEmailProvider } from '../src/modules/notifications/providers.ts';
 import type { PaymentGateway } from '../src/modules/payments/gateway.ts';
+import type { OperationsService } from '../src/modules/orders/operations.ts';
 import type { PaymentService } from '../src/modules/payments/service.ts';
 import { appUrl } from './db.ts';
 
@@ -43,6 +44,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     turnstileDefaults: { threshold: 50, windowMinutes: 60 },
     ordersAllowOutsideHours: false,
     demoPaymentsEnabled: true,
+    orderConfirmationTimeoutMs: 20 * 60_000,
     ...overrides,
   };
 }
@@ -52,6 +54,8 @@ export interface TestApi {
   outbox: ReturnType<typeof createApp>['outbox'];
   /** M6: el servicio de pagos (la reconciliación se corre a mano en las pruebas). */
   payments: PaymentService;
+  /** M7: operación (los barridos se corren a mano en las pruebas). */
+  operations: OperationsService;
   db: PrismaClient;
   clock: TestClock;
   email: MemoryEmailProvider;
@@ -59,15 +63,23 @@ export interface TestApi {
   close(): Promise<void>;
 }
 
+/**
+ * Un solo proveedor de correo en memoria para todas las API de un archivo de pruebas. Las API de
+ * prueba comparten la base: el worker del outbox de cualquiera de ellas puede tomar un correo
+ * encolado por otra (desde M7 los pagos y los cambios de estado también lo despiertan). Con un
+ * proveedor compartido, el correo llega igual a la lista que miran las pruebas.
+ */
+const sharedEmail = new MemoryEmailProvider();
+
 export function buildApi(
   options: { config?: Partial<AppConfig>; extraRoutes?: Router; paymentGateway?: PaymentGateway } = {},
 ): TestApi {
   const db = createPrismaClient(appUrl());
   const clock = new TestClock();
-  const email = new MemoryEmailProvider();
+  const email = sharedEmail;
   const logs: string[] = [];
   const logger = createLogger({ level: 'info' }, { write: (line: string) => logs.push(line) });
-  const { app, outbox, payments } = createApp({
+  const { app, outbox, payments, operations } = createApp({
     config: testConfig(options.config),
     db,
     logger,
@@ -78,7 +90,7 @@ export function buildApi(
     ...(options.extraRoutes ? { extraRoutes: options.extraRoutes } : {}),
     ...(options.paymentGateway ? { paymentGateway: options.paymentGateway } : {}),
   });
-  return { app, outbox, payments, db, clock, email, logs, close: () => db.$disconnect() };
+  return { app, outbox, payments, operations, db, clock, email, logs, close: () => db.$disconnect() };
 }
 
 let ipCounter = 0;
@@ -159,6 +171,22 @@ export function lastEmailToken(api: TestApi, to: string): string {
   return token;
 }
 
+/**
+ * Como `lastEmailToken`, pero espera un poco: el correo puede estar enviándolo el worker de otra
+ * API de prueba que lo tomó primero (comparten la base).
+ */
+export async function waitForEmailToken(api: TestApi, to: string): Promise<string> {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      return lastEmailToken(api, to);
+    } catch {
+      await api.outbox.kick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+  return lastEmailToken(api, to);
+}
+
 /** Registra, envía el correo y (opcionalmente) verifica. Devuelve el navegador sin sesión. */
 export async function registerUser(
   api: TestApi,
@@ -177,7 +205,7 @@ export async function registerUser(
   await api.outbox.idle();
   await api.outbox.kick();
   if (options.verify) {
-    await browser.post('/api/auth/verify-email', { token: lastEmailToken(api, email) });
+    await browser.post('/api/auth/verify-email', { token: await waitForEmailToken(api, email) });
   }
   return { email, browser };
 }

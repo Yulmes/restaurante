@@ -8,6 +8,12 @@ import { recordAudit } from '../audit/audit.ts';
 import { hashJson } from '../cart/service.ts';
 import { HttpIdempotency } from '../idempotency/http-idempotency.ts';
 import { orderInclude, toOrder } from '../orders/service.ts';
+import {
+  applyOrderTransition,
+  enqueueRefundEmail,
+  transitionNotAllowed,
+  versionConflict,
+} from '../orders/transitions.ts';
 import type { GatewayResult, PaymentGateway } from './gateway.ts';
 import { assertTransition, refundedStatus, type PaymentStatus } from './machine.ts';
 import { PAYMENT_TIMING } from './policies.ts';
@@ -26,10 +32,13 @@ import { PAYMENT_TIMING } from './policies.ts';
  * 4. **Σ reembolsos ≤ capturado**, contando también los reembolsos en curso (§7.2).
  * 5. Cada cambio de estado pasa por la máquina de `machine.ts`.
  *
- * Límites de M6 (D-M6-2): capturar, anular y reembolsar se exponen solo para staff y admin, sin
- * interfaz, y **no cambian el estado del pedido**: M7 los conecta con el Pase (confirmar → capture,
- * cancelar → void) y M8 agrega la pantalla de reembolsos. El correo "Pedido recibido" es de M7
- * (D-M6-3).
+ * M7 (D-M6-2, cierra R-M6-1): el resultado de cada operación mueve el pedido **en la misma
+ * transacción** en que se aplica, venga de la petición o de la reconciliación:
+ * - captura hecha → `PENDING_CONFIRMATION → CONFIRMED` (si falla, el pedido no se confirma);
+ * - anulación hecha → `PENDING_CONFIRMATION → CANCELLED`;
+ * - reembolso de la cancelación de un pedido confirmado (clave `cancel:<pedido>`, solo admin) →
+ *   `CONFIRMED → CANCELLED`. Los reembolsos parciales del admin no cambian el pedido.
+ * Los correos de estado y el de reembolso se encolan en esa misma transacción (§8.5).
  */
 const AUTHORIZE_SCOPE = 'payments.authorize';
 const REFUND_SCOPE = 'payments.refund';
@@ -51,7 +60,7 @@ interface LockedPayment {
   amountCapturedMinor: number;
   amountRefundedMinor: number;
   gatewayRef: string | null;
-  order: { code: string; status: string; expiresAt: Date | null; totalMinor: number };
+  order: { code: string; status: string; expiresAt: Date | null; totalMinor: number; version: number };
 }
 
 const lockedPaymentSelect = {
@@ -64,10 +73,12 @@ const lockedPaymentSelect = {
   amountCapturedMinor: true,
   amountRefundedMinor: true,
   gatewayRef: true,
-  order: { select: { code: true, status: true, expiresAt: true, totalMinor: true } },
+  order: { select: { code: true, status: true, expiresAt: true, totalMinor: true, version: true } },
 } as const satisfies Prisma.PaymentSelect;
 
 const notFound = () => new AppError(404, 'NOT_FOUND', 'Order not found');
+/** Prefijo de la clave del reembolso que cancela un pedido confirmado (uno por pedido). */
+const CANCEL_REFUND_PREFIX = 'cancel:';
 const notAllowed = () =>
   new AppError(409, 'PAYMENT_NOT_ALLOWED', 'The payment cannot do that in its current state');
 const inProgress = () => new AppError(409, 'PAYMENT_IN_PROGRESS', 'A payment operation is in progress');
@@ -97,12 +108,21 @@ export class PaymentService {
   readonly #config: AppConfig;
   readonly #gateway: PaymentGateway;
   readonly #idempotency: HttpIdempotency;
+  readonly #afterCommit: () => void;
 
-  constructor(deps: { db: PrismaClient; clock: Clock; config: AppConfig; gateway: PaymentGateway }) {
+  constructor(deps: {
+    db: PrismaClient;
+    clock: Clock;
+    config: AppConfig;
+    gateway: PaymentGateway;
+    /** Después de un commit que pudo encolar correos (M7): despierta el outbox. */
+    afterCommit?: () => void;
+  }) {
     this.#db = deps.db;
     this.#clock = deps.clock;
     this.#config = deps.config;
     this.#gateway = deps.gateway;
+    this.#afterCommit = deps.afterCommit ?? (() => undefined);
     this.#idempotency = new HttpIdempotency(deps.db, deps.clock, {
       lockMs: PAYMENT_TIMING.idempotencyLockMs,
       ttlMs: PAYMENT_TIMING.idempotencyTtlMs,
@@ -209,12 +229,16 @@ export class PaymentService {
     );
 
     try {
-      return await this.#db.$transaction(async (tx) => {
-        await this.#applyAuthorize(tx, opened.opId, result, { userId, role: 'CUSTOMER' });
-        const body = { order: await this.#orderView(tx, orderId) };
-        await this.#idempotency.complete(tx, claim.id, 200, body);
-        return { status: 200, body };
-      });
+      return await this.#db
+        .$transaction(async (tx) => {
+          await this.#applyAuthorize(tx, opened.opId, result, { userId, role: 'CUSTOMER' });
+          const body = { order: await this.#orderView(tx, orderId) };
+          await this.#idempotency.complete(tx, claim.id, 200, body);
+          return { status: 200, body };
+        })
+        .finally(() => {
+          this.#afterCommit();
+        });
     } catch (error) {
       // La operación quedó registrada: la reconciliación la termina.
       await this.#idempotency.release(claim.id);
@@ -227,26 +251,30 @@ export class PaymentService {
    * el pedido. No pasa por el procesador. Repetirlo devuelve el mismo resultado.
    */
   async payOnDelivery(userId: string, orderId: string): Promise<Order> {
-    return this.#db.$transaction(async (tx) => {
-      const now = this.#clock.now();
-      const payment = await this.#lock(tx, orderId, userId);
-      const already = payment.method === 'CASH_ON_DELIVERY' && payment.status === 'PENDING_COLLECTION';
-      if (!already) {
-        this.#assertPayable(payment, now);
-        assertTransition(payment.status, 'PENDING_COLLECTION');
-        await tx.payment.update({
-          where: { id: payment.id },
-          data: { method: 'CASH_ON_DELIVERY', status: 'PENDING_COLLECTION', version: { increment: 1 } },
-        });
-        await this.#toPendingConfirmation(
-          tx,
-          orderId,
-          { userId, role: 'CUSTOMER' },
-          'payment.cash_on_delivery',
-        );
-      }
-      return this.#orderView(tx, orderId);
-    });
+    return this.#db
+      .$transaction(async (tx) => {
+        const now = this.#clock.now();
+        const payment = await this.#lock(tx, orderId, userId);
+        const already = payment.method === 'CASH_ON_DELIVERY' && payment.status === 'PENDING_COLLECTION';
+        if (!already) {
+          this.#assertPayable(payment, now);
+          assertTransition(payment.status, 'PENDING_COLLECTION');
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: { method: 'CASH_ON_DELIVERY', status: 'PENDING_COLLECTION', version: { increment: 1 } },
+          });
+          await this.#toPendingConfirmation(
+            tx,
+            orderId,
+            { userId, role: 'CUSTOMER' },
+            'payment.cash_on_delivery',
+          );
+        }
+        return this.#orderView(tx, orderId);
+      })
+      .finally(() => {
+        this.#afterCommit();
+      });
   }
 
   // ─── Staff y admin (D-M6-2: API sin interfaz en M6) ──────────────────────────
@@ -255,14 +283,20 @@ export class PaymentService {
     return this.#adminView(this.#db, orderId);
   }
 
-  /** Captura lo autorizado (staff o admin). En M7 la dispara la confirmación del pedido. */
+  /**
+   * Captura lo autorizado (staff o admin). La dispara la confirmación del pedido en el Pase (M7):
+   * con la captura hecha, el pedido pasa a `CONFIRMED` en la misma transacción. Con
+   * `expectedVersion`, el pedido tiene que seguir en la versión que vio la persona.
+   */
   async capture(
     actor: PaymentActor,
     orderId: string,
     requestId: string,
+    options: { expectedVersion?: number } = {},
   ): Promise<{ status: number; body: { payment: AdminPayment } }> {
     const intent = await this.#db.$transaction(async (tx) => {
       const payment = await this.#lock(tx, orderId);
+      this.#assertVersion(payment, options.expectedVersion);
       if (
         payment.method !== 'DEMO_CARD' ||
         payment.status !== 'AUTHORIZED' ||
@@ -293,18 +327,109 @@ export class PaymentService {
   }
 
   /**
-   * Anula: libera una autorización no capturada (vía el procesador) o cancela el cobro contra
-   * entrega pendiente (sin procesador). En M7 la dispara la cancelación antes de confirmar.
+   * Cancela un pedido confirmado (solo admin, §7.1): devuelve lo capturado que falte devolver
+   * (reembolso con la clave `cancel:<pedido>`) y, con el reembolso hecho, el pedido pasa a
+   * `CANCELLED`. Sin nada que devolver (contra entrega sin cobrar, o todo ya reembolsado), cancela
+   * en el acto. Si el procesador rechaza el reembolso, el pedido sigue confirmado (502).
    */
-  async voidPayment(
+  async cancelConfirmed(
     actor: PaymentActor,
     orderId: string,
-    reason: string | null,
+    reason: string,
     requestId: string,
+    options: { expectedVersion?: number } = {},
   ): Promise<{ status: number; body: { payment: AdminPayment } }> {
     const intent = await this.#db.$transaction(async (tx) => {
       const payment = await this.#lock(tx, orderId);
-      if (payment.order.status !== 'PENDING_CONFIRMATION') throw notAllowed();
+      this.#assertVersion(payment, options.expectedVersion);
+      if (payment.order.status !== 'CONFIRMED') throw transitionNotAllowed();
+      const pending = await tx.paymentOperation.count({
+        where: { paymentId: payment.id, status: { in: ['REQUESTED', 'UNKNOWN'] } },
+      });
+      if (pending > 0) throw inProgress();
+      const now = this.#clock.now();
+      const remaining = payment.amountCapturedMinor - payment.amountRefundedMinor;
+      const refundable =
+        payment.method === 'DEMO_CARD' &&
+        (payment.status === 'CAPTURED' || payment.status === 'PARTIALLY_REFUNDED') &&
+        remaining > 0;
+      if (!refundable) {
+        if (payment.method === 'CASH_ON_DELIVERY' && payment.status === 'PENDING_COLLECTION') {
+          assertTransition(payment.status, 'VOIDED');
+          const after = await tx.payment.update({
+            where: { id: payment.id },
+            data: { status: 'VOIDED', version: { increment: 1 } },
+            select: lockedPaymentSelect,
+          });
+          await recordAudit(tx, {
+            actor,
+            action: 'payment.voided',
+            entityType: 'payment',
+            entityId: payment.id,
+            before: auditSnapshot(payment),
+            after: auditSnapshot(after),
+            reason,
+            requestId,
+          });
+        }
+        await this.#transition(tx, orderId, 'CONFIRMED', 'CANCELLED', actor, reason, requestId, now);
+        return null;
+      }
+      if (!payment.gatewayRef) throw notAllowed();
+      // Un intento anterior rechazado borró su reembolso: la clave queda libre para reintentar.
+      const refund = await tx.refund.create({
+        data: {
+          paymentId: payment.id,
+          amountMinor: remaining,
+          reason,
+          idempotencyKey: `${CANCEL_REFUND_PREFIX}${orderId}`,
+          actorUserId: actor.userId,
+          createdAt: now,
+        },
+      });
+      const op = await this.#openOperation(tx, payment.id, 'REFUND', `refund:${refund.id}`, remaining);
+      return { opId: op.id, opKey: op.idempotencyKey, ref: payment.gatewayRef, amountMinor: remaining };
+    });
+    if (!intent) {
+      this.#afterCommit();
+      return { status: 200, body: { payment: await this.adminView(orderId) } };
+    }
+    const opened = intent;
+    const result = await this.#call(() =>
+      this.#gateway.refund({
+        ref: opened.ref,
+        amountMinor: opened.amountMinor,
+        idempotencyKey: opened.opKey,
+      }),
+    );
+    return this.#finishAdminOperation(orderId, opened.opId, (tx) =>
+      this.#applyRefund(tx, opened.opId, result, actor, requestId),
+    );
+  }
+
+  /**
+   * Anula: libera una autorización no capturada (vía el procesador) o cancela el cobro contra
+   * entrega pendiente (sin procesador). La dispara la cancelación antes de confirmar (M7): con la
+   * anulación hecha, el pedido pasa a `CANCELLED` en la misma transacción. `actor` es `null` cuando
+   * la pide la API (barrido de pedidos sin confirmar); con `ownerId`, solo sobre un pedido de esa
+   * cuenta (cancelación del cliente: ajeno → 404).
+   */
+  async voidPayment(
+    actor: PaymentActor | null,
+    orderId: string,
+    reason: string | null,
+    requestId: string | null,
+    options: { expectedVersion?: number; ownerId?: string } = {},
+  ): Promise<{ status: number; body: { payment: AdminPayment } }> {
+    const intent = await this.#db.$transaction(async (tx) => {
+      const payment = await this.#lock(tx, orderId, options.ownerId);
+      this.#assertVersion(payment, options.expectedVersion);
+      if (payment.order.status !== 'PENDING_CONFIRMATION') {
+        // Desde el Pase o el cliente, el pedido ya no admite cancelarse; por la API de M6, el pago.
+        throw options.expectedVersion === undefined && !options.ownerId
+          ? notAllowed()
+          : transitionNotAllowed();
+      }
       if (payment.method === 'CASH_ON_DELIVERY' && payment.status === 'PENDING_COLLECTION') {
         assertTransition(payment.status, 'VOIDED');
         const after = await tx.payment.update({
@@ -322,6 +447,16 @@ export class PaymentService {
           reason,
           requestId,
         });
+        await this.#transition(
+          tx,
+          orderId,
+          'PENDING_CONFIRMATION',
+          'CANCELLED',
+          actor,
+          reason,
+          requestId,
+          this.#clock.now(),
+        );
         return null;
       }
       if (payment.method !== 'DEMO_CARD' || payment.status !== 'AUTHORIZED' || !payment.gatewayRef) {
@@ -330,7 +465,10 @@ export class PaymentService {
       const op = await this.#openOperation(tx, payment.id, 'VOID', `${payment.id}:void`, 0);
       return { opId: op.id, opKey: op.idempotencyKey, ref: payment.gatewayRef };
     });
-    if (!intent) return { status: 200, body: { payment: await this.adminView(orderId) } };
+    if (!intent) {
+      this.#afterCommit();
+      return { status: 200, body: { payment: await this.adminView(orderId) } };
+    }
     const result = await this.#call(() =>
       this.#gateway.void({ ref: intent.ref, idempotencyKey: intent.opKey }),
     );
@@ -512,6 +650,7 @@ export class PaymentService {
         });
         if (result.outcome === 'SUCCEEDED' || result.outcome === 'DECLINED') outcome.resolved += 1;
         else outcome.pending += 1;
+        if (result.outcome === 'SUCCEEDED') this.#afterCommit();
       } catch (error) {
         logger?.error({ err: error, operationId: op.id }, 'payment reconciliation failed');
       }
@@ -684,6 +823,17 @@ export class PaymentService {
         reason: actor ? null : 'reconciliation',
         requestId,
       });
+      // §7.3: Payment CAPTURED y Order CONFIRMED en la misma transacción.
+      await this.#transition(
+        tx,
+        payment.orderId,
+        'PENDING_CONFIRMATION',
+        'CONFIRMED',
+        actor,
+        actor ? null : 'reconciliation',
+        requestId,
+        this.#clock.now(),
+      );
     } else if (result.outcome === 'DECLINED') {
       await this.#closeOp(tx, op.id, 'FAILED', result);
     } else {
@@ -720,6 +870,16 @@ export class PaymentService {
         reason,
         requestId,
       });
+      await this.#transition(
+        tx,
+        payment.orderId,
+        'PENDING_CONFIRMATION',
+        'CANCELLED',
+        actor,
+        reason,
+        requestId,
+        this.#clock.now(),
+      );
     } else if (result.outcome === 'DECLINED') {
       await this.#closeOp(tx, op.id, 'FAILED', result);
     } else {
@@ -748,7 +908,10 @@ export class PaymentService {
         select: lockedPaymentSelect,
       });
       await this.#closeOp(tx, op.id, 'SUCCEEDED', result);
-      const refund = await tx.refund.findUnique({ where: { id: refundId }, select: { reason: true } });
+      const refund = await tx.refund.findUnique({
+        where: { id: refundId },
+        select: { reason: true, idempotencyKey: true },
+      });
       await recordAudit(tx, {
         actor,
         action: 'payment.refunded',
@@ -759,6 +922,26 @@ export class PaymentService {
         reason: refund?.reason ?? null,
         requestId,
       });
+      const now = this.#clock.now();
+      await enqueueRefundEmail(tx, {
+        orderId: payment.orderId,
+        amountMinor: op.amountMinor,
+        now,
+        publicWebUrl: this.#config.publicWebUrl,
+      });
+      // El reembolso de la cancelación de un pedido confirmado lo cancela (§7.1, solo admin).
+      if (refund?.idempotencyKey.startsWith(CANCEL_REFUND_PREFIX)) {
+        await this.#transition(
+          tx,
+          payment.orderId,
+          'CONFIRMED',
+          'CANCELLED',
+          actor,
+          refund.reason,
+          requestId,
+          now,
+        );
+      }
     } else if (result.outcome === 'DECLINED') {
       await this.#closeOp(tx, op.id, 'FAILED', result);
       // El reembolso no ocurrió: no queda registrado como hecho.
@@ -846,14 +1029,18 @@ export class PaymentService {
     opId: string,
     apply: (tx: Tx) => Promise<void>,
   ): Promise<{ status: number; body: { payment: AdminPayment } }> {
-    const { payment, status } = await this.#db.$transaction(async (tx) => {
-      await apply(tx);
-      const op = await tx.paymentOperation.findUniqueOrThrow({
-        where: { id: opId },
-        select: { status: true },
+    const { payment, status } = await this.#db
+      .$transaction(async (tx) => {
+        await apply(tx);
+        const op = await tx.paymentOperation.findUniqueOrThrow({
+          where: { id: opId },
+          select: { status: true },
+        });
+        return { payment: await this.#adminView(tx, orderId), status: op.status };
+      })
+      .finally(() => {
+        this.#afterCommit();
       });
-      return { payment: await this.#adminView(tx, orderId), status: op.status };
-    });
     if (status === 'FAILED') {
       throw new AppError(502, 'GATEWAY_ERROR', 'The payment processor rejected the operation');
     }
@@ -869,29 +1056,58 @@ export class PaymentService {
     }
   }
 
-  /** `PENDING_PAYMENT → PENDING_CONFIRMATION` con su historial (§7.1), si el pedido sigue ahí. */
+  /**
+   * `PENDING_PAYMENT → PENDING_CONFIRMATION` con su historial (§7.1), si el pedido sigue ahí. Encola
+   * "Pedido recibido" al cliente y "nuevo pedido por confirmar" al staff (D-M6-3).
+   */
   async #toPendingConfirmation(
     tx: Tx,
     orderId: string,
     actor: PaymentActor | null,
     reason: string,
   ): Promise<void> {
-    const moved = await tx.order.updateMany({
-      where: { id: orderId, status: 'PENDING_PAYMENT' },
-      data: { status: 'PENDING_CONFIRMATION', version: { increment: 1 } },
+    await this.#transition(
+      tx,
+      orderId,
+      'PENDING_PAYMENT',
+      'PENDING_CONFIRMATION',
+      actor,
+      reason,
+      null,
+      this.#clock.now(),
+    );
+  }
+
+  /**
+   * Mueve el pedido como consecuencia de una operación de pago ya autorizada (el permiso se comprobó
+   * al abrirla). Si el pedido ya no está en `from`, no hace nada.
+   */
+  async #transition(
+    tx: Tx,
+    orderId: string,
+    from: 'PENDING_PAYMENT' | 'PENDING_CONFIRMATION' | 'CONFIRMED',
+    to: 'PENDING_CONFIRMATION' | 'CONFIRMED' | 'CANCELLED',
+    actor: PaymentActor | null,
+    reason: string | null,
+    requestId: string | null,
+    now: Date,
+  ): Promise<void> {
+    await applyOrderTransition(tx, {
+      orderId,
+      from,
+      to,
+      actor,
+      reason,
+      requestId,
+      now,
+      publicWebUrl: this.#config.publicWebUrl,
+      checkRole: false,
     });
-    if (moved.count === 0) return;
-    await tx.orderStatusHistory.create({
-      data: {
-        orderId,
-        fromStatus: 'PENDING_PAYMENT',
-        toStatus: 'PENDING_CONFIRMATION',
-        actorUserId: actor?.userId ?? null,
-        actorRole: actor?.role ?? null,
-        reason,
-        createdAt: this.#clock.now(),
-      },
-    });
+  }
+
+  /** Con versión pedida, el pedido tiene que seguir en la que vio la persona (§7.1). */
+  #assertVersion(payment: LockedPayment, expected: number | undefined): void {
+    if (expected !== undefined && payment.order.version !== expected) throw versionConflict();
   }
 
   async #orderView(tx: Tx | PrismaClient, orderId: string): Promise<Order> {

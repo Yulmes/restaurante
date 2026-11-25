@@ -1,7 +1,7 @@
 /**
  * Arranque de la API: `npm run dev -w @marea-baja/api` (o `node src/server.ts`).
- * Valida el entorno (si falta algo, no arranca), conecta la base, procesa el outbox cada 30 s y
- * reconcilia los pagos cada 5 s (M6).
+ * Valida el entorno (si falta algo, no arranca), conecta la base, procesa el outbox cada 30 s,
+ * reconcilia los pagos cada 5 s (M6) y barre los pedidos vencidos o sin confirmar cada minuto (M7).
  */
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -12,8 +12,11 @@ import { createLogger } from './config/logger.ts';
 import { createPrismaClient } from './db/client.ts';
 import { HOUR, systemClock } from './lib/clock.ts';
 import { FakeBotCheck, TurnstileBotCheck, type BotCheck } from './modules/bot-check/bot-check.ts';
+import { ORDER_TIMING } from './modules/orders/policies.ts';
 import { PAYMENT_TIMING } from './modules/payments/policies.ts';
 import {
+  DeliverableRecipients,
+  DemoInboxProvider,
   MailpitProvider,
   MemoryEmailProvider,
   ResendProvider,
@@ -38,7 +41,7 @@ const production = env.NODE_ENV === 'production';
 const logger = createLogger({ level: env.LOG_LEVEL ?? (production ? 'info' : 'debug'), pretty: !production });
 const config = appConfigFromEnv(env);
 
-function emailProvider(): EmailProvider {
+function baseEmailProvider(): EmailProvider {
   switch (env.EMAIL_PROVIDER) {
     case 'resend':
       return new ResendProvider(env.RESEND_API_KEY ?? '', env.EMAIL_FROM);
@@ -46,7 +49,17 @@ function emailProvider(): EmailProvider {
       return new MemoryEmailProvider();
     case 'mailpit':
       return new MailpitProvider(env.MAILPIT_URL, env.EMAIL_FROM);
+    case 'demo':
+      return new DemoInboxProvider();
   }
+}
+
+/** M7 (§8.5, C9): con `EMAIL_DELIVERABLE_TO`, el resto de los destinatarios queda `DEMO_ONLY`. */
+function emailProvider(): EmailProvider {
+  const base = baseEmailProvider();
+  return env.EMAIL_DELIVERABLE_TO.length > 0
+    ? new DeliverableRecipients(base, env.EMAIL_DELIVERABLE_TO)
+    : base;
 }
 
 const botCheck: BotCheck =
@@ -55,7 +68,7 @@ const botCheck: BotCheck =
     : new FakeBotCheck();
 
 const db = createPrismaClient(env.DATABASE_URL);
-const { app, outbox, limiter, payments } = createApp({
+const { app, outbox, limiter, payments, operations } = createApp({
   config,
   db,
   logger,
@@ -87,6 +100,21 @@ setInterval(() => {
       reconciling = false;
     });
 }, PAYMENT_TIMING.reconcileEveryMs).unref();
+
+// Barridos de pedidos (§7.1, M7): vencidos sin pagar (30 min) y sin confirmar a tiempo (20 min).
+let sweeping = false;
+setInterval(() => {
+  if (sweeping) return;
+  sweeping = true;
+  operations
+    .sweep(logger)
+    .catch((error: unknown) => {
+      logger.error({ err: error }, 'order sweep failed');
+    })
+    .finally(() => {
+      sweeping = false;
+    });
+}, ORDER_TIMING.sweepEveryMs).unref();
 
 const server = app.listen(env.API_PORT, () => {
   logger.info(

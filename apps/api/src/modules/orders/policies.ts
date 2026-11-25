@@ -17,10 +17,12 @@ export const ORDER_LIMITS = {
   ordersPerIp: { max: 60, windowMs: HOUR },
   /** Altas, cambios y bajas de direcciones: por cuenta. */
   addressesPerAccount: { max: 60, windowMs: HOUR },
+  /** M7: cancelaciones del cliente, por cuenta (valor de implementación, ADR 0008). */
+  cancelPerAccount: { max: 10, windowMs: HOUR },
 } as const;
 
 export const ORDER_TIMING = {
-  /** Un pedido sin pagar se cancela a los 30 min (§7.1); el job que lo aplica es de M7. */
+  /** Un pedido sin pagar se cancela a los 30 min (§7.1); lo aplica el barrido de M7. */
   pendingPaymentTtlMs: 30 * MINUTE,
   /** Mismo usuario y carrito idéntico en menos de 60 s → el pedido existente (§7.3, punto 5). */
   duplicateWindowMs: 60 * 1000,
@@ -30,6 +32,8 @@ export const ORDER_TIMING = {
   idempotencyTtlMs: DAY,
   /** Cuánto se recuerda una `mergeKey` ya fusionada (idempotencia de la fusión, §7.5). */
   mergeKeyTtlMs: 30 * DAY,
+  /** M7: cada cuánto corren los barridos de pedidos mientras la API está despierta. */
+  sweepEveryMs: MINUTE,
 } as const;
 
 export async function enforceLimit(
