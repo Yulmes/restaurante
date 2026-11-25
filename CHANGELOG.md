@@ -4,7 +4,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
-### Agregado — M8 · Admin (en integración por el PR #11, sin merge)
+### Agregado — M8 · Admin (integrado en `main` mediante el PR #11)
 
 - **Dashboard** (`/admin`) con datos reales: primero el trabajo pendiente y el enlace al Pase; después ventas netas, pedidos aceptados, ticket promedio, reembolsos, platos más pedidos y pedidos por estado (hoy, 7 y 30 días, hora del local).
 - **Carta** (`/admin/carta`): categorías y platos con su traducción al inglés (D2), "Agotado hoy" con un clic, creación y desactivación. Editor de plato con vista previa en vivo de la línea de carta en los dos idiomas (§3.6); grupos y opciones con recargo y disponibilidad. Versión optimista (409) y precios en el incremento de la moneda.
