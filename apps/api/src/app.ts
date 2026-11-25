@@ -10,6 +10,11 @@ import type { Clock } from './lib/clock.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { loadSession } from './middleware/session.ts';
 import { addressRouter } from './modules/addresses/routes.ts';
+import { CustomersAdminService } from './modules/admin/customers.ts';
+import { InsightsAdminService } from './modules/admin/insights.ts';
+import { MenuAdminService } from './modules/admin/menu.ts';
+import { adminRouter } from './modules/admin/routes.ts';
+import { SettingsAdminService } from './modules/admin/settings.ts';
 import { AddressService } from './modules/addresses/service.ts';
 import { authRouter } from './modules/auth/routes.ts';
 import { cartRouter } from './modules/cart/routes.ts';
@@ -95,6 +100,23 @@ export function createApp(deps: AppDeps): App {
     afterCommit: () => void outbox.kick(),
   });
 
+  // M8: admin. Los cambios de la carta y de la moneda invalidan la versión del catálogo (D10, R20).
+  const invalidateCatalog = () => {
+    catalog.invalidateVersion();
+  };
+  const admin = {
+    db: deps.db,
+    menu: new MenuAdminService({ db: deps.db, clock: deps.clock, afterChange: invalidateCatalog }),
+    settings: new SettingsAdminService({ db: deps.db, afterChange: invalidateCatalog }),
+    customers: new CustomersAdminService({ db: deps.db, clock: deps.clock }),
+    insights: new InsightsAdminService({
+      db: deps.db,
+      clock: deps.clock,
+      payments,
+      demoPaymentsEnabled: deps.config.demoPaymentsEnabled,
+    }),
+  };
+
   const app = express();
   app.disable('x-powered-by');
   // La IP real detrás del Worker se toma del secreto de origen en M10 (R5, R-SEC-09).
@@ -143,6 +165,7 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', paymentRouter(payments, limiter, deps.config));
   app.use('/api', operationRouter(operations, limiter));
   app.use('/api', notificationRouter(deps.db));
+  app.use('/api', adminRouter(admin, limiter));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);
