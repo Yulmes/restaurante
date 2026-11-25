@@ -1,5 +1,5 @@
 import { ROLE_KEYS, type RoleKey } from '@marea-baja/shared';
-import type { PrismaClient } from '../../generated/prisma/client.ts';
+import type { Prisma, PrismaClient } from '../../generated/prisma/client.ts';
 import { recordAudit, type AuditActor } from '../audit/audit.ts';
 import { FORCE_ROTATION_AT } from '../auth/sessions.ts';
 
@@ -12,8 +12,8 @@ import { FORCE_ROTATION_AT } from '../auth/sessions.ts';
  * 3. escribe la entrada del AuditLog.
  * Si cualquier paso falla, no cambia nada.
  *
- * En M3 lo usa el script del propietario (`users:set-role`); la pantalla de clientes del admin
- * llega en M8.
+ * En M3 lo usa el script del propietario (`users:set-role`); en M8, también la pantalla de
+ * clientes del admin (`replaceUserRoles`).
  */
 export class UserNotFoundError extends Error {
   constructor() {
@@ -38,35 +38,59 @@ export async function setUserRoles(
   return db.$transaction(async (tx) => {
     const user = await tx.user.findFirst({
       where: { email: { equals: input.email.trim(), mode: 'insensitive' } },
-      select: { id: true, email: true, roles: { select: { role: { select: { key: true } } } } },
+      select: { id: true },
     });
     if (!user) throw new UserNotFoundError();
-    const before = ROLE_KEYS.filter((role) => user.roles.some((r) => r.role.key === role));
-    if (before.join() === after.join()) return { userId: user.id, before, after, changed: false };
-
-    const roleRows = await tx.role.findMany({ where: { key: { in: after } }, select: { id: true } });
-    await tx.userRole.deleteMany({ where: { userId: user.id } });
-    await tx.userRole.createMany({
-      data: roleRows.map((role) => ({
-        userId: user.id,
-        roleId: role.id,
-        grantedById: input.actor?.userId ?? null,
-      })),
-    });
-    await tx.session.updateMany({
-      where: { userId: user.id, revokedAt: null },
-      data: { rotatedAt: FORCE_ROTATION_AT },
-    });
-    await recordAudit(tx, {
-      actor: input.actor,
-      action: 'user.roles_changed',
-      entityType: 'user',
-      entityId: user.id,
-      before: { email: user.email, roles: before },
-      after: { email: user.email, roles: after },
-      reason: input.reason,
-      requestId: input.requestId ?? null,
-    });
-    return { userId: user.id, before, after, changed: true };
+    return replaceUserRoles(tx, { ...input, userId: user.id, roles: after });
   });
+}
+
+/**
+ * El mismo cambio dentro de una transacción que ya existe (la pantalla de clientes, M8): reemplaza
+ * los roles, fuerza la rotación de las sesiones y escribe el AuditLog. No abre otra transacción.
+ */
+export async function replaceUserRoles(
+  tx: Prisma.TransactionClient,
+  input: {
+    userId: string;
+    roles: readonly RoleKey[];
+    actor: AuditActor | null;
+    reason: string | null;
+    requestId?: string | null;
+  },
+): Promise<{ userId: string; before: RoleKey[]; after: RoleKey[]; changed: boolean }> {
+  const after = ROLE_KEYS.filter((role) => input.roles.includes(role));
+  if (after.length === 0) throw new Error('Un usuario necesita al menos un rol.');
+  const user = await tx.user.findUnique({
+    where: { id: input.userId },
+    select: { id: true, email: true, roles: { select: { role: { select: { key: true } } } } },
+  });
+  if (!user) throw new UserNotFoundError();
+  const before = ROLE_KEYS.filter((role) => user.roles.some((r) => r.role.key === role));
+  if (before.join() === after.join()) return { userId: user.id, before, after, changed: false };
+
+  const roleRows = await tx.role.findMany({ where: { key: { in: after } }, select: { id: true } });
+  await tx.userRole.deleteMany({ where: { userId: user.id } });
+  await tx.userRole.createMany({
+    data: roleRows.map((role) => ({
+      userId: user.id,
+      roleId: role.id,
+      grantedById: input.actor?.userId ?? null,
+    })),
+  });
+  await tx.session.updateMany({
+    where: { userId: user.id, revokedAt: null },
+    data: { rotatedAt: FORCE_ROTATION_AT },
+  });
+  await recordAudit(tx, {
+    actor: input.actor,
+    action: 'user.roles_changed',
+    entityType: 'user',
+    entityId: user.id,
+    before: { email: user.email, roles: before },
+    after: { email: user.email, roles: after },
+    reason: input.reason,
+    requestId: input.requestId ?? null,
+  });
+  return { userId: user.id, before, after, changed: true };
 }

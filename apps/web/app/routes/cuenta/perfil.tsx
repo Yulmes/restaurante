@@ -96,11 +96,15 @@ function Profile({ user }: { user: PublicUser }) {
   );
 }
 
-/** M7: historial de pedidos (D3), bandeja de demostración (§8.5) y, para el personal, el Pase. */
+/**
+ * M7: historial de pedidos (D3), bandeja de demostración (§8.5) y, para el personal, el Pase.
+ * M8: la administración ve además el enlace al admin.
+ */
 function OrdersSection({ user }: { user: PublicUser }) {
   const { t } = useT('account');
   const to = useLocalizedPath();
   const staff = user.roles.includes('STAFF') || user.roles.includes('ADMIN');
+  const admin = user.roles.includes('ADMIN');
   return (
     <section aria-labelledby="orders-title" className="flex flex-col gap-3 border-t border-border pt-6">
       <h2 id="orders-title" className="t-h2">
@@ -121,6 +125,13 @@ function OrdersSection({ user }: { user: PublicUser }) {
           <li>
             <Link to={to('/admin/pase')} className="t-ui underline underline-offset-4">
               {t('profile.passLink')}
+            </Link>
+          </li>
+        ) : null}
+        {admin ? (
+          <li>
+            <Link to={to('/admin')} className="t-ui underline underline-offset-4">
+              {t('profile.adminLink')}
             </Link>
           </li>
         ) : null}

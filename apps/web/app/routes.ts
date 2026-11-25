@@ -33,7 +33,20 @@ const ORDER = [
 ] as const;
 
 // M7: el Pase de staff y admin (noindex, fuera del prerender). La protección real está en la API.
-const ADMIN = [['admin/pase', 'en/admin/pass', 'routes/admin/pase.tsx', 'pase']] as const;
+// M8: el resto del admin, solo para ADMIN (D-M8-3).
+const ADMIN = [
+  ['admin', 'en/admin', 'routes/admin/inicio.tsx', 'admin-inicio'],
+  ['admin/pase', 'en/admin/pass', 'routes/admin/pase.tsx', 'pase'],
+  ['admin/pedidos', 'en/admin/orders', 'routes/admin/pedidos.tsx', 'admin-pedidos'],
+  ['admin/pedidos/:id', 'en/admin/orders/:id', 'routes/admin/pedido.tsx', 'admin-pedido'],
+  ['admin/carta', 'en/admin/menu', 'routes/admin/carta.tsx', 'admin-carta'],
+  ['admin/carta/:id', 'en/admin/menu/:id', 'routes/admin/plato.tsx', 'admin-plato'],
+  ['admin/pesca', 'en/admin/catch', 'routes/admin/pesca.tsx', 'admin-pesca'],
+  ['admin/clientes', 'en/admin/customers', 'routes/admin/clientes.tsx', 'admin-clientes'],
+  ['admin/clientes/:id', 'en/admin/customers/:id', 'routes/admin/cliente.tsx', 'admin-cliente'],
+  ['admin/configuracion', 'en/admin/settings', 'routes/admin/configuracion.tsx', 'admin-configuracion'],
+  ['admin/auditoria', 'en/admin/audit', 'routes/admin/auditoria.tsx', 'admin-auditoria'],
+] as const;
 
 export default [
   index('routes/inicio.tsx', { id: 'inicio-es' }),

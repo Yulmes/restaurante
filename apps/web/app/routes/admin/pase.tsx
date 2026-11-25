@@ -12,6 +12,7 @@ import { ApiError, NetworkError, apiGet, apiSend } from '../../account/api.ts';
 import { useLocalizedPath } from '../../account/links.ts';
 import { useMe } from '../../account/session.ts';
 import { orderMeta, OrderShell } from '../../cart/OrderShell.tsx';
+import { AdminNav } from '../../admin/kit.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { useLocale, useT } from '../../i18n/use-locale.ts';
 import { useTimeFormat } from '../../orders/tracking.tsx';
@@ -165,6 +166,7 @@ function PassBoard() {
 
   return (
     <OrderShell title={t('pass.title')} intro={t('pass.intro')}>
+      <AdminNav current="pass" />
       <div className="flex flex-col gap-2">
         <p className="text-sm leading-5 text-text-muted">{t('pass.shortcuts')}</p>
         {pass.data ? (

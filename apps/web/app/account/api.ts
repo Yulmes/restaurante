@@ -73,7 +73,8 @@ export async function apiGet<S extends z.ZodType>(path: string, schema: S): Prom
 }
 
 export async function apiSend<S extends z.ZodType>(
-  method: 'POST' | 'PATCH' | 'DELETE',
+  /** M8: `PUT` para las ediciones del admin, que reemplazan el recurso completo. */
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
   path: string,
   body: unknown,
   schema?: S,

@@ -1,5 +1,6 @@
 import 'i18next';
 import type account from './locales/es-CR/account.json';
+import type admin from './locales/es-CR/admin.json';
 import type common from './locales/es-CR/common.json';
 import type design from './locales/es-CR/design.json';
 import type order from './locales/es-CR/order.json';
@@ -15,6 +16,7 @@ declare module 'i18next' {
       account: typeof account;
       site: typeof site;
       order: typeof order;
+      admin: typeof admin;
     };
   }
 }

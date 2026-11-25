@@ -16,6 +16,7 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test:e2e:catalog -w @marea-baja/web` | Playwright del catálogo y SEO: recrea `<base>_e2e`, levanta la API, hace el build de producción con prerender y lo sirve como el hosting estático |
 | `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run test:e2e:pedido -w @marea-baja/web` | Playwright del pedido (M5) en Chromium y `Mobile Safari` (WebKit con perfil de iPhone; no es un iPhone real). Recrea `<base>_e2e`, levanta su API (3400, con `ORDERS_ALLOW_OUTSIDE_HOURS=true`) y la web de desarrollo (5178) |
+| `npm run test:e2e:admin -w @marea-baja/web` | Playwright del admin (M8, escenarios 3 y 4) en Chromium y `Mobile Safari`, cada motor en su propia invocación. Recrea `<base>_e2e`, levanta su API (3430) y la web de desarrollo (5208); no necesita Mailpit |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
@@ -212,3 +213,15 @@ La suite de pagos tiene su propia API y su propia web (`playwright.pagos.config.
 | E2E escenario 2 en Chromium y `Mobile Safari`: el staff confirma y avanza en el Pase (también con el atajo A), el cliente lo sigue en la línea de marea, el historial y la bandeja; cancelaciones del staff, del admin y del cliente; en inglés; correos en Mailpit; acceso denegado a clientes; axe | `apps/web/e2e/operacion/operacion.spec.ts` (`npm run test:e2e:operacion -w @marea-baja/web`) | §11, §3.6, §8.5 |
 
 La suite de operación tiene su propia API y su propia web (`playwright.operacion.config.ts`, puertos 3420 y 5198) y necesita Mailpit. Las cuentas de staff y admin se crean con `apps/api/scripts/e2e-user.ts --role STAFF|ADMIN`. Detalle en `docs/m7/VALIDACIONES_M7.md`.
+
+## Qué cubre M8
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| Tipo de cambio sin coma flotante, conversión CRC ↔ USD half-up, incremento de la moneda y vuelta exacta | `apps/api/src/modules/admin/currency.test.ts` | §6.2 |
+| Días locales con el desfase real de la zona (Costa Rica y una zona con horario de verano) | `apps/api/src/modules/admin/time.test.ts` | §6.1 |
+| 18 pruebas contra PostgreSQL: RBAC y CSRF; carta con traducción, versión optimista, incremento y AuditLog por tipo; pesca del día; bloqueo con revocación de sesiones y roles con la carrera de dos admins; umbral de Turnstile que rige el login; impuestos y zonas; asistente de moneda; dashboard; auditoría con filtros; pedidos; límite de §8.4 | `apps/api/test/admin.db.test.ts` | §6.2, §8.4, §8.6, D2, D5, D8 |
+| Textos del espacio `admin` con las mismas claves y variables en es-CR y en | `apps/web/app/i18n/messages.test.ts` | D2 |
+| E2E escenarios 3 y 4 en Chromium y `Mobile Safari`: carta y editor con vista previa reflejados en la carta pública; pesca del día, umbral de Turnstile y auditoría en inglés; staff y cliente sin acceso, bloqueo que corta la sesión; conflicto de edición, validaciones, moneda bloqueada, cancelación y reembolso; axe | `apps/web/e2e/admin/admin.spec.ts` (`npm run test:e2e:admin -w @marea-baja/web`) | §11, §12, §3.6 |
+
+`admin.db.test.ts` cambia la configuración global de la base de prueba y la restaura al terminar. Detalle en `docs/m8/VALIDACIONES_M8.md`.

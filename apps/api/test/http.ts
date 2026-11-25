@@ -2,7 +2,7 @@
  * Ayudas para las pruebas de integración de la API (Supertest + PostgreSQL real, §11).
  * Cada prueba usa correos e IP únicos, así los límites y los datos no se cruzan entre casos.
  */
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import type { Router } from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.ts';
@@ -93,7 +93,10 @@ export function buildApi(
   return { app, outbox, payments, operations, db, clock, email, logs, close: () => db.$disconnect() };
 }
 
-let ipCounter = 0;
+// M8: cada archivo de pruebas empieza en un punto aleatorio del rango. Los archivos comparten la
+// base (y sus contadores de límites por IP) en una misma corrida; si todos empezaran en la misma
+// IP, los registros de uno contarían contra el límite de 5 / h por IP del siguiente.
+let ipCounter = randomInt(0, 60_000);
 /** IP única de la red de documentación (RFC 5737). */
 export function uniqueIp(): string {
   ipCounter += 1;
@@ -132,7 +135,7 @@ export class Browser {
   }
 
   async send(
-    method: 'post' | 'patch' | 'delete',
+    method: 'post' | 'patch' | 'put' | 'delete',
     path: string,
     body: object = {},
     headers: Record<string, string> = {},
@@ -160,6 +163,11 @@ export class Browser {
 
   patch(path: string, body: object = {}) {
     return this.send('patch', path, body);
+  }
+
+  /** M8: las ediciones del admin reemplazan el recurso completo. */
+  put(path: string, body: object = {}) {
+    return this.send('put', path, body);
   }
 }
 

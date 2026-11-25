@@ -153,6 +153,16 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 - **Bandeja de demostración:** nunca devuelve enlaces. Los de un solo uso no salen de la base y se borran al cerrar el correo (también al quedar `DEMO_ONLY`). Los correos de estado no llevan dirección, teléfono ni datos de pago.
 - **Datos para el staff:** el Pase muestra el nombre, el teléfono y la dirección de entrega del pedido (necesarios para operar), sin correo ni datos del procesador.
 
+## Admin (M8)
+
+- **RBAC:** todo `/api/admin/*` (salvo el Pase y las operaciones de pago de M6 y M7, que conservan sus reglas) exige ADMIN (D-M8-3). La web oculta las secciones; la protección está en la API.
+- **Cuentas:** bloquear marca `blockedAt` y revoca todas las sesiones abiertas en la misma transacción; el login ya rechazaba cuentas bloqueadas. Nadie cambia su propia cuenta (403 `ADMIN_SELF_CHANGE`) y siempre queda un ADMIN activo (409 `LAST_ADMIN`), con un candado de transacción para los cambios simultáneos. Bloqueos y roles llevan motivo.
+- **Montos y moneda:** precios, recargos y tarifas en enteros, múltiplos del incremento de la moneda; el cambio de moneda exige que no haya pedidos activos y convierte en una sola transacción. Los pedidos conservan su moneda.
+- **Concurrencia:** versión optimista en la configuración (`version`) y en platos y categorías (`updatedAt`): 409 en lugar de pisar un cambio ajeno.
+- **AuditLog:** listas blancas `product`, `category`, `optionGroup`, `option`, `catch`, `settings`, `taxRate` y `deliveryZone`; el umbral de Turnstile y el cambio de moneda tienen su propia acción. La UI de auditoría es de solo lectura y muestra los correos enmascarados.
+- **Límites:** todos los cambios del admin comparten "reembolsos y cambios de configuración" de §8.4 (30 / 10 min por usuario, la misma clave que M6 y M7), con `<entidad>.rate_limited` en el AuditLog.
+- **Textos editables:** se guardan y se muestran como texto plano (React escapa; sin `dangerouslySetInnerHTML`).
+
 ## Pendiente en otros hitos
 
 - **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): M10. Hasta entonces la API usa la IP del socket.

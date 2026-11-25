@@ -12,8 +12,9 @@ import { maskEmail } from '../../config/logger.ts';
  * 3. La tabla es de solo inserción (trigger y permisos de M2); este módulo solo hace INSERT.
  *
  * En M3 se audita el cambio de roles (RBAC); en M6, las capturas, anulaciones y reembolsos; en M7,
- * los cambios de estado del pedido hechos por staff o admin y el cobro contra entrega. Las
- * listas de productos y configuración se agregan con sus servicios (M8).
+ * los cambios de estado del pedido hechos por staff o admin y el cobro contra entrega; en M8, la
+ * carta, la pesca del día, los bloqueos de cuentas, la configuración, los impuestos, las zonas y
+ * la moneda.
  */
 export const AUDIT_WHITELIST = {
   user: ['email', 'name', 'locale', 'roles', 'emailVerified', 'blocked'],
@@ -29,6 +30,46 @@ export const AUDIT_WHITELIST = {
   ],
   /** M7: cambios de estado y cancelaciones hechos por staff o admin (§7.1, §8.6). */
   order: ['code', 'status', 'version'],
+  /** M8: carta (§8.6: creación, modificación, desactivación, precio y disponibilidad). */
+  product: [
+    'slug',
+    'name',
+    'description',
+    'categoryId',
+    'basePriceMinor',
+    'tags',
+    'isActive',
+    'isAvailable',
+    'sortOrder',
+    'enName',
+    'enDescription',
+    'enAltText',
+    'imageAlt',
+  ],
+  category: ['slug', 'name', 'description', 'sortOrder', 'isActive', 'enName', 'enDescription'],
+  optionGroup: ['productId', 'name', 'enName', 'isActive'],
+  option: ['groupId', 'name', 'enName', 'priceDeltaMinor', 'isAvailable'],
+  /** M8: pesca del día (§8.6 "publicación de la pesca del día"). */
+  catch: ['date', 'published', 'species', 'ports', 'itemCount'],
+  /** M8: configuración, moneda y umbral de Turnstile (§6.2, §8.4, D8). */
+  settings: [
+    'currency',
+    'pricesIncludeTax',
+    'roundingIncrementMinor',
+    'minOrderMinor',
+    'pickupEnabled',
+    'deliveryEnabled',
+    'turnstileGlobalThreshold',
+    'turnstileWindowMinutes',
+    'openingHours',
+    'version',
+    'crcPerUsd',
+    'productsConverted',
+    'optionsConverted',
+    'zonesConverted',
+  ],
+  taxRate: ['key', 'name', 'rateBps', 'appliesTo', 'fulfillmentTypes', 'isActive'],
+  deliveryZone: ['key', 'name', 'districts', 'feeMinor', 'etaMinutes', 'isActive'],
 } as const satisfies Record<string, readonly string[]>;
 
 export type AuditEntityType = keyof typeof AUDIT_WHITELIST;

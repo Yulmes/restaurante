@@ -10,7 +10,15 @@ export default defineConfig({
   // Las del catálogo (M4) y las de producción usan el build servido: playwright.catalog.config.ts
   // y playwright.produccion.config.ts. Las del pedido (M5), con playwright.pedido.config.ts; las de
   // pagos (M6) y operación (M7), con sus propias configuraciones.
-  testIgnore: ['auth/**', 'catalogo/**', 'produccion/**', 'pedido/**', 'pagos/**', 'operacion/**'],
+  testIgnore: [
+    'auth/**',
+    'catalogo/**',
+    'produccion/**',
+    'pedido/**',
+    'pagos/**',
+    'operacion/**',
+    'admin/**',
+  ],
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,

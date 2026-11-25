@@ -215,9 +215,9 @@ jobs:
         run: docker compose down --volumes
 
   order:
-    name: Pedido, pagos y operación (carrito, checkout, pago demo, Pase y E2E en Chromium y WebKit)
+    name: Pedido, pagos, operación y admin (carrito, checkout, pago demo, Pase, admin y E2E en Chromium y WebKit)
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -273,6 +273,12 @@ jobs:
       # en la línea de marea, su historial y la bandeja de demostración; correos en Mailpit.
       - name: Operación y Pase (Chromium y Mobile Safari)
         run: npm run test:e2e:operacion -w @marea-baja/web
+
+      # M8 (escenarios 3 y 4): el admin edita la carta, publica la pesca del día, cambia la
+      # configuración, bloquea una cuenta, cancela y reembolsa; staff y clientes no entran; los
+      # conflictos y las validaciones se ven en la interfaz. Su propia API (freno de ráfagas aparte).
+      - name: Admin (Chromium y Mobile Safari)
+        run: npm run test:e2e:admin -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()
