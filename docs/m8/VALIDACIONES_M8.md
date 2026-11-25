@@ -135,7 +135,7 @@ Todas ejecutadas en local el 24/11/2026 sobre el árbol final de la rama (Window
 - Dashboard: ventas, reembolsos, otra moneda, cancelados, pendientes y top.
 - Auditoría: filtros, orden, paginación, sin endpoints de edición, correos enmascarados.
 - Pedidos: búsqueda, estado, detalle; 404 con un id inexistente o inválido.
-- Límite de §8.4: el 31.º cambio responde 429 y queda `deliveryZone.rate_limited` en el AuditLog.
+- Límite de §8.4: el 31.º cambio responde 429 y queda `delivery_zone.rate_limited` en el AuditLog, que el filtro de acciones encuentra.
 
 El archivo cambia la configuración global de la base de prueba: guarda el estado inicial y lo restaura al terminar (precios, tasas, zonas, horario, pizarra y platos creados).
 
@@ -197,6 +197,9 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 | 5 | El ingreso ignoraba `?next=/admin` | `safeNextPath` acepta las rutas propias del admin con el mismo patrón |
 | 6 | Botón de disponibilidad con el nombre completo del plato: ruido visual | Texto visible corto, plato solo para lectores de pantalla |
 | 7 | "Abre el Lunes" (mayúscula a mitad de frase) | "Apertura · Lunes" |
+| 8 | Revisión previa al push: las acciones de límite excedido iban en camelCase (`deliveryZone.rate_limited`) y el filtro de acciones de la auditoría no podía encontrarlas | Acciones en snake_case como el resto (`delivery_zone.rate_limited`), con prueba del filtro |
+| 9 | Revisión previa al push: "Guardar borrador" sobre una pizarra ya publicada cambiaba la portada mientras el aviso decía que no se publicaba | Una pizarra publicada solo se corrige con "Publicar los cambios" |
+| 10 | Revisión previa al push: el ejemplo del asistente de moneda mostraba siempre CRC → USD | El ejemplo sigue la dirección del cambio |
 
 ## Riesgos
 

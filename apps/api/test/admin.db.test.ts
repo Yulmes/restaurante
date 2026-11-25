@@ -948,8 +948,13 @@ describe('límites de §8.4 para cambios del admin', () => {
     expect(limited.status).toBe(429);
     expect(error(limited.body).code).toBe('RATE_LIMITED');
     const entry = await api.db.auditLog.findFirst({
-      where: { actorUserId: id, action: 'deliveryZone.rate_limited' },
+      where: { actorUserId: id, action: 'delivery_zone.rate_limited' },
     });
     expect(entry).not.toBeNull();
+    // El filtro de acciones de la auditoría la encuentra.
+    const found = adminAuditResponseSchema.parse(
+      (await browser.get('/api/admin/audit?action=delivery_zone.rate_limited')).body,
+    );
+    expect(found.entries.some((e) => e.entityId === zone.id)).toBe(true);
   });
 });

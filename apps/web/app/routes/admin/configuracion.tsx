@@ -671,8 +671,18 @@ function CurrencyWizard({ data }: { data: AdminSettingsResponse }) {
                 {t('currency.confirm', { from: current, to: target, rate: rate.trim() })}
               </p>
               <p className="text-sm leading-5 text-text-muted">
-                {t('currency.example')} <Price amountMinor={890000} currency="CRC" /> →{' '}
-                <Price amountMinor={Math.round((8900 / Number(rate || 1)) * 100)} currency="USD" />
+                {t('currency.example')}{' '}
+                {target === 'USD' ? (
+                  <>
+                    <Price amountMinor={890000} currency="CRC" /> →{' '}
+                    <Price amountMinor={Math.round((8900 / Number(rate || 1)) * 100)} currency="USD" />
+                  </>
+                ) : (
+                  <>
+                    <Price amountMinor={1780} currency="USD" /> →{' '}
+                    <Price amountMinor={Math.round(17.8 * Number(rate || 1)) * 100} currency="CRC" />
+                  </>
+                )}
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button

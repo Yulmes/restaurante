@@ -206,18 +206,21 @@ function CatchEditor({ data }: { data: AdminCatchResponse }) {
           >
             {t('catch.add')}
           </Button>
-          <Button
-            variant="secondary"
-            loading={save.isPending && !save.variables}
-            onClick={() => {
-              setNotice(null);
-              save.mutate(false);
-            }}
-          >
-            {t('catch.saveDraft')}
-          </Button>
+          {/* Una pizarra ya publicada se corrige publicándola de nuevo: guardarla cambia la portada. */}
+          {current?.publishedAt ? null : (
+            <Button
+              variant="secondary"
+              loading={save.isPending && !save.variables}
+              onClick={() => {
+                setNotice(null);
+                save.mutate(false);
+              }}
+            >
+              {t('catch.saveDraft')}
+            </Button>
+          )}
           <Button type="submit" loading={save.isPending && save.variables}>
-            {t('catch.publish')}
+            {current?.publishedAt ? t('catch.publishChanges') : t('catch.publish')}
           </Button>
         </div>
       </form>

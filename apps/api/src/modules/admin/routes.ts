@@ -35,7 +35,8 @@ import type { SettingsAdminService } from './settings.ts';
  *
  * Los cambios comparten el límite de §8.4 "reembolsos y cambios de configuración (admin)":
  * 30 / 10 min por usuario, la misma clave que los pagos (M6) y el Pase (M7). Al excederlo,
- * 429 y una entrada `<entidad>.rate_limited` en el AuditLog.
+ * 429 y una entrada `<entidad>.rate_limited` en el AuditLog (en snake_case, para que el filtro de
+ * acciones de la auditoría la encuentre).
  */
 export interface AdminServices {
   db: PrismaClient;
@@ -46,6 +47,21 @@ export interface AdminServices {
 }
 
 const uuid = z.uuid();
+
+/** Nombre de la entidad en las acciones del AuditLog (snake_case, como `delivery_zone.fee_changed`). */
+const ACTION_PREFIX: Record<AuditEntityType, string> = {
+  user: 'user',
+  payment: 'payment',
+  order: 'order',
+  product: 'product',
+  category: 'category',
+  optionGroup: 'option_group',
+  option: 'option',
+  catch: 'catch',
+  settings: 'settings',
+  taxRate: 'tax_rate',
+  deliveryZone: 'delivery_zone',
+};
 
 function idOf(req: Request, what: string): string {
   const id = uuid.safeParse(req.params['id']);
@@ -88,7 +104,7 @@ export function adminRouter(services: AdminServices, limiter: RateLimiter): Rout
         .$transaction((tx) =>
           recordAudit(tx, {
             actor,
-            action: `${entityType}.rate_limited`,
+            action: `${ACTION_PREFIX[entityType]}.rate_limited`,
             entityType,
             entityId,
             requestId: req.requestId,

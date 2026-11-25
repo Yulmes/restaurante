@@ -227,7 +227,7 @@
     "date": "Día",
     "today": "Hoy ({{date}})",
     "tomorrow": "Mañana ({{date}})",
-    "statusPublished": "Publicada el {{time}}.",
+    "statusPublished": "Publicada el {{time}}. Los cambios se ven en la portada recién al publicarlos.",
     "statusDraft": "Borrador sin publicar.",
     "statusNone": "Todavía no hay pizarra para este día.",
     "species": "Especie {{n}}",
@@ -238,7 +238,8 @@
     "max": "La pizarra admite hasta 12 especies.",
     "add": "Agregar especie",
     "saveDraft": "Guardar borrador",
-    "publish": "Publicar"
+    "publish": "Publicar",
+    "publishChanges": "Publicar los cambios"
   },
   "customers": {
     "title": "Clientes",

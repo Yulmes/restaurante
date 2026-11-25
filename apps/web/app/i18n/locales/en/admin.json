@@ -227,7 +227,7 @@
     "date": "Day",
     "today": "Today ({{date}})",
     "tomorrow": "Tomorrow ({{date}})",
-    "statusPublished": "Published on {{time}}.",
+    "statusPublished": "Published on {{time}}. Changes show on the home page only once you publish them.",
     "statusDraft": "Unpublished draft.",
     "statusNone": "There's no board for this day yet.",
     "species": "Species {{n}}",
@@ -238,7 +238,8 @@
     "max": "The board allows up to 12 species.",
     "add": "Add species",
     "saveDraft": "Save draft",
-    "publish": "Publish"
+    "publish": "Publish",
+    "publishChanges": "Publish the changes"
   },
   "customers": {
     "title": "Customers",
