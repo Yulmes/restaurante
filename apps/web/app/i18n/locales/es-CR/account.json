@@ -120,7 +120,8 @@
     "ordersTitle": "Pedidos y avisos",
     "ordersLink": "Mis pedidos",
     "inboxLink": "Bandeja de demostración",
-    "passLink": "Abrir el Pase (personal del local)"
+    "passLink": "Abrir el Pase (personal del local)",
+    "adminLink": "Abrir el admin (carta, clientes, configuración y auditoría)"
   },
   "inbox": {
     "metaTitle": "Bandeja de demostración · Marea Baja",

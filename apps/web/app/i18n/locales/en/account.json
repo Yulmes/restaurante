@@ -120,7 +120,8 @@
     "ordersTitle": "Orders and notices",
     "ordersLink": "My orders",
     "inboxLink": "Demo inbox",
-    "passLink": "Open the Pass (restaurant staff)"
+    "passLink": "Open the Pass (restaurant staff)",
+    "adminLink": "Open the admin (menu, customers, settings and audit log)"
   },
   "inbox": {
     "metaTitle": "Demo inbox · Marea Baja",

@@ -26,6 +26,12 @@ const SEGMENTS: Record<string, string> = {
   bandeja: 'inbox',
   admin: 'admin',
   pase: 'pass',
+  // Admin (M8).
+  pesca: 'catch',
+  clientes: 'customers',
+  configuracion: 'settings',
+  auditoria: 'audit',
+  nuevo: 'new',
 };
 const REVERSE_SEGMENTS = Object.fromEntries(Object.entries(SEGMENTS).map(([es, en]) => [en, es]));
 

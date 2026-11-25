@@ -18,6 +18,9 @@ describe('destino después de iniciar sesión (M5)', () => {
     expect(safeNextPath('/pedido/finalizar')).toBe('/pedido/finalizar');
     expect(safeNextPath('/en/order/checkout')).toBe('/en/order/checkout');
     expect(safeNextPath('/pedido')).toBe('/pedido');
+    // M8: también las secciones del admin, del mismo sitio.
+    expect(safeNextPath('/admin/carta')).toBe('/admin/carta');
+    expect(safeNextPath('/en/admin/menu')).toBe('/en/admin/menu');
   });
 
   it('ignora otros orígenes, esquemas y rutas', () => {
@@ -29,6 +32,9 @@ describe('destino después de iniciar sesión (M5)', () => {
       '/\\evil.example',
       '/cuenta',
       '/pedido/../cuenta',
+      '/admin/../cuenta',
+      '//admin',
+      '/administrador',
       'javascript:alert(1)',
       '/pedidos-falsos',
     ])
