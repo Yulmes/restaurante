@@ -8,7 +8,7 @@
 
 | # | Proyecto | Stack previsto | Estado |
 |---|---|---|---|
-| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M7 integrados en `main`; M7 cerrado (PR #9, merge `991ddba`, 24/11/2026). M8–M11 no iniciados.** |
+| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M7 integrados en `main`; M7 cerrado (PR #9, merge `991ddba`, 24/11/2026). M8 implementado en local (rama `m8-admin`), sin integrar. M9–M11 no iniciados.** |
 | 2 | E-commerce de ropa y accesorios | React, TypeScript, Java, Spring Boot, PostgreSQL | Futuro. No iniciado. |
 | 3 | Peluquería: reservas y gestión de citas | React, TypeScript, C#, ASP.NET Core, SQL Server | Futuro. No iniciado. |
 | 4 | SaaS multiusuario de gestión de proyectos | Next.js, TypeScript, NestJS, PostgreSQL, Redis | Futuro. No iniciado. |
@@ -35,7 +35,8 @@
   | **M5 · Pedido** | **Integrado en `main` y cerrado** (PR #6, merge `bcebdcb`, 23/11/2026, con autorización de Nivel 3 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7 jobs aprobados, sin reintentos. Nota final: 90/100, con los defectos D1–D4 corregidos y dos riesgos heredados aceptados temporalmente, no resueltos (ver abajo). Sin despliegue. Carrito de invitado y de cuenta con fusión idempotente, motor de precios, checkout de 3 pasos, direcciones y pedido en `PENDING_PAYMENT` sin cobro. Detalle en `docs/m5/VALIDACIONES_M5.md` |
   | **M6 · Pagos** | **Integrado en `main` y cerrado** (PR #7, merge commit `5ed236f`, 24/11/2026, con autorización de Nivel 3 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 91/100, integración aprobada, con la revisión de aceptación técnica (4 defectos corregidos) y D-M6-4 resuelta (contra entrega en retiro y delivery). Sin despliegue y sin activar `DEMO_PAYMENTS_ENABLED` en ningún entorno remoto. Riesgos aceptados R-M6-1 a R-M6-3 (ver abajo). Interfaz `PaymentGateway` con procesador simulado, escenarios de la tarjeta demo, idempotencia, reconciliación, contra entrega (D-M6-1), capturar, anular y reembolsar por API para staff y admin (D-M6-2). Detalle en `docs/m6/VALIDACIONES_M6.md` y ADR 0007 |
   | **M7 · Operación** | **Integrado en `main` y cerrado** (PR #9, merge commit `991ddba`, 24/11/2026, con autorización de Nivel 4 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 92/100, integración aprobada. Sin despliegue. Incluye máquina de estados del pedido, Pase, seguimiento e historial (D3), cancelaciones, barridos, correos de estado en es-CR y en, `DEMO_ONLY` y bandeja de demostración. Cierra R-M6-1 y R-M6-2. Detalle en `docs/m7/VALIDACIONES_M7.md` y ADR 0008 |
-  | M8 a M11 | No iniciados |
+  | **M8 · Admin** | **Implementado en local en la rama `m8-admin`, pendiente de la revisión del propietario.** No integrado ni cerrado; sin push ni despliegue. Iniciado con autorización de Nivel 2 (24/11/2026) sobre `main` en `4b483c9`, después del B0 posterior a M7. Puntaje propuesto: 90/100. Dashboard con datos reales, carta con traducciones y editor con vista previa, pesca del día, clientes (bloqueo y roles), configuración, impuestos, zonas, umbral de Turnstile, asistente de moneda, auditoría con filtros y pedidos con reembolsos, en es-CR y en. Decisiones D-M8-1 a D-M8-4 del propietario (promociones fuera, fotos solo con texto alternativo, todo solo ADMIN, moneda por tipo de cambio). Detalle en `docs/m8/VALIDACIONES_M8.md` y ADR 0009 |
+  | M9 a M11 | No iniciados |
 
 - **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** siguen pendientes; no se dan por cumplidos.
   - LCP móvil < 2,5 s en producción: M10. En local solo se cumple con HTTP/2.
@@ -60,7 +61,9 @@
   - R-M7-3: la verificación del correo de los visitantes en la demo pública depende de una decisión de M10.
   - R-M7-4: dos transiciones en el mismo milisegundo no tienen un orden garantizado en el seguimiento.
   - Detalle en `docs/m7/VALIDACIONES_M7.md`.
-- **Próximo paso:** revisión del entorno posterior a M7 (B0). M8 · Admin empieza solo con autorización expresa del propietario.
+- **B0 posterior a M7:** completado el 24/11/2026 (worktree principal en `main` en `4b483c9`, sin cambios en ramas ni worktrees).
+- **Riesgos nuevos de M8 (implementación local):** R-M8-1 (el límite de §8.4 también rige la edición de la carta), R-M8-2 (pedido creado en el mismo instante que un cambio de moneda), R-M8-3 (precios del HTML prerenderizado hasta el rebuild de M10) y R-M8-4 (sin *finish gate* externo). Detalle en `docs/m8/VALIDACIONES_M8.md`.
+- **Próximo paso:** revisión de aceptación de M8 por el propietario y, con su autorización, la integración por PR. M9 empieza solo con autorización expresa.
 
 ## 2 · E-commerce (futuro)
 

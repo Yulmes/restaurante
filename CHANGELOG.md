@@ -4,6 +4,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M8 · Admin (implementación local en `m8-admin`, sin integrar)
+
+- **Dashboard** (`/admin`) con datos reales: primero el trabajo pendiente y el enlace al Pase; después ventas netas, pedidos aceptados, ticket promedio, reembolsos, platos más pedidos y pedidos por estado (hoy, 7 y 30 días, hora del local).
+- **Carta** (`/admin/carta`): categorías y platos con su traducción al inglés (D2), "Agotado hoy" con un clic, creación y desactivación. Editor de plato con vista previa en vivo de la línea de carta en los dos idiomas (§3.6); grupos y opciones con recargo y disponibilidad. Versión optimista (409) y precios en el incremento de la moneda.
+- **Pesca del día** (`/admin/pesca`): borrador y publicación de la pizarra de hoy o de mañana.
+- **Clientes** (`/admin/clientes`): búsqueda, detalle con pedidos, bloqueo (revoca sesiones) y roles, con motivo; nadie cambia su propia cuenta y siempre queda un admin.
+- **Configuración** (`/admin/configuracion`): modalidades, IVA incluido, pedido mínimo, redondeo, horario, umbral de Turnstile (D8), impuestos (D5) y zonas de delivery.
+- **Asistente de cambio de moneda** (§6.2): exige que no haya pedidos activos y convierte precios, recargos, tarifas y pedido mínimo en una sola transacción con un tipo de cambio (D-M8-4).
+- **Auditoría** (`/admin/auditoria`): solo lectura, con filtros por tipo, acción y fechas (§8.6).
+- **Pedidos** (`/admin/pedidos`): lista con búsqueda y estado; detalle con reembolso total o parcial y cancelación (pantalla que M7 dejó para M8).
+- **API** `/api/admin/*` solo para ADMIN (D-M8-3), con AuditLog en la misma transacción y el límite de §8.4.
+- **E2E de los escenarios 3 y 4** (`npm run test:e2e:admin`) en Chromium y `Mobile Safari`, y 18 pruebas de integración (`admin.db.test.ts`).
+
+### Cambiado — M8
+
+- El Pase muestra la navegación del admin; el perfil, el enlace al admin para ADMIN; el ingreso vuelve a la sección del admin pedida (`?next=`).
+- `replaceUserRoles` reutiliza el cambio de roles de M3 dentro de otra transacción.
+- Pruebas con PostgreSQL: cada archivo empieza en un punto aleatorio del rango de IP de prueba, para no compartir contadores de límites entre archivos.
+- CI: el job del pedido suma la suite del admin y su tiempo máximo sube a 45 min.
+
 ### Agregado — M7 · Operación (integrado en `main` mediante el PR #9)
 
 - **Máquina de estados del pedido** (§7.1) con la matriz completa por rol y modalidad, y un único punto de transición: versión optimista, historial, AuditLog de staff/admin y correos en la misma transacción.
