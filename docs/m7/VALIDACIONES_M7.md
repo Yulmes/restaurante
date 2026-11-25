@@ -1,6 +1,6 @@
 # Validaciones de M7 · Operación
 
-> **Estado (24/11/2026):** **en integración por el PR #9 (`m7-operacion` → `main`), con autorización de Nivel 3 del propietario; pendiente de la autorización de merge.** M7 **no está integrado ni cerrado** hasta el merge. CI 7/7 en el PR ([run](https://github.com/Yulmes/restaurante/actions/runs/45506147978)), sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `c30de42`.
+> **Estado (24/11/2026):** **M7 está integrado en `main` y cerrado:** PR #9, merge commit `991ddba`, CI 7/7 antes y después del merge (ver "Integración y cierre"), con autorización de Nivel 4 del propietario. Sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `c30de42` e integrado por PR con la de Nivel 3.
 >
 > **Decisiones de M7.** No hubo decisiones de negocio bloqueantes: todo lo implementado está en la propuesta (§7.1–7.4, §3.6, §2.4, §8.5, §8.6) o se deriva técnicamente de ella. Las derivaciones quedan registradas abajo y en el ADR 0008 para que el propietario las revise.
 
@@ -162,19 +162,19 @@ Dos hallazgos de infraestructura de pruebas, corregidos sin relajar políticas:
 
 | Riesgo | Estado |
 |---|---|
-| **R-M6-1** (capturar y anular no cambiaban el pedido) | **Resuelto en esta implementación local**, pendiente de integración |
-| **R-M6-2** (pedido vencido confirmado por la reconciliación) | **Resuelto en esta implementación local** (D-M7-6), pendiente de integración |
+| **R-M6-1** (capturar y anular no cambiaban el pedido) | **Resuelto** e integrado en `main` con M7 (PR #9, merge `991ddba`) |
+| **R-M6-2** (pedido vencido confirmado por la reconciliación) | **Resuelto** (D-M7-6) e integrado en `main` con M7 (PR #9, merge `991ddba`) |
 | **R-M6-3** (reconciliación sin tope de reintentos ni espera creciente) | **Abierto.** M7 no lo cambia: no está en su alcance |
 | **R-M5-1** (`npm audit`, `effect` transitiva de Prisma) | **Abierto**, sin cambios (M7 no toca dependencias) |
 | **R-M5-2** (fallas heredadas de WebKit en M1–M4) | **Abierto**, sin cambios. Las suites nuevas de M7 pasan en WebKit |
-| **R-M7-1** | Los barridos y la reconciliación solo corren con la API despierta. El endpoint interno y el cron de §4.3 son de M10 |
-| **R-M7-2** | El límite de staff/admin (30 / 10 min por usuario) puede quedar corto en un local con mucho movimiento. Es la política de §8.4; un cambio requiere aprobación |
-| **R-M7-3** | En la demo pública, la verificación del correo de los visitantes depende de una decisión de M10 (ver la observación de arriba) |
-| **R-M7-4** | Las marcas del seguimiento se ordenan por `createdAt`. Dos transiciones en el mismo milisegundo no tienen un orden garantizado (solo ocurre con el reloj fijo de las pruebas) |
+| **R-M7-1** | **Abierto.** Los barridos y la reconciliación solo corren con la API despierta. El endpoint interno y el cron de §4.3 son de M10 |
+| **R-M7-2** | **Abierto.** El límite de staff/admin (30 / 10 min por usuario) puede quedar corto en un local con mucho movimiento. Es la política de §8.4; un cambio requiere aprobación |
+| **R-M7-3** | **Abierto.** En la demo pública, la verificación del correo de los visitantes depende de una decisión de M10 (ver la observación de arriba) |
+| **R-M7-4** | **Abierto.** Las marcas del seguimiento se ordenan por `createdAt`. Dos transiciones en el mismo milisegundo no tienen un orden garantizado (solo ocurre con el reloj fijo de las pruebas) |
 
 ## Evaluación
 
-**Puntaje propuesto: 92/100** (91 en la implementación local; +1 en pruebas por el CI 7/7 del PR). Pendiente de la autorización de merge.
+**Resultado final: 92/100, integración aprobada** (91 en la implementación local; +1 en pruebas por el CI 7/7 en el PR y en `main`).
 
 | Dimensión | Peso | Nota | Justificación |
 |---|---|---|---|
@@ -182,8 +182,8 @@ Dos hallazgos de infraestructura de pruebas, corregidos sin relajar políticas:
 | Corrección y reglas de negocio | 20 | 19 | Matriz de 512 casos, transiciones atadas al resultado del procesador, versión optimista y concurrencia probadas. Cierra R-M6-1 y R-M6-2. Queda R-M7-4 (marcas con el mismo milisegundo) |
 | Seguridad | 15 | 14 | RBAC e IDOR en la API, cuerpos estrictos, AuditLog con motivo, bandeja sin enlaces. Pendiente la revisión completa de M9 |
 | UX, accesibilidad e i18n | 15 | 12 | axe sin violaciones serias en las pantallas nuevas, 4 anchos sin desbordamiento, dos idiomas, 4 defectos visuales corregidos. Sin *finish gate* externo |
-| Pruebas | 15 | 14 | Unitarias, integración, E2E en dos motores, regresión local completa y CI 7/7 en el PR. Sin repetir WebKit en M1–M4 (R-M5-2) |
-| Documentación y proceso | 10 | 9 | ADR 0008, este documento, CHANGELOG, TESTING, SECURITY, variables y planificación al día; commits separados; integración por PR con CI. Falta el cierre posterior al merge |
+| Pruebas | 15 | 14 | Unitarias, integración, E2E en dos motores, regresión local completa y CI 7/7 en el PR y en `main` después del merge. Sin repetir WebKit en M1–M4 (R-M5-2) |
+| Documentación y proceso | 10 | 9 | ADR 0008, este documento, CHANGELOG, TESTING, SECURITY, variables y planificación al día; commits separados; integración por PR con CI y cierre registrado. Sin *finish gate* externo ni revisión de un tercero |
 | **Total** | **100** | **92** | |
 
 ## Integración por PR (24/11/2026)
@@ -203,5 +203,18 @@ Dos hallazgos de infraestructura de pruebas, corregidos sin relajar políticas:
 - **CI del PR sobre `846b02d`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45506147978)): **7/7 jobs aprobados en el primer intento, sin reintentos.**
   - El job **Pedido, pagos y operación** levantó PostgreSQL y Mailpit. Resultados: pedido 12/12, pagos 6/6 y operación 5/5 en Chromium + 5/5 en `Mobile Safari`, con los asuntos verificados en Mailpit.
   - Los otros seis jobs: formato, lint, tipos y tests; sistema de diseño y accesibilidad; servicios locales; base de datos; identidad; catálogo y SEO.
-- **Merge:** pendiente de la autorización expresa del propietario. Sin auto-merge y sin despliegue.
-- **R-M6-1 y R-M6-2** quedan resueltos recién con el merge.
+- **CI del PR sobre `fd39fd4`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45513719164)): 7/7, sin reintentos.
+
+## Integración y cierre (24/11/2026)
+
+- **Estado:** M7 está **integrado en `main` y cerrado**, con autorización de Nivel 4 del propietario.
+- **PR:** [#9](https://github.com/Yulmes/restaurante/pull/9), `m7-operacion` (último commit `fd39fd4`) → `main`, integrado con un merge commit, el método de los PR anteriores. Sin auto-merge. La rama `m7-operacion` se conserva.
+- **Merge en `main`:** `991ddba` (padres `c30de42` y `fd39fd4`). Integra `a39096a`, `3d51ced`, `846b02d` y `fd39fd4`. El árbol de `main` quedó idéntico al de `fd39fd4`. `main` y `origin/main` quedaron sincronizados.
+- **CI:** 7/7 jobs aprobados en el PR (runs [sobre `846b02d`](https://github.com/Yulmes/restaurante/actions/runs/45506147978) y [sobre `fd39fd4`](https://github.com/Yulmes/restaurante/actions/runs/45513719164)) y 7/7 después del merge en `main` sobre `991ddba` ([run](https://github.com/Yulmes/restaurante/actions/runs/45524032776)). Todos en el primer intento, sin reintentos ni correcciones.
+- **Despliegue:** ninguno. `DEMO_PAYMENTS_ENABLED` no se activó en ningún entorno remoto.
+- **Evaluación final:** **92/100, integración aprobada.**
+- **Riesgos:**
+  - **R-M6-1 y R-M6-2:** resueltos e integrados en `main`.
+  - **R-M7-1 a R-M7-4:** abiertos (ver "Riesgos").
+  - **R-M5-1, R-M5-2 y R-M6-3:** heredados, abiertos y sin cambios.
+- **M8:** no iniciado; empieza solo con autorización expresa del propietario.

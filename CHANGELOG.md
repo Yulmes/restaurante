@@ -4,7 +4,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
-### Agregado — M7 · Operación (en integración por el PR #9, sin merge)
+### Agregado — M7 · Operación (integrado en `main` mediante el PR #9)
 
 - **Máquina de estados del pedido** (§7.1) con la matriz completa por rol y modalidad, y un único punto de transición: versión optimista, historial, AuditLog de staff/admin y correos en la misma transacción.
 - **Pase** (`/admin/pase`, API `GET /api/admin/pass` y `PATCH /api/admin/orders/:id/status`): columnas por estado, antigüedad, avance con un clic, cancelación con motivo y atajos de teclado.
