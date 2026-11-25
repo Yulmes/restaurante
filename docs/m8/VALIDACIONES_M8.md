@@ -1,6 +1,6 @@
 # Validaciones de M8 · Admin
 
-> **Estado (24/11/2026):** **en integración por el PR #11 (`m8-admin` → `main`), con autorización de Nivel 3 del propietario; pendiente de la autorización de merge.** M8 **no está integrado ni cerrado** hasta el merge. CI 7/7 en el PR ([run](https://github.com/Yulmes/restaurante/actions/runs/45540448945)), sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `4b483c9` (M7 integrado y cerrado, B0 posterior a M7 completado).
+> **Estado (24/11/2026):** **M8 está integrado en `main` y cerrado:** PR #11, merge commit `ca21fcb`, CI 7/7 antes y después del merge (ver "Integración y cierre"), con autorización de Nivel 4 del propietario. Sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `4b483c9` e integrado por PR con la de Nivel 3.
 >
 > **Decisiones de M8.** El propietario resolvió cuatro puntos al iniciar (D-M8-1 a D-M8-4, abajo). El resto se deriva de la propuesta; las derivaciones quedan registradas aquí y en el ADR 0009 para su revisión.
 
@@ -212,14 +212,14 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 | **R-M6-3** (reconciliación sin tope de reintentos) | **Abierto**, sin cambios |
 | **R-M5-1** (`npm audit`) | **Abierto**, sin cambios (M8 no agrega dependencias) |
 | **R-M5-2** (WebKit en M1–M4) | **Abierto**, sin cambios |
-| **R-M8-1** (nuevo) | Editar muchos platos seguidos puede alcanzar el límite de 30 cambios / 10 min. Es la política de §8.4 aplicada a la carta (D-M8-5); cambiarla requiere aprobación |
-| **R-M8-2** (nuevo) | El cambio de moneda cuenta los pedidos activos después de tomar la configuración, pero la creación de pedidos no bloquea esa fila: un pedido creado en el mismo instante podría quedar en la moneda anterior. Ese pedido conserva su moneda (§6.2) y el dashboard lo cuenta aparte; la ventana es de milisegundos |
-| **R-M8-3** (nuevo) | Precios ya publicados en el HTML prerenderizado cambian recién con el rebuild (M10); la web los corrige al hidratar con el precio en vivo (D10), como en M4 |
-| **R-M8-4** (nuevo) | Sin *finish gate* externo de las pantallas del admin (como en M7) |
+| **R-M8-1** (nuevo) | **Abierto.** Editar muchos platos seguidos puede alcanzar el límite de 30 cambios / 10 min. Es la política de §8.4 aplicada a la carta (D-M8-5); cambiarla requiere aprobación |
+| **R-M8-2** (nuevo) | **Abierto.** El cambio de moneda cuenta los pedidos activos después de tomar la configuración, pero la creación de pedidos no bloquea esa fila: un pedido creado en el mismo instante podría quedar en la moneda anterior. Ese pedido conserva su moneda (§6.2) y el dashboard lo cuenta aparte; la ventana es de milisegundos |
+| **R-M8-3** (nuevo) | **Abierto.** Precios ya publicados en el HTML prerenderizado cambian recién con el rebuild (M10); la web los corrige al hidratar con el precio en vivo (D10), como en M4 |
+| **R-M8-4** (nuevo) | **Abierto.** Sin *finish gate* externo de las pantallas del admin (como en M7) |
 
 ## Evaluación
 
-**Puntaje propuesto: 91/100** (90 en la implementación local; +1 en pruebas por el CI 7/7 del PR, con la suite del admin verificada en el log). Pendiente de la autorización de merge.
+**Resultado final: 91/100, integración aprobada** (90 en la implementación local; +1 en pruebas por el CI 7/7 en el PR y en `main`). El CI posterior al merge confirma la nota, pero no la sube: no resuelve las limitaciones que la bajan (sin *finish gate* externo, alcance sin altas de grupos, opciones, zonas ni tasas).
 
 | Dimensión | Peso | Nota | Justificación |
 |---|---|---|---|
@@ -227,8 +227,8 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 | Corrección y reglas de negocio | 20 | 19 | Versión optimista, moneda en una transacción con enteros, incremento de precios, último admin con candado, auditoría por tipo de cambio. Queda R-M8-2 |
 | Seguridad | 15 | 14 | RBAC en la API, CSRF, cuerpos estrictos, AuditLog con listas blancas, bloqueo con revocación, límites. Pendiente la revisión completa de M9 |
 | UX, accesibilidad e i18n | 15 | 12 | axe sin violaciones serias, 4 anchos sin desbordamiento, dos idiomas completos, vista previa en vivo, confirmaciones en línea. Sin *finish gate* externo |
-| Pruebas | 15 | 14 | Unitarias, 18 de integración, E2E de los escenarios 3 y 4 en dos motores, regresión local completa y CI 7/7 en el PR. Sin repetir WebKit en M1–M4 (R-M5-2) |
-| Documentación y proceso | 10 | 9 | ADR 0009, este documento y los documentos del proyecto al día; commits separados; integración por PR con CI. Falta el cierre posterior al merge |
+| Pruebas | 15 | 14 | Unitarias, 18 de integración, E2E de los escenarios 3 y 4 en dos motores, regresión local completa y CI 7/7 en el PR y en `main` después del merge. Sin repetir WebKit en M1–M4 (R-M5-2) |
+| Documentación y proceso | 10 | 9 | ADR 0009, este documento y los documentos del proyecto al día; commits separados; integración por PR con CI y cierre registrado. Sin *finish gate* externo ni revisión de un tercero |
 | **Total** | **100** | **91** | |
 
 ## Integración por PR (24/11/2026)
@@ -244,4 +244,23 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 - **CI del PR sobre `0bd80fb`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45540448945)): **7/7 jobs aprobados en el primer intento, sin reintentos.**
   - El job **Pedido, pagos, operación y admin** corrió las cuatro suites, cada una en los dos motores: pedido, pagos, operación (M7) y admin. En el log del paso del admin: 4/4 en Chromium y 4/4 en `Mobile Safari`.
   - Los otros seis jobs: formato, lint, tipos y tests; base de datos; servicios locales; sistema de diseño y accesibilidad; identidad; catálogo y SEO.
-- **Merge:** pendiente de la autorización expresa del propietario. Sin auto-merge y sin despliegue.
+- **CI del PR sobre `0ad4bfc`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45543461192)): 7/7, sin reintentos.
+
+## Integración y cierre (24/11/2026)
+
+- **Estado:** M8 está **integrado en `main` y cerrado**, con autorización de Nivel 4 del propietario.
+- **PR:** [#11](https://github.com/Yulmes/restaurante/pull/11), `m8-admin` (último commit `0ad4bfc`) → `main`, integrado con un merge commit, el método de los PR anteriores. Sin auto-merge. La rama `m8-admin` se conserva.
+- **Merge en `main`:** `ca21fcb` (padres `4b483c9` y `0ad4bfc`), el 24/11/2026 (25/11 04:39 UTC). Integra `ba93d88`, `1bff095`, `42f4524`, `0bd80fb` y `0ad4bfc`. El árbol de `main` quedó idéntico al de `0ad4bfc`. `main` y `origin/main` quedaron sincronizados.
+- **CI:**
+  - 7/7 jobs aprobados en el PR, en sus dos corridas: [sobre `0bd80fb`](https://github.com/Yulmes/restaurante/actions/runs/45540448945) y [sobre `0ad4bfc`](https://github.com/Yulmes/restaurante/actions/runs/45543461192);
+  - 7/7 después del merge en `main` sobre `ca21fcb` ([run](https://github.com/Yulmes/restaurante/actions/runs/45548305353));
+  - todos en el primer intento, sin reintentos ni correcciones.
+- **Correcciones previas a la integración:** los defectos 8 a 10 de la tabla, encontrados en la revisión previa al push (`0bd80fb`).
+- **Despliegue:** ninguno. `DEMO_PAYMENTS_ENABLED` no se activó en ningún entorno remoto.
+- **Evaluación final:** **91/100, integración aprobada.**
+- **Decisiones derivadas D-M8-5 a D-M8-10:** integradas tal como las registra el ADR 0009. Siguen a disposición del propietario para revisión; ninguna cambió en la integración.
+- **Riesgos:** siguen todos pendientes; la integración no aporta evidencia para cerrar ninguno.
+  - **R-M8-1 a R-M8-4:** abiertos. El CI confirma el comportamiento probado, pero no cambia su exposición: el límite sigue aplicando a la carta, el cambio de moneda sigue sin bloquear la creación concurrente de pedidos, el rebuild es de M10 y no hubo *finish gate*.
+  - **R-M7-2:** abierto, con el alcance ampliado por D-M8-5.
+  - **R-M5-1, R-M5-2, R-M6-3, R-M7-1, R-M7-3 y R-M7-4:** heredados, abiertos y sin cambios.
+- **M9:** no iniciado; empieza solo con autorización expresa del propietario, después del B0 posterior a M8.
