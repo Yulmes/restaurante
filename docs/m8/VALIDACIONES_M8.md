@@ -1,6 +1,6 @@
 # Validaciones de M8 · Admin
 
-> **Estado (24/11/2026):** **implementación local terminada en la rama `m8-admin`, pendiente de la revisión del propietario.** M8 **no está integrado ni cerrado**: sin push, sin PR, sin CI remoto y sin despliegue. Iniciado con la autorización de Nivel 2 del propietario (24/11/2026), sobre `main` en `4b483c9` (M7 integrado y cerrado, B0 posterior a M7 completado).
+> **Estado (24/11/2026):** **en integración por el PR #11 (`m8-admin` → `main`), con autorización de Nivel 3 del propietario; pendiente de la autorización de merge.** M8 **no está integrado ni cerrado** hasta el merge. CI 7/7 en el PR ([run](https://github.com/Yulmes/restaurante/actions/runs/45540448945)), sin despliegue. Implementado con la autorización de Nivel 2 (24/11/2026) sobre `main` en `4b483c9` (M7 integrado y cerrado, B0 posterior a M7 completado).
 >
 > **Decisiones de M8.** El propietario resolvió cuatro puntos al iniciar (D-M8-1 a D-M8-4, abajo). El resto se deriva de la propuesta; las derivaciones quedan registradas aquí y en el ADR 0009 para su revisión.
 
@@ -99,7 +99,7 @@ La propuesta (§12) define M8 como "Dashboard (datos reales), carta **con edici�
 
 ## Pruebas
 
-Todas ejecutadas en local el 24/11/2026 sobre el árbol final de la rama (Windows, Docker con PostgreSQL 17 y Mailpit). **Sin ejecución en GitHub Actions** (requiere push, no autorizado).
+Todas ejecutadas en local el 24/11/2026 sobre el árbol final de la rama (Windows, Docker con PostgreSQL 17 y Mailpit); `check`, `test:db` y la E2E del admin se repitieron después de las correcciones de la revisión previa al push. El CI de GitHub Actions está en "Integración por PR", más abajo.
 
 | Suite | Resultado |
 |---|---|
@@ -219,7 +219,7 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 
 ## Evaluación
 
-**Puntaje propuesto: 90/100.** Implementación local completa y verificada, pendiente de la revisión del propietario y de la integración.
+**Puntaje propuesto: 91/100** (90 en la implementación local; +1 en pruebas por el CI 7/7 del PR, con la suite del admin verificada en el log). Pendiente de la autorización de merge.
 
 | Dimensión | Peso | Nota | Justificación |
 |---|---|---|---|
@@ -227,12 +227,21 @@ Las tablas largas se desplazan dentro de su propio contenedor.
 | Corrección y reglas de negocio | 20 | 19 | Versión optimista, moneda en una transacción con enteros, incremento de precios, último admin con candado, auditoría por tipo de cambio. Queda R-M8-2 |
 | Seguridad | 15 | 14 | RBAC en la API, CSRF, cuerpos estrictos, AuditLog con listas blancas, bloqueo con revocación, límites. Pendiente la revisión completa de M9 |
 | UX, accesibilidad e i18n | 15 | 12 | axe sin violaciones serias, 4 anchos sin desbordamiento, dos idiomas completos, vista previa en vivo, confirmaciones en línea. Sin *finish gate* externo |
-| Pruebas | 15 | 13 | Unitarias, 18 de integración, E2E de los escenarios 3 y 4 en dos motores y regresión local completa. Sin CI remoto (exige push) |
-| Documentación y proceso | 10 | 9 | ADR 0009, este documento y los documentos del proyecto al día; commits locales separados. Falta registrar el CI remoto |
-| **Total** | **100** | **90** | |
+| Pruebas | 15 | 14 | Unitarias, 18 de integración, E2E de los escenarios 3 y 4 en dos motores, regresión local completa y CI 7/7 en el PR. Sin repetir WebKit en M1–M4 (R-M5-2) |
+| Documentación y proceso | 10 | 9 | ADR 0009, este documento y los documentos del proyecto al día; commits separados; integración por PR con CI. Falta el cierre posterior al merge |
+| **Total** | **100** | **91** | |
 
-## Preparación para la integración
+## Integración por PR (24/11/2026)
 
-- Rama `m8-admin` con commits locales sobre `4b483c9`, sin push.
-- CI actualizado (job con el admin), todavía sin correr en GitHub Actions.
-- Para integrar, en una autorización aparte de Nivel 3: push, PR a `main`, CI 7/7 y merge con merge commit.
+- **PR:** [#11](https://github.com/Yulmes/restaurante/pull/11), `m8-admin` → `main`, sobre `4b483c9` (sin cambios en `main` desde entonces). Commits:
+  - `ba93d88`: API;
+  - `1bff095`: web, E2E y CI;
+  - `42f4524`: documentación;
+  - `0bd80fb`: correcciones de la revisión previa al push (defectos 8 a 10);
+  - y este registro del estado de integración.
+- **Revisión previa al push:** diff completo contra `main` (57 archivos). Sin secretos, `.env`, artefactos de prueba ni archivos generados; sin migraciones ni cambios en `package-lock.json`. Se corrigieron tres defectos reales (8 a 10 de la tabla) y se repitieron `check` 849, `test:db` 266 y la E2E del admin 4 + 4.
+- **Push** normal, sin force; la rama remota es nueva y quedó igual a la local.
+- **CI del PR sobre `0bd80fb`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45540448945)): **7/7 jobs aprobados en el primer intento, sin reintentos.**
+  - El job **Pedido, pagos, operación y admin** corrió las cuatro suites, cada una en los dos motores: pedido, pagos, operación (M7) y admin. En el log del paso del admin: 4/4 en Chromium y 4/4 en `Mobile Safari`.
+  - Los otros seis jobs: formato, lint, tipos y tests; base de datos; servicios locales; sistema de diseño y accesibilidad; identidad; catálogo y SEO.
+- **Merge:** pendiente de la autorización expresa del propietario. Sin auto-merge y sin despliegue.

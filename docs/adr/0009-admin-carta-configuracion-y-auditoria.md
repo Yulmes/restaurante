@@ -1,6 +1,6 @@
 # ADR 0009 · Admin: carta, configuración, moneda, clientes y auditoría
 
-> **Estado:** propuesto con M8 (24/11/2026), implementación local en la rama `m8-admin`, pendiente de la revisión del propietario. No integrado en `main`.
+> **Estado:** propuesto con M8 (24/11/2026), en integración por el PR #11 con CI 7/7; pendiente de la autorización de merge. No integrado en `main`.
 >
 > **Contexto de decisiones previas:** §12 (M8: "Dashboard (datos reales), carta con edición de traducciones (D2), clientes, configuración, moneda, impuestos configurables (D5), umbral de Turnstile (D8), auditoría; admin completo en ambos idiomas"), §3.6 (editor de plato con vista previa, pizarra editable), §6.1–6.2 (configuración, impuestos, asistente de moneda), §8.4 (límite de cambios del admin), §8.6 (AuditLog y UI de solo lectura), ADR 0008 (pantalla de reembolsos pendiente para M8).
 
