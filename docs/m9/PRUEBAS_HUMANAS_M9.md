@@ -1,6 +1,6 @@
 # Pruebas que requieren al propietario · M9
 
-> **Estado (25/11/2026):** **pendientes de validación humana.** Ninguna de estas pruebas se marca como hecha hasta que el propietario la ejecute, o pida expresamente que Claude la ejecute, como en M1 con NVDA portátil. Lo que sí se verificó de forma automática está en `AUDITORIA_M9.md`.
+> **Estado (26/11/2026, al cerrar M9):** **pendientes de validación humana.** El propietario aceptó cerrar M9 (PR #13, merge `adb772f`) con estas pruebas pendientes; no se dan por hechas. Ninguna de estas pruebas se marca como hecha hasta que el propietario la ejecute, o pida expresamente que Claude la ejecute, como en M1 con NVDA portátil. Lo que sí se verificó de forma automática está en `AUDITORIA_M9.md`.
 
 ## 1 · Recorrido con NVDA sobre las pantallas reales (D1, R-A11Y-01)
 

@@ -1,6 +1,6 @@
 # Auditoría de M9 · Calidad
 
-> **Estado (25/11/2026):** **en integración por PR, sin merge:** [PR #13](https://github.com/Yulmes/restaurante/pull/13), `m9-calidad` → `main`, con CI 7/7 (ver "Integración por PR"). M9 **no está integrado ni cerrado**: falta la autorización de Nivel 4 (merge), y NVDA y Safari de iOS real siguen pendientes. Sin despliegue. Implementado con la autorización de Nivel 2 del propietario (25/11/2026) sobre `main` en `d3d1a27` (M8 cerrado, B0 posterior a M8 completado); R-M9-1 corregido con la autorización de las alternativas 1 y 2; integración con la de Nivel 3.
+> **Estado (26/11/2026):** **M9 está integrado en `main` y cerrado con riesgos aceptados y pendientes humanos:** PR #13, merge commit `adb772f`, CI 7/7 antes y después del merge (ver "Integración y cierre"), con autorización de Nivel 4 del propietario. Sin despliegue. **NVDA y Safari de iOS real siguen pendientes** y R-M9-1 queda mitigado en parte. Implementado con la autorización de Nivel 2 (25/11/2026) sobre `main` en `d3d1a27`; R-M9-1 corregido con la autorización de las alternativas 1 y 2; integrado por PR con la de Nivel 3.
 >
 > Este documento es el **informe de auditoría** que §12 fija como evidencia de M9. Las pruebas que requieren al propietario (NVDA y Safari de iOS real) están en `PRUEBAS_HUMANAS_M9.md` y siguen **pendientes**.
 
@@ -255,8 +255,8 @@ Sobre el código anterior fallan 7 de las 12 pruebas; sobre el corregido pasan l
 
 | Riesgo | Estado después de M9 (local) |
 |---|---|
-| R-M5-1 (`npm audit`) | **Abierto.** Análisis actualizado (M9-10): sin impacto en ejecución; las correcciones son mayores o demasiado recientes |
-| R-M5-2 (WebKit en M1–M4) | **Mitigado en parte.** El defecto real de la app (axe en `/_design`) se corrigió; lo que queda son supuestos de las pruebas y comportamiento de la plataforma (M9-13). Sigue abierto hasta adaptar esas pruebas o aceptarlo |
+| R-M5-1 (`npm audit`) | **Abierto, aceptado al cerrar M9.** Análisis actualizado (M9-10): sin impacto en ejecución; las correcciones son mayores o demasiado recientes |
+| R-M5-2 (WebKit en M1–M4) | **Mitigado en parte; lo que queda se acepta como riesgo abierto al cerrar M9.** El defecto real de la app (axe en `/_design`) se corrigió; lo que queda son supuestos de las pruebas y comportamiento de la plataforma (M9-13). Sigue abierto hasta adaptar esas pruebas o aceptarlo |
 | R-M6-3 (reconciliación sin tope) | **Abierto**, sin cambios: no es de M9 |
 | R-M7-1 (barridos con la API despierta) | **Abierto** (M10) |
 | R-M7-2 / R-M8-1 (límite de staff y admin) | **Abiertos.** Es la política de §8.4 |
@@ -265,8 +265,8 @@ Sobre el código anterior fallan 7 de las 12 pruebas; sobre el corregido pasan l
 | R-M8-2 (pedido simultáneo con un cambio de moneda) | **Abierto**, sin cambios |
 | R-M8-3 (precios del prerender) | **Abierto** (rebuild en M10); la web los corrige al hidratar |
 | R-M8-4 (sin *finish gate*) | **Mitigado:** *finish gate* con capturas reales en 4 anchos y 2 idiomas, 2 HOLD corregidos. Queda la revisión externa de una persona |
-| **R-M9-1 (nuevo)** | **Mitigado en parte.** M9-08 corregido; M9-07 corregido en el redondeo. Sigue abierta la cota teórica de ~2 × N de la aproximación deslizante: requiere la alternativa 3, no autorizada |
-| **R-M9-2 (nuevo)** | La CSP estricta de M10 necesita hashes para los scripts en línea del prerender (M9-09) |
+| **R-M9-1 (nuevo)** | **Mitigado en parte; el residuo se acepta y queda abierto al cerrar M9.** M9-08 corregido; M9-07 corregido en el redondeo. Sigue abierta la cota teórica de ~2 × N de la aproximación deslizante: requiere la alternativa 3, no autorizada |
+| **R-M9-2 (nuevo)** | **Abierto, transferido a M10:** la CSP estricta necesita hashes para los scripts en línea del prerender (M9-09) |
 
 ## Pendientes del propietario
 
@@ -313,11 +313,25 @@ Sobre el código anterior fallan 7 de las 12 pruebas; sobre el corregido pasan l
 - **Comentarios del PR:** ninguno (ni revisiones ni bots).
 - **Sin cambios por la integración en:** el modelo de §8.4, los límites, las reglas de negocio y las pruebas heredadas de WebKit (R-M5-2 sigue como está documentado en M9-13).
 
+## Integración y cierre (26/11/2026)
+
+- **Autorización:** Nivel 4 del propietario (26/11/2026). Aceptó cerrar M9 con estos riesgos y pendientes documentados, **sin darlos por resueltos**:
+  - R-M9-1, mitigado en parte: M9-07 y M9-08 corregidos; la cota teórica de la aproximación sigue abierta. El modelo de §8.4 no cambió y la alternativa 3 no se implementó;
+  - NVDA (18 pasos) y Safari de iOS real (9 escenarios): **pendientes de validación humana**, con su procedimiento en `PRUEBAS_HUMANAS_M9.md`;
+  - R-M5-2: el defecto real de la app está corregido; lo que queda son supuestos de las pruebas y comportamiento de la plataforma (M9-13);
+  - R-M9-2 (CSP): transferido a M10. R-M5-1 (`npm audit`): abierto, sin actualizar dependencias.
+- **Verificación previa al merge:** PR #13 abierto, `m9-calidad` → `main`, `mergeable: clean`, sin revisiones ni comentarios; checks 7/7 sobre el último commit (`879e989`); `main` = `origin/main` = `d3d1a27`; árbol local limpio (solo `.claude/`), sin stashes; PostgreSQL y Mailpit sanos.
+- **Merge:** desde la interfaz de GitHub, con sesión del propietario, método **merge commit** (como en M0–M8). Merge commit `adb772f` (26/11/2026), con padres `d3d1a27` (`main`) y `879e989` (`m9-calidad`); el árbol es idéntico al de `879e989`. La rama `m9-calidad` se conserva.
+- **CI posterior al merge en `main`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45843124734)): **7/7 jobs aprobados, sin reintentos**, incluida la auditoría de calidad.
+- **Cierre documental:** este registro, `CHANGELOG.md`, `PORTFOLIO_MASTER_PLAN.md`, `PRUEBAS_HUMANAS_M9.md`, `docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md` y la propuesta, por un PR documental desde `m9-calidad`, como en M7 y M8.
+
+**Nota final de M9: 88/100.** Parte de los 87 de la implementación local: +1 por la integración (revisión previa con 2 defectos reales corregidos, auditoría de calidad en CI, 7/7 en cuatro corridas sin reintentos). No sube más porque NVDA y Safari de iOS real siguen pendientes y R-M9-1 queda abierto en parte.
+
 ## Dictamen de preparación
 
 **Nivel 2 → Nivel 3:** listo con condiciones (cumplido: PR #13 con CI 7/7).
 
-**Nivel 3 → Nivel 4 (merge): listo, con condiciones** que no bloquean el merge pero sí el cierre de M9:
+**Nivel 3 → Nivel 4 (merge): listo, con condiciones** (cumplido: merge `adb772f`; el propietario aceptó cerrar M9 con estas condiciones documentadas, no resueltas):
 1. **NVDA y Safari de iOS real** quedan pendientes y no se pueden marcar como hechos.
 2. **R-M9-1:** M9-07 y M9-08 están corregidos. La cota teórica de la aproximación deslizante necesita tu decisión (aceptarla o autorizar la alternativa 3) antes del cierre de M9.
 3. **R-M5-2:** adaptar o aceptar las pruebas heredadas de WebKit.

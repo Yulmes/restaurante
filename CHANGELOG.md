@@ -4,6 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
 
+### Agregado — M9 · Calidad (integrado en `main` mediante el PR #13)
+
+- **Auditoría de calidad** (`npm run test:calidad -w @marea-baja/web`): 31 pantallas reales × 2 idiomas × 4 anchos (375, 768, 1024 y 1280 px) con axe WCAG 2.2 AA, desbordamiento, foco visible, movimiento reducido y formato de fechas por idioma; corre en CI desde M9. Informe en `docs/m9/AUDITORIA_M9.md`.
+- **Correcciones de la auditoría:** fechas del admin en el idioma de la página (M9-01), horario de la configuración alineado (M9-02), tabla de contraste de `/_design` enfocable y con nombre (M9-03, WCAG 2.1.1), `spellCheck={false}` en los correos (M9-04), `overscroll-contain` en la hoja de producto (M9-05), la suite de M1 ya no toma la de calidad (M9-06) y textos con número válidos para cualquier cantidad (M9-14).
+- **Límites de §8.4 (R-M9-1, alternativas 1 y 2 autorizadas):** el peso de la ventana anterior se calcula en enteros y se redondea hacia arriba (M9-07); el login reserva cuenta+IP antes de consultar la demora y el bloqueo, así los intentos simultáneos ya no se la saltean (M9-08). El modelo y los límites no cambian; la cota teórica de la aproximación sigue abierta.
+- **Evidencia:** capturas a 768 y 1024 px (criterio aplazado de M4) y antes/después en `docs/evidencias/m9/`; Lighthouse en HTTP/2 con LCP móvil ≤ 2,10 s.
+- **Pendientes humanos (no hechos):** NVDA (18 pasos) y Safari de iOS real (9 escenarios), en `docs/m9/PRUEBAS_HUMANAS_M9.md`.
+
 ### Agregado — M8 · Admin (integrado en `main` mediante el PR #11)
 
 - **Dashboard** (`/admin`) con datos reales: primero el trabajo pendiente y el enlace al Pase; después ventas netas, pedidos aceptados, ticket promedio, reembolsos, platos más pedidos y pedidos por estado (hoy, 7 y 30 días, hora del local).

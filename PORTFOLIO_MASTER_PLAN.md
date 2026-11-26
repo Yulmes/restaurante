@@ -8,7 +8,7 @@
 
 | # | Proyecto | Stack previsto | Estado |
 |---|---|---|---|
-| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M8 integrados en `main`; M8 cerrado (PR #11, merge `ca21fcb`, 24/11/2026). M9–M11 no iniciados.** |
+| 1 | **Marea Baja** — restaurante con pedidos, pagos simulados y administración | React 19, TypeScript, Vite, React Router, Tailwind, Node 24, Express 5, PostgreSQL, Prisma, Zod | **En implementación.** Planificación (D1–D14) aprobada el 10/11/2026. **M0–M9 integrados en `main`; M9 cerrado con riesgos aceptados y pendientes humanos (PR #13, merge `adb772f`, 26/11/2026). M10 y M11 no iniciados.** |
 | 2 | E-commerce de ropa y accesorios | React, TypeScript, Java, Spring Boot, PostgreSQL | Futuro. No iniciado. |
 | 3 | Peluquería: reservas y gestión de citas | React, TypeScript, C#, ASP.NET Core, SQL Server | Futuro. No iniciado. |
 | 4 | SaaS multiusuario de gestión de proyectos | Next.js, TypeScript, NestJS, PostgreSQL, Redis | Futuro. No iniciado. |
@@ -36,19 +36,20 @@
   | **M6 · Pagos** | **Integrado en `main` y cerrado** (PR #7, merge commit `5ed236f`, 24/11/2026, con autorización de Nivel 3 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 91/100, integración aprobada, con la revisión de aceptación técnica (4 defectos corregidos) y D-M6-4 resuelta (contra entrega en retiro y delivery). Sin despliegue y sin activar `DEMO_PAYMENTS_ENABLED` en ningún entorno remoto. Riesgos aceptados R-M6-1 a R-M6-3 (ver abajo). Interfaz `PaymentGateway` con procesador simulado, escenarios de la tarjeta demo, idempotencia, reconciliación, contra entrega (D-M6-1), capturar, anular y reembolsar por API para staff y admin (D-M6-2). Detalle en `docs/m6/VALIDACIONES_M6.md` y ADR 0007 |
   | **M7 · Operación** | **Integrado en `main` y cerrado** (PR #9, merge commit `991ddba`, 24/11/2026, con autorización de Nivel 4 del propietario). CI previo al merge: 7/7 jobs aprobados. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 92/100, integración aprobada. Sin despliegue. Incluye máquina de estados del pedido, Pase, seguimiento e historial (D3), cancelaciones, barridos, correos de estado en es-CR y en, `DEMO_ONLY` y bandeja de demostración. Cierra R-M6-1 y R-M6-2. Detalle en `docs/m7/VALIDACIONES_M7.md` y ADR 0008 |
   | **M8 · Admin** | **Integrado en `main` y cerrado** (PR #11, merge commit `ca21fcb`, 24/11/2026, con autorización de Nivel 4 del propietario). CI previo al merge: 7/7 jobs aprobados en dos corridas. CI posterior al merge en `main`: 7/7, sin reintentos. Nota final: 91/100, integración aprobada, con tres defectos corregidos en la revisión previa al push. Sin despliegue. Dashboard con datos reales, carta con traducciones y editor con vista previa, pesca del día, clientes (bloqueo y roles), configuración, impuestos, zonas, umbral de Turnstile, asistente de moneda, auditoría con filtros y pedidos con reembolsos, en es-CR y en. Decisiones D-M8-1 a D-M8-4 del propietario (promociones fuera, fotos solo con texto alternativo, todo solo ADMIN, moneda por tipo de cambio). Detalle en `docs/m8/VALIDACIONES_M8.md` y ADR 0009 |
-  | M9 a M11 | No iniciados |
+  | **M9 · Calidad** | **Integrado en `main` y cerrado con riesgos aceptados y pendientes humanos** (PR #13, merge commit `adb772f`, 26/11/2026, con autorización de Nivel 4 del propietario). CI previo al merge: 7/7 jobs aprobados en dos corridas. CI posterior al merge en `main`: 7/7, sin reintentos ([run](https://github.com/Yulmes/restaurante/actions/runs/45843124734)). Nota final: 88/100. Sin despliegue. Auditoría de 31 pantallas reales × 2 idiomas × 4 anchos (axe WCAG 2.2 AA, foco, movimiento reducido, desbordamiento) que corre en CI, *finish gate*, Lighthouse, revisión de seguridad y de los límites de §8.4; 9 defectos corregidos, entre ellos M9-07 y M9-08 (R-M9-1, alternativas 1 y 2). **NVDA y Safari de iOS real siguen pendientes del propietario.** Detalle en `docs/m9/AUDITORIA_M9.md` |
+  | M10 y M11 | No iniciados |
 
 - **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** siguen pendientes; no se dan por cumplidos.
   - LCP móvil < 2,5 s en producción: M10. En local solo se cumple con HTTP/2.
   - Validación externa de JSON-LD y `hreflang`: M10.
   - Workflow de rebuild cada 30 min: M10.
-  - Capturas a 768 y 1024 px: M9.
+  - Capturas a 768 y 1024 px: **hechas en M9** (`docs/evidencias/m9/`).
   - WebKit móvil: pendiente desde M1, sin hito asignado.
   - En seguimiento: el error React #418, que no se pudo reproducir, y el riesgo de publicar URLs locales si falta `VITE_SITE_URL` (M10).
   - Detalle en `docs/m4/VALIDACIONES_M4.md`.
 - **Riesgos heredados aceptados temporalmente para integrar M5 (23/11/2026):** siguen pendientes; no se dan por resueltos.
   - `npm audit`: GHSA-7589-6fvf-x4pw en `effect` 3.20.0, transitiva de Prisma 7.10.1. Se espera una Prisma 7.x que lo corrija.
-  - Fallas heredadas de M1–M4 en WebKit (Playwright, perfil de iPhone): M9.
+  - Fallas heredadas de M1–M4 en WebKit (Playwright, perfil de iPhone): revisadas en M9. El defecto real de la app se corrigió; lo que queda (supuestos de las pruebas y comportamiento de la plataforma) se **acepta como riesgo abierto** al cerrar M9 (R-M5-2).
   - Detalle en `docs/m5/REVISION_ACEPTACION_M5.md` §7.
 - **Riesgos aceptados al cerrar M6 (24/11/2026):** siguen pendientes; no se dan por resueltos. R-M5-1 y R-M5-2 también siguen abiertos.
   - R-M6-1: capturar y anular no cambian el estado del pedido hasta M7. **Resuelto con M7, integrado en `main`** (PR #9, merge `991ddba`).
@@ -63,7 +64,15 @@
   - Detalle en `docs/m7/VALIDACIONES_M7.md`.
 - **B0 posterior a M7:** completado el 24/11/2026 (worktree principal en `main` en `4b483c9`, sin cambios en ramas ni worktrees).
 - **Riesgos abiertos al cerrar M8 (24/11/2026):** siguen pendientes; no se dan por resueltos. R-M7-2 amplía su alcance (D-M8-5). R-M8-1 (el límite de §8.4 también rige la edición de la carta), R-M8-2 (pedido creado en el mismo instante que un cambio de moneda), R-M8-3 (precios del HTML prerenderizado hasta el rebuild de M10) y R-M8-4 (sin *finish gate* externo). Detalle en `docs/m8/VALIDACIONES_M8.md`.
-- **Próximo paso:** revisión del entorno posterior a M8 (B0), con autorización propia. M9 · Calidad empieza solo con autorización expresa del propietario.
+- **B0 posterior a M8:** completado el 25/11/2026 (worktree principal en `main` en `d3d1a27`, sin cambios en ramas ni worktrees).
+- **Riesgos al cerrar M9 (26/11/2026), aceptados por el propietario para el cierre; siguen pendientes y no se dan por resueltos:**
+  - R-M9-1: **mitigado en parte.** M9-07 y M9-08 corregidos; la cota teórica de la aproximación deslizante (hasta ~2 × N en un intervalo más corto que la ventana) sigue abierta. Cerrarla requiere una ventana deslizante exacta (alternativa 3), con autorización aparte.
+  - R-M9-2: la CSP estricta necesita hashes para los scripts en línea del prerender. Transferido a M10.
+  - R-M5-1 (`npm audit`) y R-M5-2 (WebKit heredado): abiertos y aceptados.
+  - Validaciones humanas pendientes: NVDA (18 pasos) y Safari de iOS real (9 escenarios), en `docs/m9/PRUEBAS_HUMANAS_M9.md`.
+  - R-M8-4 (sin *finish gate*): mitigado con el *finish gate* de M9; queda la revisión externa de una persona.
+  - Detalle en `docs/m9/AUDITORIA_M9.md`.
+- **Próximo paso:** revisión del entorno posterior a M9 (B0), con autorización propia. M10 empieza solo con autorización expresa del propietario.
 
 ## 2 · E-commerce (futuro)
 
