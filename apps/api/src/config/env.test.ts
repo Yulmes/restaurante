@@ -20,6 +20,8 @@ const PROD = {
   RESEND_API_KEY: 're_test',
   BOT_CHECK_PROVIDER: 'turnstile',
   TURNSTILE_SECRET_KEY: 'secret',
+  ORIGIN_SECRETS: 'o'.repeat(32),
+  TASKS_SECRETS: 't'.repeat(32),
 };
 
 function problemsOf(source: Record<string, string | undefined>): readonly string[] {
@@ -47,6 +49,9 @@ describe('loadEnv', () => {
       DEMO_PAYMENTS_ENABLED: false,
       EMAIL_DELIVERABLE_TO: [],
       ORDER_CONFIRMATION_TIMEOUT_MINUTES: 20,
+      ORIGIN_SECRETS: [],
+      TASKS_SECRETS: [],
+      DEMO_EMAIL_VERIFICATION_ENABLED: false,
     });
   });
 
@@ -135,7 +140,41 @@ describe('loadEnv', () => {
       'DATABASE_URL: en producción debe incluir sslmode=require (o verify-ca / verify-full)',
       'PUBLIC_WEB_URL: en producción debe usar https',
       'EMAIL_PROVIDER: en producción debe ser resend',
+      'ORIGIN_SECRETS: es obligatoria en producción',
+      'TASKS_SECRETS: es obligatoria en producción',
       'BOT_CHECK_PROVIDER: en producción debe ser turnstile (D8)',
+    ]);
+  });
+
+  it('M10 (ADR 0010): secretos de origen y de tareas, uno o dos, de 32+ caracteres y distintos', () => {
+    const env = loadEnv({
+      ...BASE,
+      ORIGIN_SECRETS: ` ${'a'.repeat(32)} , ${'b'.repeat(40)} `,
+      TASKS_SECRETS: 'c'.repeat(32),
+    });
+    expect(env.ORIGIN_SECRETS).toEqual(['a'.repeat(32), 'b'.repeat(40)]);
+    expect(env.TASKS_SECRETS).toEqual(['c'.repeat(32)]);
+    // En desarrollo pueden faltar: las funciones quedan apagadas.
+    expect(loadEnv(BASE).ORIGIN_SECRETS).toEqual([]);
+    expect(loadEnv(BASE).TASKS_SECRETS).toEqual([]);
+    expect(problemsOf({ ...BASE, ORIGIN_SECRETS: 'corto' })).toEqual([
+      'ORIGIN_SECRETS.0: cada secreto debe tener al menos 32 caracteres',
+    ]);
+    expect(
+      problemsOf({ ...BASE, TASKS_SECRETS: ['d'.repeat(32), 'e'.repeat(32), 'f'.repeat(32)].join(',') }),
+    ).toEqual(['TASKS_SECRETS: admite como máximo dos secretos (el actual y el siguiente)']);
+    expect(problemsOf({ ...BASE, ORIGIN_SECRETS: 'g'.repeat(32), TASKS_SECRETS: 'g'.repeat(32) })).toEqual([
+      'TASKS_SECRETS: no puede repetir un secreto de ORIGIN_SECRETS',
+    ]);
+  });
+
+  it('M10 (D-M10-P1): la verificación demo está apagada salvo DEMO_EMAIL_VERIFICATION_ENABLED=true', () => {
+    expect(loadEnv(BASE).DEMO_EMAIL_VERIFICATION_ENABLED).toBe(false);
+    expect(
+      loadEnv({ ...BASE, DEMO_EMAIL_VERIFICATION_ENABLED: 'true' }).DEMO_EMAIL_VERIFICATION_ENABLED,
+    ).toBe(true);
+    expect(problemsOf({ ...BASE, DEMO_EMAIL_VERIFICATION_ENABLED: 'si' })).toEqual([
+      'DEMO_EMAIL_VERIFICATION_ENABLED: debe ser true o false',
     ]);
   });
 

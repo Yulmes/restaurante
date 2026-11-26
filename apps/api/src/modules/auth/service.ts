@@ -7,6 +7,7 @@ import { AppError, rateLimited } from '../../http/errors.ts';
 import type { Clock } from '../../lib/clock.ts';
 import { hmac, randomToken, sha256 } from '../../lib/crypto.ts';
 import type { BotCheck } from '../bot-check/bot-check.ts';
+import { recordAudit } from '../audit/audit.ts';
 import { enqueueEmail } from '../notifications/outbox.ts';
 import type { RateLimiter } from '../rate-limit/rate-limiter.ts';
 import { LoginProtection, type LoginSubject } from './login-protection.ts';
@@ -327,6 +328,76 @@ export class AuthService {
       ),
     );
     this.#d.afterCommit();
+  }
+
+  /**
+   * M10 (ADR 0010, D-M10-P1): verificación desde la bandeja demo. Sin dominio (D6), el correo de
+   * verificación de un visitante queda `DEMO_ONLY` y su enlace nunca sale de la base (D-M7-4). Con
+   * `DEMO_EMAIL_VERIFICATION_ENABLED`, la propia cuenta puede verificarse si **su último** correo
+   * de verificación quedó `DEMO_ONLY`: si se envió por un canal real (`SENT`, `QUEUED`, `FAILED`),
+   * vale solo el enlace del correo. No crea ni expone tokens; invalida los pendientes, registra el
+   * cambio en el AuditLog y rota la sesión, como la verificación por enlace.
+   */
+  async demoVerifyEmail(
+    auth: AuthContext,
+    requestId: string,
+  ): Promise<{ user: PublicUser; session?: IssuedSession }> {
+    if (!this.#d.config.demoEmailVerification) {
+      throw new AppError(403, 'DEMO_VERIFICATION_UNAVAILABLE', 'Demo verification unavailable');
+    }
+    await this.#limit(`demo-verify:${auth.userId}`, AUTH_LIMITS.demoVerify);
+    const now = this.#d.clock.now();
+    const result = await this.#d.db.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: auth.userId }, select: userSelect });
+      if (!user) throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required');
+      if (user.emailVerifiedAt) {
+        throw new AppError(409, 'EMAIL_ALREADY_VERIFIED', 'Email already verified');
+      }
+      const latest = await tx.emailOutbox.findFirst({
+        where: { userId: user.id, template: 'email-verification' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: { status: true },
+      });
+      if (latest?.status !== 'DEMO_ONLY') {
+        throw new AppError(403, 'DEMO_VERIFICATION_UNAVAILABLE', 'Demo verification unavailable');
+      }
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: now },
+      });
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: now },
+        select: userSelect,
+      });
+      await recordAudit(tx, {
+        actor: { userId: user.id, role: auth.roles[0] ?? 'CUSTOMER' },
+        action: 'user.email_verified_demo',
+        entityType: 'user',
+        entityId: user.id,
+        before: { emailVerified: false },
+        after: { emailVerified: true },
+        reason: 'demo inbox',
+        requestId,
+      });
+      const current = await tx.session.findUniqueOrThrow({ where: { id: auth.sessionId } });
+      const rotated = await rotateSession(tx, {
+        sessionId: current.id,
+        createdAt: current.createdAt,
+        absoluteExpiresAt: current.absoluteExpiresAt,
+        roles: rolesOf(updated),
+        now,
+      });
+      return {
+        user: updated,
+        session: {
+          token: rotated.token,
+          expires: rotated.absoluteExpiresAt,
+          csrfToken: sessionCsrfToken(current.csrfSecret, current.id),
+        },
+      };
+    });
+    return { user: toPublicUser(result.user), session: result.session };
   }
 
   /** Recuperación (§8.4): respuesta idéntica siempre; el límite por correo es silencioso. */

@@ -8,6 +8,7 @@ import { AppError, errorHandler, notFoundHandler } from './http/errors.ts';
 import { requestContext } from './http/request-context.ts';
 import type { Clock } from './lib/clock.ts';
 import { csrfProtection } from './middleware/csrf.ts';
+import { originGuard } from './middleware/origin.ts';
 import { loadSession } from './middleware/session.ts';
 import { addressRouter } from './modules/addresses/routes.ts';
 import { CustomersAdminService } from './modules/admin/customers.ts';
@@ -36,10 +37,15 @@ import { paymentRouter } from './modules/payments/routes.ts';
 import { PaymentService } from './modules/payments/service.ts';
 import type { EmailProvider } from './modules/notifications/providers.ts';
 import { RateLimiter } from './modules/rate-limit/rate-limiter.ts';
+import { ActivityMonitor } from './modules/tasks/activity.ts';
+import { BackgroundTasks } from './modules/tasks/background.ts';
+import { internalRouter, readyRouter } from './modules/tasks/routes.ts';
 
 /**
  * API de Marea Baja (§4.3). Orden de las capas:
- * requestId y log → Helmet → freno de ráfagas → JSON → sesión → CSRF → rutas → 404 → errores.
+ * requestId y log → Helmet → `/api/health` → secreto de origen e IP (M10) → actividad (M10) →
+ * `/api/health/ready` → freno de ráfagas → tareas internas (M10) → JSON → sesión → CSRF → rutas →
+ * 404 → errores.
  */
 export interface AppDeps {
   config: AppConfig;
@@ -64,6 +70,9 @@ export interface App {
   payments: PaymentService;
   /** M7: Pase, cambios de estado, historial y barridos de pedidos. */
   operations: OperationsService;
+  /** M10 (ADR 0010, D-M10-1): tareas periódicas y actividad reciente que las habilita. */
+  tasks: BackgroundTasks;
+  activity: ActivityMonitor;
 }
 
 export function createApp(deps: AppDeps): App {
@@ -137,6 +146,20 @@ export function createApp(deps: AppDeps): App {
     res.json({ status: 'ok' });
   });
 
+  // M10 (ADR 0010): todo lo que sigue exige el secreto de origen en producción (D-M10-2).
+  app.use('/api', originGuard(deps.config.originSecrets));
+  const activity = new ActivityMonitor(deps.clock);
+  app.use(activity.middleware());
+  app.use('/api', readyRouter(deps.db));
+  const tasks = new BackgroundTasks({
+    payments,
+    operations,
+    outbox,
+    limiter,
+    clock: deps.clock,
+    logger: deps.logger,
+  });
+
   app.use(
     '/api',
     rateLimit({
@@ -154,6 +177,7 @@ export function createApp(deps: AppDeps): App {
       },
     }),
   );
+  app.use('/api', internalRouter({ tasks, limiter, secrets: deps.config.tasksSecrets }));
   app.use('/api', express.json({ limit: '16kb' }));
   app.use('/api', loadSession({ db: deps.db, clock: deps.clock, config: deps.config }));
   app.use('/api', csrfProtection(deps.config));
@@ -164,11 +188,11 @@ export function createApp(deps: AppDeps): App {
   app.use('/api', orderRouter(orders, limiter, deps.config));
   app.use('/api', paymentRouter(payments, limiter, deps.config));
   app.use('/api', operationRouter(operations, limiter));
-  app.use('/api', notificationRouter(deps.db));
+  app.use('/api', notificationRouter(deps.db, deps.config.demoEmailVerification));
   app.use('/api', adminRouter(admin, limiter));
   if (deps.extraRoutes) app.use('/api', deps.extraRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return { app, outbox, limiter, catalog, payments, operations };
+  return { app, outbox, limiter, catalog, payments, operations, tasks, activity };
 }

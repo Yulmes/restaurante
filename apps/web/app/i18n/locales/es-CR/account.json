@@ -138,6 +138,14 @@
     },
     "received": "Generado el {{date}}",
     "linkHidden": "El enlace de un solo uso no se muestra en la bandeja: solo llega en el correo.",
-    "openOrder": "Ver el pedido"
+    "openOrder": "Ver el pedido",
+    "demoVerify": {
+      "action": "Verificar (demo)",
+      "pending": "Verificando…",
+      "hint": "Demostración: este correo no se envió. Podés verificar tu cuenta desde aquí para seguir con la compra.",
+      "done": "Listo: tu correo quedó verificado. Ya podés hacer pedidos.",
+      "error": "No pudimos verificar la cuenta. Volvé a intentarlo.",
+      "rateLimited": "Hiciste muchos intentos seguidos. Esperá un rato y volvé a intentarlo."
+    }
   }
 }
