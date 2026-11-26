@@ -165,8 +165,44 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 - **Límites:** todos los cambios del admin comparten "reembolsos y cambios de configuración" de §8.4 (30 / 10 min por usuario, la misma clave que M6 y M7), con `<entidad>.rate_limited` en el AuditLog.
 - **Textos editables:** se guardan y se muestran como texto plano (React escapa; sin `dangerouslySetInnerHTML`).
 
+## Despliegue (M10, ADR 0010)
+
+- **Secreto de origen e IP del cliente (D-M10-2):**
+  - El Worker borra las cabeceras de IP y de secretos que mande el cliente, pone `X-Client-IP` con la IP que le da Cloudflare (`CF-Connecting-IP`) y agrega `X-Origin-Auth`.
+  - En la API (`middleware/origin.ts`), con `ORIGIN_SECRETS` configurada:
+    - sin un secreto válido → 403;
+    - con secreto válido, `X-Client-IP` tiene que ser una IPv4 o IPv6 válida (si no, 400).
+  - La comparación es en tiempo constante (SHA-256 de los dos lados y `timingSafeEqual`, recorriendo todos los secretos). `X-Forwarded-For` nunca se usa y `trust proxy` sigue en `false`. `/api/health` queda fuera.
+  - Una llamada directa a Render no puede elegir su IP ni saltar el Worker.
+  - Los logs redactan `x-origin-auth`, `x-tasks-auth` y `x-client-ip`; el registro de cada petición no incluye la IP.
+  - **Límite conocido:** que un cliente no pueda falsificar `CF-Connecting-IP` en la entrada del Worker es comportamiento de Cloudflare. Se comprueba contra la URL pública ([POST_DEPLOY.md](docs/m10/POST_DEPLOY.md), prueba 1.4).
+- **Endpoint interno de tareas (D-M10-1):**
+  - `POST /api/internal/tasks` exige el secreto de origen **y** `X-Tasks-Auth`.
+  - Va antes de la sesión y el CSRF: no tiene cuerpo ni cookies.
+  - Tiene límite propio (12 por hora) y corre una vuelta a la vez (409 si ya corre).
+  - Responde solo conteos.
+- **`/api/health/ready` (D-M10-6):** exige el secreto de origen y responde 200 o 503, sin detalles.
+- **Roles en producción (D-M10-3):**
+  - Render solo tiene el rol de la aplicación (`DATABASE_URL`);
+  - el propietario solo vive en el environment `production-migrations` de GitHub, con revisor obligatorio;
+  - el backup usa `backup_reader`, de solo lectura.
+- **Verificación demo del correo (D-M10-P1):**
+  - `POST /api/auth/demo-verify` exige sesión y la bandera `DEMO_EMAIL_VERIFICATION_ENABLED`.
+  - Solo vale si el **último** correo de verificación de la propia cuenta quedó `DEMO_ONLY`. Si salió por un canal real, solo vale el enlace del correo.
+  - No crea ni expone tokens: invalida los pendientes.
+  - Tiene límite de 5 por hora por cuenta, registra `user.email_verified_demo` en el AuditLog y rota la sesión.
+- **CSP por página (D-M10-5, R-M9-2):**
+  - Después del build, `apps/web/scripts/csp.ts` inserta en cada HTML un `<meta http-equiv="Content-Security-Policy">` con los SHA-256 de sus scripts ejecutables y su `<style>` en línea. No hay `unsafe-inline` ni `unsafe-eval`.
+  - Turnstile (`challenges.cloudflare.com`) está permitido en `script-src` y `frame-src`.
+  - Se usa `font-src 'self' data:` para los subconjuntos tipográficos que Vite incrusta.
+  - `_headers` (y el Worker, para el fallback de la SPA) agregan `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` y `Cross-Origin-Opener-Policy` (`SECURITY_HEADERS`).
+  - Zod 4 compila validadores con `new Function` al definir los esquemas. Un script clásico al principio de `<head>`, con su hash, le pide `jitless`, para que no haya ni siquiera intentos bloqueados.
+  - **Límites del `<meta>`:** no admite `frame-ancestors`, `report-uri` ni *Report-Only*, y rige desde donde aparece (va primero, después del `charset`).
+  - La validación es la E2E `e2e/produccion/csp.spec.ts` (0 violaciones en todas las páginas del sitemap, las rutas de la SPA y los flujos) más `npm run csp:check` en CI.
+  - Emergencia: `CSP_META=off` ([DEPLOYMENT.md](DEPLOYMENT.md)).
+
 ## Pendiente en otros hitos
 
-- **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): M10. Hasta entonces la API usa la IP del socket.
-- **Pruebas post-deploy** de cookies, CSRF y recuperación: M10.
+- **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): **implementado en M10-1** (ver "Despliegue"); falta la prueba contra la URL pública.
+- **Pruebas post-deploy** de cookies, CSRF, recuperación, Turnstile real y CSP: M10-7 ([POST_DEPLOY.md](docs/m10/POST_DEPLOY.md)).
 - **Revisión completa de seguridad:** hecha en M9 (`docs/m9/AUDITORIA_M9.md`, integrado en `main` con el PR #13). Lo que dejó abierto: R-M9-1 (cota teórica de la aproximación deslizante) y R-M9-2 (CSP con hashes para el prerender, M10).
