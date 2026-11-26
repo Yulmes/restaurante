@@ -173,6 +173,9 @@ describe('tarjeta demo: matriz de escenarios (§7.4)', () => {
       expect(row.amountAuthorizedMinor).toBe(0);
       expect(row.operations).toMatchObject([{ status: 'FAILED', lastError: code }]);
 
+      // El reloj de prueba está fijo (beforeEach): sin avanzarlo, los dos intentos tendrían el mismo
+      // createdAt y su orden quedaría indefinido. En la realidad, el reintento siempre es posterior.
+      api.clock.advance(1_000);
       const retry = await authorize(browser, order.id, 'APPROVED');
       expect(orderBody.parse(retry.body).order.payment.status).toBe('AUTHORIZED');
       const final = await paymentRow(order.id);
