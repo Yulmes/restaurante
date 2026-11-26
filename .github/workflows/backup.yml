@@ -1,0 +1,115 @@
+# Backup semanal cifrado y prueba de restauración (M10, ADR 0010 D-M10-8; §10, D7).
+#
+# - `backup`: environment `backup` (rol backup_reader, clave PÚBLICA de age, clave de B2 de solo
+#   escritura). pg_dump → age → SHA-256 → B2 privado. Retención: regla de ciclo de vida del bucket.
+# - `restore-test`: environment `restore-test` (clave PRIVADA de age, clave de B2 de solo lectura).
+#   Restaura en un PostgreSQL efímero del runner; nunca toca producción.
+# - Inactivo hasta que el propietario defina la variable de repositorio DEPLOY_ENABLED=true (M10-3).
+# - Los logs de un repositorio público son públicos: solo imprimen pasos, tamaños y conteos.
+# - Riesgo aceptado (D-M10-P9): GitHub desactiva los workflows programados de un repositorio público
+#   después de 60 días sin actividad. Control: revisión mensual (docs/m10/OPERACION.md).
+name: Backup
+
+on:
+  schedule:
+    - cron: '0 6 * * 0' # domingo 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Motivo (queda en el manifiesto)
+        type: choice
+        options: [manual, pre-migration]
+        default: manual
+  workflow_call:
+    inputs:
+      reason:
+        type: string
+        default: pre-migration
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Backup cifrado a B2
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: backup
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cliente de PostgreSQL 17 y age
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Backup
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ vars.AGE_RECIPIENT }}
+          BACKUP_LOCATION: ${{ vars.BACKUP_LOCATION }}
+          B2_S3_ENDPOINT: ${{ vars.B2_S3_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_WRITE_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_WRITE_KEY }}
+          BACKUP_REASON: ${{ inputs.reason || 'weekly' }}
+        run: bash ops/backup/backup.sh
+
+  restore-test:
+    name: Prueba de restauración
+    needs: backup
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: restore-test
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_USER: restore
+          POSTGRES_PASSWORD: restore-efimero
+          POSTGRES_DB: postgres
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U restore" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cliente del servidor de Prisma
+        run: npm run typegen -w @marea-baja/api
+
+      - name: Cliente de PostgreSQL 17 y age
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Restaurar y verificar
+        env:
+          BACKUP_LOCATION: ${{ vars.BACKUP_LOCATION }}
+          B2_S3_ENDPOINT: ${{ vars.B2_S3_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_READ_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_READ_KEY }}
+          AGE_IDENTITY: ${{ secrets.AGE_IDENTITY }}
+          RESTORE_ADMIN_URL: postgresql://restore:restore-efimero@127.0.0.1:5432/postgres
+        run: bash ops/backup/restore-test.sh

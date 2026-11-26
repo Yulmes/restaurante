@@ -23,7 +23,8 @@
     "services:up": "docker compose up -d --wait",
     "services:down": "docker compose down",
     "db:setup": "npm run db:setup -w @marea-baja/api",
-    "env:check": "npm run env:check -w @marea-baja/api"
+    "env:check": "npm run env:check -w @marea-baja/api",
+    "backup:selftest": "bash ops/backup/local-selftest.sh"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

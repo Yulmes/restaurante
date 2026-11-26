@@ -1,0 +1,90 @@
+# Build del sitio y despliegue del Worker con sus assets (M10, ADR 0010 D-M10-2 y D-M10-5; D10).
+#
+# - A mano (`workflow_dispatch`): despliegue del código nuevo de la web o del Worker.
+# - Cada 30 min (D10, C6): compara la versión del catálogo de la API con la publicada y solo
+#   reconstruye si cambió (R-M8-3, R13, R20). `catalog-version` no toca la base.
+# - El build lee la API de Render con el secreto de origen (`CATALOG_ORIGIN_SECRET`), porque la API
+#   rechaza cualquier llamada sin él. La CSP por página se genera y se verifica antes de publicar.
+# - Wrangler se usa con versión exacta (publicada hace más de dos semanas), sin sumarlo a las
+#   dependencias del repositorio.
+# - Inactivo hasta que el propietario defina DEPLOY_ENABLED=true (M10-3).
+name: Web y Worker
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Construir y desplegar aunque la versión del catálogo no haya cambiado
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+env:
+  WRANGLER_VERSION: 4.160.1
+
+jobs:
+  deploy:
+    name: Build y despliegue
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: ¿Cambió la carta? (D10)
+        id: check
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          FORCE: ${{ inputs.force || 'false' }}
+        run: |
+          if [ "$FORCE" = "true" ]; then echo "build=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          live="$(curl --fail --silent --max-time 90 "$SITE_URL/api/public/catalog-version" | jq -r .version || true)"
+          published="$(curl --fail --silent --max-time 30 "$SITE_URL/catalog-version.json" | jq -r .version || true)"
+          if [ -n "$live" ] && [ "$live" != "null" ] && [ "$live" = "$published" ]; then
+            echo "Sin cambios en la carta."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "La carta cambió o no hay versión publicada."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.check.outputs.build == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.check.outputs.build == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - if: steps.check.outputs.build == 'true'
+        run: npm ci
+
+      - name: Build con prerender y CSP por página
+        if: steps.check.outputs.build == 'true'
+        env:
+          CATALOG_API_URL: ${{ vars.API_ORIGIN }}
+          CATALOG_ORIGIN_SECRET: ${{ secrets.ORIGIN_SECRET }}
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+        run: npm run build -w @marea-baja/web
+
+      - name: Verificar la CSP de cada HTML
+        if: steps.check.outputs.build == 'true'
+        run: npm run csp:check -w @marea-baja/web
+
+      - name: Desplegar el Worker y los assets
+        if: steps.check.outputs.build == 'true'
+        working-directory: apps/edge
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy --var "API_ORIGIN:${{ vars.API_ORIGIN }}"
