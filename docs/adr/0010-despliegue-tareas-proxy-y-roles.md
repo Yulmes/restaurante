@@ -1,6 +1,6 @@
 # ADR 0010 · Despliegue: tareas periódicas, proxy e IP del cliente, roles, CSP y operación
 
-> **Estado:** **aceptado** (26/11/2026) e **implementado en local en M10-1** (rama `m10-despliegue`, sin desplegar).
+> **Estado:** **aceptado** (26/11/2026) e **implementado en M10-1**, en integración por el [PR #16](https://github.com/Yulmes/restaurante/pull/16) (CI 7/7, sin merge, sin desplegar).
 > - Propuesto en M10-0. El propietario aprobó las decisiones D-M10-P1 a P11 el 26/11/2026, con las condiciones que se registran abajo.
 > - La implementación de cada decisión está en la sección "Implementación (M10-1)".
 > - Sin cuentas, recursos, secretos reales ni despliegue: eso es M10-2 en adelante, con su propia autorización.

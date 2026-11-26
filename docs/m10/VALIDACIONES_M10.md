@@ -1,7 +1,6 @@
 # Validaciones de M10 · Despliegue
 
-> **Estado (26/11/2026):** **M10-1 implementado en local, sin desplegar.**
-> - Va en la rama `m10-despliegue` (desde `main` en `c856bad`), con commits locales: sin push, sin PR y sin CI remoto.
+> **Estado (26/11/2026):** **M10-1 en integración por el [PR #16](https://github.com/Yulmes/restaurante/pull/16)** (`m10-despliegue` → `main`), con CI 7/7 y sin merge (ver "Integración por PR").
 > - Decisiones en la [ADR 0010](../adr/0010-despliegue-tareas-proxy-y-roles.md), aprobadas por el propietario el 26/11/2026 (D-M10-P1 a P11).
 > - **No hay cuentas, recursos, secretos reales ni URL pública.** M10 no está cerrado: faltan M10-2 a M10-7.
 
@@ -113,3 +112,41 @@ Está en [POST_DEPLOY.md](POST_DEPLOY.md):
 - `SECURITY.md`, `TESTING.md`, `README.md`
 - `PORTFOLIO_MASTER_PLAN.md`
 - encabezado de `ci.yml`
+
+## Integración por PR (26/11/2026, Nivel 2)
+
+- **PR:** [#16](https://github.com/Yulmes/restaurante/pull/16), `m10-despliegue` → `main`, sobre `c856bad` (`main` sin cambios desde entonces; GitHub lo marca sin conflictos).
+- **Commits:**
+  - los cuatro de M10-1: `6af37c6` (API), `322e1ef` (Worker y CSP), `36ed1de` (backups, workflows y CI), `d0dc698` (documentación);
+  - `c64ec17`: revisión previa al push;
+  - `3bab344`: prueba de M6 con el reloj congelado;
+  - `593cc58`: permisos de los scripts;
+  - y este registro.
+  - Sin reescribir historia ni force push.
+- **Revisión previa al push** (`c64ec17`), con una prueba para cada corrección que falla con la versión anterior cuando se puede:
+  1. **Alta.** El manifiesto del backup contaba las filas después del volcado: con la base en uso, la prueba de restauración fallaba. Ahora el volcado y los conteos usan el mismo snapshot exportado. El self-test escribe durante el backup: con el script anterior falla ("tablas con conteos distintos") y en CI se escribieron 289 filas durante el backup sin diferencias.
+  2. **Media.** La restauración de prueba se niega a un servidor que no es local, salvo con `ALLOW_REMOTE_RESTORE=1`. Lo cubre el self-test.
+  3. **Media.** Región y sumas de verificación de la CLI de AWS para la API S3 de B2 (`B2_REGION`).
+  4. **Baja.** `deploy-web.yml` interpolaba una variable de GitHub en el shell; ahora va por entorno.
+  5. **Baja.** "Verificar (demo)" simultánea: antes las dos llamadas daban `[200, 200]` y dejaban dos AuditLog; ahora, actualización condicional, `[200, 409]` y uno solo.
+- **Regresión local de la rama corregida:**
+  - `check` 887;
+  - `test:db` 303;
+  - E2E de identidad 14, catálogo 19, producción 12 (CSP), pedido 12, pagos 6, operación 5 + 5, admin 4 + 4, calidad 1 + 1 y M1 41;
+  - `backup:selftest`, `csp:check` 57/57, `db:drift` y `env:check`.
+  - **Falla intermitente:** apareció una vez en una prueba de M6 (dos intentos de pago con el mismo `createdAt` por el reloj de prueba congelado). Se corrigió en `3bab344` avanzando el reloj antes del reintento, con la misma verificación; corrió tres veces seguidas en verde.
+- **Push** normal de `m10-despliegue` (rama nueva en el remoto).
+- **CI del PR:**
+  - **Sobre `3bab344`** ([run 45901806919](https://github.com/Yulmes/restaurante/actions/runs/45901806919)): 6/7. Falló el job de base de datos en el paso del self-test de backup: "Permission denied". Los scripts se habían versionado desde Windows sin el bit de ejecución; en local no se veía porque el volumen de Windows ignora los permisos. Se corrigió en `593cc58` (bit `100755` y llamadas internas con `bash`).
+  - **Sobre `593cc58`** ([run 45903495015](https://github.com/Yulmes/restaurante/actions/runs/45903495015)): **7/7 en el primer intento, sin reintentos**, verificado en los logs de cada job:
+    - formato, lint, tipos y tests: 887;
+    - base de datos: 303 + self-test de backup (289 escrituras durante el backup, restauración con conteos iguales, migraciones al día, humo de la API);
+    - diseño: M1 41 y calidad 1 + 1;
+    - identidad: 14;
+    - catálogo: 19, producción 12 con CSP y `csp:check` 57/57;
+    - pedido, pagos, operación y admin: 12 · 6 · 5 + 5 · 4 + 4.
+  - **El job de pedido ya llega con su nombre completo** ("Pedido, pagos, operación y admin (Chromium y WebKit)"): los 7 nombres sirven para el ruleset (D-M10-P5).
+- **Comentarios, revisiones y bots del PR:** ninguno.
+- **Lo que este CI no ejecuta**, porque no dependen de un PR:
+  - **Los cuatro workflows nuevos** (`backup`, `migrate`, `deploy-web`, `tasks`) se disparan solo por horario o a mano desde `main` y exigen `DEPLOY_ENABLED=true`. Su sintaxis se validó con Prettier (YAML); **GitHub los valida recién cuando están en `main`**: hay que revisar la pestaña Actions después del merge.
+
