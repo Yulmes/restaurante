@@ -106,7 +106,7 @@
       "refunded": "Reembolsado"
     },
     "salesNote": "Cuentan los pedidos que el local aceptó (de confirmado a entregado). Los cancelados no suman; los reembolsos parciales se restan.",
-    "otherCurrency": "{{n}} pedidos del período están en otra moneda y no se suman.",
+    "otherCurrency": "Pedidos del período en otra moneda: {{n}}. No se suman.",
     "topTitle": "Platos más pedidos",
     "topEmpty": "Todavía no hay pedidos aceptados en este período.",
     "topProduct": "Plato",
@@ -338,7 +338,7 @@
     "title": "Moneda",
     "current": "Moneda actual: {{currency}}.",
     "hint": "Cambiar la moneda convierte en una sola operación los precios de la carta, los recargos, las tarifas de envío y el pedido mínimo. Los pedidos ya hechos conservan su moneda.",
-    "blocked": "Hay {{n}} pedidos activos. El cambio de moneda se habilita cuando no quede ninguno.",
+    "blocked": "Pedidos activos: {{n}}. El cambio de moneda se habilita cuando no quede ninguno.",
     "done": "Moneda cambiada a {{currency}}: {{products}} platos y {{zones}} zonas convertidos.",
     "rate": "Tipo de cambio: colones por dólar",
     "rateHint": "Por ejemplo 510.25. Hasta dos decimales, con punto.",
@@ -373,7 +373,7 @@
     "by": "{{name}} ({{role}})",
     "bySystem": "El sistema o un script del propietario",
     "reason": "Motivo: {{reason}}",
-    "changes": "Ver los {{n}} campos que cambiaron",
+    "changes": "Ver los cambios ({{n}})",
     "change": "{{before}} → {{after}}"
   }
 }

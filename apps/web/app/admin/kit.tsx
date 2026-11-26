@@ -8,7 +8,7 @@ import { OrderShell } from '../cart/OrderShell.tsx';
 import { ErrorIcon } from '../components/ui/ErrorIcon.tsx';
 import { i18n } from '../i18n/config.ts';
 import { localeFromPathname, pathForLocale } from '../i18n/locale.ts';
-import { useT } from '../i18n/use-locale.ts';
+import { useLocale, useT } from '../i18n/use-locale.ts';
 
 /**
  * Piezas comunes del admin (M8). Todo es solo de ADMIN (D-M8-3): la web oculta, la API protege.
@@ -340,9 +340,11 @@ export function fromMinor(minor: number, currency: CurrencyCode): string {
 
 /** Fecha y hora cortas en el idioma de la página y la zona del local. */
 export function useDateTime(): (iso: string) => string {
-  const { i18n: instance } = useT('admin');
+  // M9: el idioma de la ruta, no el de la instancia global de i18next (que puede seguir en es-CR
+  // en las páginas en inglés).
+  const locale = useLocale();
   return (iso) =>
-    new Intl.DateTimeFormat(instance.language, {
+    new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',
       timeZone: 'America/Costa_Rica',

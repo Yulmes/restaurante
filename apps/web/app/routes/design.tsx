@@ -131,8 +131,11 @@ export default function Design() {
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(Object.keys(DERIVED) as ColorName[]).map((name) => swatch(name))}
           </ul>
-          <h3 className="t-h3">{t('colors.contrastTitle')}</h3>
-          <div className="overflow-x-auto">
+          <h3 id="contrast-title" className="t-h3">
+            {t('colors.contrastTitle')}
+          </h3>
+          {/* M9: región desplazable en el celular; enfocable y con nombre para recorrerla con teclado (WCAG 2.1.1). */}
+          <div className="overflow-x-auto" role="region" aria-labelledby="contrast-title" tabIndex={0}>
             <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-text">

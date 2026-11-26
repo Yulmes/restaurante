@@ -106,7 +106,7 @@
       "refunded": "Refunded"
     },
     "salesNote": "Orders the restaurant accepted count (from confirmed to delivered). Cancelled orders don't count; partial refunds are subtracted.",
-    "otherCurrency": "{{n}} orders in this period are in another currency and aren't added up.",
+    "otherCurrency": "Orders in this period in another currency: {{n}}. They aren’t added up.",
     "topTitle": "Most ordered dishes",
     "topEmpty": "No accepted orders in this period yet.",
     "topProduct": "Dish",
@@ -338,7 +338,7 @@
     "title": "Currency",
     "current": "Current currency: {{currency}}.",
     "hint": "Changing the currency converts menu prices, surcharges, delivery fees and the minimum order in a single operation. Existing orders keep their currency.",
-    "blocked": "There are {{n}} active orders. The currency change is enabled when there are none left.",
+    "blocked": "Active orders: {{n}}. The currency change is enabled when there are none left.",
     "done": "Currency changed to {{currency}}: {{products}} dishes and {{zones}} zones converted.",
     "rate": "Exchange rate: colones per dollar",
     "rateHint": "For example 510.25. Up to two decimals, with a dot.",
@@ -373,7 +373,7 @@
     "by": "{{name}} ({{role}})",
     "bySystem": "The system or an owner script",
     "reason": "Reason: {{reason}}",
-    "changes": "See the {{n}} fields that changed",
+    "changes": "See the changes ({{n}})",
     "change": "{{before}} → {{after}}"
   }
 }
