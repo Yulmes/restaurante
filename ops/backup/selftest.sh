@@ -35,7 +35,7 @@ WRITER=$!
 sleep 0.5
 
 log "1/4 backup (con escrituras simultáneas)"
-BACKUP_DATABASE_URL="$SOURCE_DATABASE_URL" AGE_RECIPIENT="$RECIPIENT" BACKUP_REASON=selftest "$HERE/backup.sh"
+BACKUP_DATABASE_URL="$SOURCE_DATABASE_URL" AGE_RECIPIENT="$RECIPIENT" BACKUP_REASON=selftest bash "$HERE/backup.sh"
 kill "$WRITER" 2>/dev/null || true
 wait "$WRITER" 2>/dev/null || true
 WRITER=""
@@ -50,17 +50,17 @@ if pg_restore --list "$DUMP" >/dev/null 2>&1; then fail "el volcado se lee sin d
 log "3/4 un volcado alterado no se restaura"
 cp "$DUMP" "$TMP/original.age"
 printf 'x' >>"$DUMP"
-if AGE_IDENTITY="$(cat "$TMP/key.txt")" "$HERE/restore-test.sh" >/dev/null 2>&1; then
+if AGE_IDENTITY="$(cat "$TMP/key.txt")" bash "$HERE/restore-test.sh" >/dev/null 2>&1; then
   fail "se restauró un volcado alterado"
 fi
 cp "$TMP/original.age" "$DUMP"
 
 log "la restauración se niega a un servidor que no es local"
-if RESTORE_ADMIN_URL="postgresql://x:y@db.example.com:5432/postgres" AGE_IDENTITY="$(cat "$TMP/key.txt")"   "$HERE/restore-test.sh" >"$TMP/remote.log" 2>&1; then
+if RESTORE_ADMIN_URL="postgresql://x:y@db.example.com:5432/postgres" AGE_IDENTITY="$(cat "$TMP/key.txt")" bash "$HERE/restore-test.sh" >"$TMP/remote.log" 2>&1; then
   fail "restauró contra un servidor remoto sin ALLOW_REMOTE_RESTORE"
 fi
 grep -q "no es local" "$TMP/remote.log" || fail "no rechazó el servidor remoto por el motivo esperado"
 
 log "4/4 restauración completa"
-AGE_IDENTITY="$(cat "$TMP/key.txt")" "$HERE/restore-test.sh"
+AGE_IDENTITY="$(cat "$TMP/key.txt")" bash "$HERE/restore-test.sh"
 log "OK: selftest de backup y restauración"
