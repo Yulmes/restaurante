@@ -232,6 +232,6 @@ La suite de operación tiene su propia API y su propia web (`playwright.operacio
 | Prueba | Archivo | Validación |
 |---|---|---|
 | Auditoría de pantallas reales: axe, desbordamiento en 4 anchos, foco, movimiento reducido, fechas por idioma y capturas | `apps/web/e2e/calidad/calidad.spec.ts` (`npm run test:calidad -w @marea-baja/web`) | §11, D1, R-A11Y-01/02, R-RESP-01 |
-| Diagnóstico de los límites de §8.4: incremento atómico, peso de la ventana anterior y las dos debilidades documentadas (M9-07 y M9-08) | `apps/api/test/limites.db.test.ts` | §8.4 (M3) |
+| Límites de §8.4: incremento atómico, peso de la ventana anterior en los bordes (M9-07), un solo intento de login a la vez por cuenta+IP y la demora antes de la contraseña (M9-08) | `apps/api/test/limites.db.test.ts` | §8.4 (M3) |
 
 Detalle, hallazgos y pendientes en `docs/m9/AUDITORIA_M9.md` y `docs/m9/PRUEBAS_HUMANAS_M9.md`.

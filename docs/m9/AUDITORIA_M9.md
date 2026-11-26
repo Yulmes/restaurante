@@ -23,7 +23,7 @@ La propuesta (§12) define M9 como "Accesibilidad (axe en pantallas reales y en 
 | *Finish gate* | Revisión de las 248 capturas reales con el criterio del agente `design-ui-finish-gate-reviewer` y los contratos de §2.4 | Capturas en `apps/web/calidad-report/` (regenerables); evidencia elegida en `docs/evidencias/m9/` |
 | Pautas de interfaz | Skill *Web Design Guidelines* (D12), con las reglas vigentes descargadas el 25/11/2026 | Componentes y rutas de la web |
 | WebKit | Las suites de M1–M4 con solo el motor WebKit (perfil de iPhone 13), con configuraciones temporales no versionadas, como en M5 | — |
-| Límites (M3) | Pruebas de diagnóstico contra PostgreSQL | `apps/api/test/limites.db.test.ts` |
+| Límites (M3) | Pruebas de diagnóstico contra PostgreSQL; desde la corrección de R-M9-1, pruebas de la garantía corregida | `apps/api/test/limites.db.test.ts` |
 | Rendimiento | Lighthouse sobre el build de producción en HTTP/2 (procedimiento de M4); revisión de consultas e índices | `npm run lighthouse:h2 -w @marea-baja/web` |
 | Seguridad | Revisión del código (rutas, sesiones, CSRF, SQL, errores, redirecciones, XSS, cabeceras) y `npm audit` | — |
 
@@ -115,7 +115,7 @@ Lo que queda son supuestos de las pruebas o del entorno, no defectos de la aplic
 
 ### Límites de §8.4 (revisión obligatoria de M3)
 
-Diagnóstico reproducible en `apps/api/test/limites.db.test.ts` (5 pruebas, todas pasan y documentan el comportamiento actual):
+Diagnóstico reproducible en `apps/api/test/limites.db.test.ts`. La tabla muestra el estado **antes** de la corrección autorizada; el resultado está en [Corrección de R-M9-1](#corrección-de-r-m9-1-alternativas-1-y-2).
 
 | Garantía | Resultado |
 |---|---|
@@ -130,7 +130,7 @@ Otros puntos revisados:
 - un login exitoso borra los contadores de cuenta+IP (documentado);
 - la limpieza de las ventanas de más de 24 h depende de la API despierta (R-M7-1).
 
-**No se cambió el algoritmo** (requiere autorización). Alternativas, con su impacto:
+En la primera entrega no se cambió el algoritmo (requería autorización). Alternativas, con su impacto (el propietario autorizó la 1 y la 2; la 3 **no** está autorizada):
 1. **Sin redondear hacia abajo** el peso de la ventana anterior. Arregla el caso de 0,999… pero no el límite teórico de 2 × N. Es un cambio mínimo, que no altera el modelo.
 2. **Bloquear la demora y el bloqueo antes de evaluar la contraseña**, con un candado de transacción por cuenta+IP o un contador "en curso". Cierra M9-08 sin cambiar las cifras de §8.4. Agrega latencia solo a los intentos simultáneos.
 3. **Ventana deslizante exacta**, con un registro por intento o en ventanas cortas (por ejemplo 1 min). Da la garantía exacta, pero cambia el modelo de §8.4: más escrituras y almacenamiento.
@@ -164,8 +164,8 @@ Otros puntos revisados:
 | M9-04 | Baja | Formularios | Correos sin `spellCheck={false}` | ✅ Corregido | Revisión D12 |
 | M9-05 | Baja | Celular | Hoja de producto sin `overscroll-behavior: contain` | ✅ Corregido | Revisión D12 |
 | M9-06 | Media | Pruebas | La suite por defecto de M1 tomaba `e2e/calidad/` (introducido en M9) | ✅ Corregido | `testIgnore` |
-| M9-07 | Media | Seguridad | La aproximación deslizante acepta hasta 2 × el límite | ⏸ Abierto: requiere autorización (§8.4) | `limites.db.test.ts` |
-| M9-08 | Media | Seguridad | La demora y el bloqueo del login se saltean con intentos en paralelo | ⏸ Abierto: requiere autorización (§8.4) | `limites.db.test.ts` |
+| M9-07 | Media | Seguridad | La aproximación deslizante acepta hasta 2 × el límite; `Math.floor` lo llevaba al doble exacto | ✅ Corregido el redondeo (alternativa 1). Queda la cota teórica de la aproximación (alternativa 3, sin autorizar) | `limites.db.test.ts`: 20 → 19 aceptadas |
+| M9-08 | Media | Seguridad | La demora y el bloqueo del login se saltean con intentos en paralelo | ✅ Corregido (alternativa 2) | `limites.db.test.ts`: 9 contraseñas evaluadas en paralelo → como máximo 4 |
 | M9-09 | Baja | Seguridad / M10 | La CSP estricta necesita hashes para 9 scripts en línea por página | Abierto: M10 | HTML del build |
 | M9-10 | Baja | Dependencias | R-M5-1: 44 avisos, solo en herramientas; correcciones mayores o demasiado recientes | Abierto | `npm audit` |
 | M9-11 | Info | Rendimiento | Auditoría sin índice por `createdAt`; tope de 200 en el Pase | Registrado | Revisión de consultas |
@@ -187,17 +187,58 @@ Otros puntos revisados:
 
 **Agregados:**
 - la suite de auditoría `e2e/calidad/` con `playwright.calidad.config.ts` y el comando `npm run test:calidad -w @marea-baja/web`;
-- las pruebas de diagnóstico `apps/api/test/limites.db.test.ts`;
+- las pruebas de los límites `apps/api/test/limites.db.test.ts` (diagnóstico y, después, garantía corregida);
 - `calidad-report/` en `.gitignore`.
 
-**Sin cambios:** reglas de negocio, el algoritmo de §8.4, migraciones y dependencias.
+**Corrección de R-M9-1 (autorizada por el propietario, alternativas 1 y 2):**
 
-## Validaciones (25/11/2026, árbol final de la rama)
+| Archivo | Corrección | Hallazgo |
+|---|---|---|
+| `apps/api/src/modules/rate-limit/rate-limiter.ts` | Peso de la ventana anterior en enteros, redondeado hacia arriba: `ceil(anterior × restante / ventana)` | M9-07 |
+| `apps/api/src/modules/auth/login-protection.ts` | Reserva atómica del intento por cuenta+IP antes de consultar la demora y el bloqueo; `release` | M9-08 |
+| `apps/api/src/modules/auth/service.ts` | El desafío, la contraseña y el registro del fallo o del éxito corren con la reserva tomada; se libera siempre | M9-08 |
+
+**Sin cambios:** reglas de negocio, el modelo de §8.4 (ventana fija con aproximación deslizante), los límites configurados, migraciones y dependencias.
+
+## Corrección de R-M9-1 (alternativas 1 y 2)
+
+Autorización del propietario (25/11/2026): corregir M9-07 con la alternativa 1 y M9-08 con la alternativa 2, sin cambiar el modelo ni los límites de §8.4. La alternativa 3 (ventana deslizante exacta) **sigue sin autorización** y no se implementó.
+
+**M9-07 · peso de la ventana anterior.**
+- Antes: `actual + Math.floor(anterior × (1 − transcurrido / ventana))`, en coma flotante. Al 90 % de la ventana, 10 × 0,1 daba 0,999… → 0.
+- Ahora: `actual + ceil(anterior × restante_ms / ventana_ms)`, en enteros. El peso es exacto cuando la cuenta da entera y, si no, se redondea hacia arriba (como mucho 1 intento más conservador).
+- No cambian el modelo, los límites ni la escritura (una sola consulta atómica por intento).
+
+**M9-08 · demora en paralelo.**
+- Antes: la demora y el bloqueo se consultaban antes de evaluar la contraseña, pero el fallo se registraba después. Varios intentos simultáneos leían "sin demora" a la vez.
+- Ahora: `before()` reserva el intento de cuenta+IP con una sola consulta atómica (`INSERT … ON CONFLICT DO UPDATE … WHERE "lockedUntil" <= ahora`) sobre `LoginLock`, con la clave `inflight:<cuenta>:<IP>`. Recién con la reserva tomada consulta la demora y el bloqueo. La reserva se libera después de registrar el fallo (que escribe la demora) o el éxito.
+- Un intento simultáneo de la misma cuenta+IP recibe **429 sin evaluar la contraseña**. Otras IP de la misma cuenta no se ven afectadas.
+- Sin migración: reutiliza `LoginLock`. La reserva vence sola a los 30 s si el proceso cae antes de liberarla.
+- Se descartó un candado de PostgreSQL retenido durante Argon2: las peticiones en espera ocuparían conexiones del pool y podrían agotarlo.
+
+**Evidencia antes y después** (`limites.db.test.ts`, 12 pruebas; la misma suite corrida sobre el código anterior y sobre el corregido):
+
+| Escenario | Antes | Después |
+|---|---|---|
+| Ráfaga de 10 al final de una ventana + 10 al 90 % de la siguiente (límite 10) | 20 aceptadas | **19** |
+| Peso de 10 intentos en el último milisegundo de la ventana | 0 | **1** |
+| Peso de 3 intentos a la mitad (1,5) | 1 | **2** |
+| Inicio de la ventana nueva (10 anteriores + 1) | 10 | **11** |
+| 12 logins fallidos simultáneos de la misma cuenta+IP | 9 contraseñas evaluadas | **≤ 4**, el resto 429 |
+| Segundo intento con la reserva tomada | Se evaluaba | **429** |
+| Reserva abandonada | — | Vence a los 30 s |
+| En serie, contraseña correcta tras 4 fallos, logins correctos simultáneos, otra IP | ✅ | ✅ sin cambios |
+
+Sobre el código anterior fallan 7 de las 12 pruebas; sobre el corregido pasan las 12.
+
+**Lo que no se corrigió (fuera de la autorización):** la cota teórica de la aproximación deslizante. Una ráfaga al final de una ventana y otra al principio de la siguiente todavía pueden sumar hasta ~2 × N en un intervalo real más corto que la ventana. Solo la cierra una ventana deslizante exacta (alternativa 3), que cambia el modelo de §8.4.
+
+## Validaciones (25/11/2026, árbol final de la rama, con la corrección de R-M9-1)
 
 | Validación | Resultado |
 |---|---|
 | `npm run check` | ✅ 849/849 |
-| `npm run test:db` | ✅ 271/271 (antes 266: +5 de `limites.db.test.ts`) |
+| `npm run test:db` | ✅ 278/278 (antes de M9: 266; +12 de `limites.db.test.ts` después de la corrección de R-M9-1) |
 | `db:drift` / `env:check` | ✅ Sin diferencias / OK |
 | Auditoría de calidad (`test:calidad`) | ✅ 31 pantallas × 2 idiomas × 4 anchos, 0 hallazgos |
 | E2E de identidad / catálogo / producción | ✅ 14 · 19 · 9 |
@@ -224,36 +265,36 @@ Otros puntos revisados:
 | R-M8-2 (pedido simultáneo con un cambio de moneda) | **Abierto**, sin cambios |
 | R-M8-3 (precios del prerender) | **Abierto** (rebuild en M10); la web los corrige al hidratar |
 | R-M8-4 (sin *finish gate*) | **Mitigado:** *finish gate* con capturas reales en 4 anchos y 2 idiomas, 2 HOLD corregidos. Queda la revisión externa de una persona |
-| **R-M9-1 (nuevo)** | Debilidades de los límites de §8.4 (M9-07 y M9-08). **Requiere autorización** para corregir |
+| **R-M9-1 (nuevo)** | **Mitigado en parte.** M9-08 corregido; M9-07 corregido en el redondeo. Sigue abierta la cota teórica de ~2 × N de la aproximación deslizante: requiere la alternativa 3, no autorizada |
 | **R-M9-2 (nuevo)** | La CSP estricta de M10 necesita hashes para los scripts en línea del prerender (M9-09) |
 
 ## Pendientes del propietario
 
 - **NVDA:** recorrido de 18 pasos (`PRUEBAS_HUMANAS_M9.md`).
 - **Safari de iOS real:** 9 escenarios (`PRUEBAS_HUMANAS_M9.md`).
-- **Decisión sobre R-M9-1:** cuál de las alternativas aplicar a los límites, si alguna.
+- **R-M9-1:** las alternativas 1 y 2 están aplicadas. Queda decidir si la cota teórica de la aproximación se acepta o si se autoriza la alternativa 3.
 - **R-M5-2:** adaptar las pruebas heredadas de M1–M4 al celular (abrir el menú antes de buscar el selector y los filtros) o aceptar lo que queda.
 
 ## Evaluación (implementación local)
 
-**Puntaje propuesto: 86/100.**
+**Puntaje propuesto: 87/100** (86 en la primera entrega; +1 por la corrección autorizada de R-M9-1).
 
 | Dimensión | Peso | Nota | Justificación |
 |---|---|---|---|
 | Profundidad de la auditoría | 20 | 18 | 31 pantallas reales × 2 idiomas × 4 anchos, axe, foco, movimiento reducido, capturas, Lighthouse, revisión de seguridad y diagnóstico de límites. La seguridad se revisó en el código, sin herramientas de ataque dinámicas |
 | Evidencia | 15 | 14 | Suite reproducible, informe JSON, capturas antes y después, pruebas de diagnóstico |
-| Correcciones | 15 | 13 | 7 defectos reales corregidos con verificación; las debilidades de los límites quedan sin corregir porque requieren autorización |
+| Correcciones | 15 | 14 | 9 defectos reales corregidos con verificación, incluidos M9-07 y M9-08 con evidencia antes y después; la cota teórica de los límites sigue abierta (alternativa 3, sin autorizar) |
 | Accesibilidad | 15 | 13 | 0 violaciones en las pantallas reales y en los dos idiomas; falta NVDA real |
 | Responsive y diseño | 15 | 13 | 4 anchos sin desbordamiento, *finish gate* con 2 HOLD resueltos; sin revisión externa ni Safari real |
 | Rendimiento | 10 | 9 | Objetivos de §11 cumplidos en local; la medición definitiva es en M10 |
 | Regresión | 10 | 6 | Todas las suites de M1–M8 en verde; WebKit de M1–M4 con fallas de pruebas sin adaptar |
-| **Total** | **100** | **86** | |
+| **Total** | **100** | **87** | |
 
 ## Dictamen de preparación
 
 **Listo para el Nivel 3, con condiciones:**
 1. **NVDA y Safari de iOS real** quedan pendientes y no se pueden marcar como hechos.
-2. **R-M9-1:** las debilidades de los límites necesitan tu decisión, o quedar aceptadas temporalmente, antes del cierre de M9.
+2. **R-M9-1:** M9-07 y M9-08 están corregidos. La cota teórica de la aproximación deslizante necesita tu decisión (aceptarla o autorizar la alternativa 3) antes del cierre de M9.
 3. **R-M5-2:** adaptar o aceptar las pruebas heredadas de WebKit.
 
 Ninguna de estas condiciones bloquea el push ni el PR: el código corregido está verificado y no cambia reglas aprobadas.

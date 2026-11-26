@@ -3,8 +3,8 @@ import type { Clock } from '../../lib/clock.ts';
 
 /**
  * Límites persistentes en PostgreSQL (§8.4): ventana fija con aproximación deslizante
- * (ventana actual + la fracción que queda de la anterior). El incremento es atómico, en una
- * sola consulta parametrizada.
+ * (ventana actual + la fracción que queda de la anterior, redondeada hacia arriba). El incremento
+ * es atómico, en una sola consulta parametrizada.
  *
  * Las claves nunca llevan datos personales en claro: correos e IP llegan ya con hash.
  */
@@ -70,9 +70,13 @@ export class RateLimiter {
       where: { key_windowStart: { key, windowStart: new Date(start.getTime() - windowMs) } },
       select: { count: true },
     });
-    const elapsed = (now.getTime() - start.getTime()) / windowMs;
-    const weighted = (previous?.count ?? 0) * (1 - elapsed);
-    return { count: current + Math.floor(weighted), resetInMs: start.getTime() + windowMs - now.getTime() };
+    // M9-07 (R-M9-1, alternativa 1): el peso de la ventana anterior se calcula en enteros y se
+    // redondea hacia arriba. Con `Math.floor` sobre coma flotante, 10 × 0,1 daba 0,999… → 0 y el
+    // limitador aceptaba el doble del límite en un intervalo real. El modelo (ventana fija con
+    // aproximación deslizante, §8.4) no cambia.
+    const remainingMs = start.getTime() + windowMs - now.getTime();
+    const weighted = Math.ceil(((previous?.count ?? 0) * remainingMs) / windowMs);
+    return { count: current + weighted, resetInMs: remainingMs };
   }
 }
 
