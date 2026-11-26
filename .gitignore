@@ -13,6 +13,8 @@ playwright-report/
 playwright-report-auth/
 playwright-report-catalog/
 playwright-report-produccion/
+# M9: informe y capturas de la auditoría de calidad (se regeneran; la evidencia elegida va a docs/evidencias/m9/).
+calidad-report/
 apps/web/lighthouse-report/
 # Certificado TLS local de las mediciones HTTP/2 (apps/web/scripts/dev-cert.ts). Vive fuera del
 # repositorio; esto evita versionarlo si DEV_CERT_DIR apunta adentro por error.
