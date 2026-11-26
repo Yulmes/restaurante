@@ -2,14 +2,20 @@
 
 Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia** de demostración (San José, Costa Rica; dirección ficticia). Proyecto 1 de 4 del portafolio.
 
-**Estado:** hito **M4 · Catálogo y SEO**. Ya existen:
+**Estado (26/11/2026):** **M0–M9 integrados en `main`**; M10 (despliegue) y M11 (documentación) no iniciados. El estado vivo de cada hito está en [PORTFOLIO_MASTER_PLAN.md](PORTFOLIO_MASTER_PLAN.md). Ya existen:
 
 - el sistema visual y la infraestructura de idiomas (M1, página interna `/_design`);
 - la base de datos con su carta semilla bilingüe (M2, [DATABASE.md](DATABASE.md));
 - la API de identidad y las pantallas de la cuenta (M3, [SECURITY.md](SECURITY.md)): registro, verificación por correo, inicio de sesión, recuperación, perfil, sesiones, CSRF, límites, Turnstile condicional y RBAC;
 - el sitio público (M4, [ADR 0005](docs/adr/0005-catalogo-prerender-e-imagenes.md)): portada con la pesca del día, carta con búsqueda y filtros, páginas de cada plato, Nosotros y Visítanos, prerenderizadas en los dos idiomas con metadatos, `hreflang`, JSON-LD, sitemap y robots, y precios y disponibilidad en vivo.
 
-El carrito, el checkout y los pedidos llegan en los hitos siguientes.
+- el carrito, el checkout de 3 pasos y los pedidos (M5, [ADR 0006](docs/adr/0006-pedido-carrito-precios-e-idempotencia.md));
+- los pagos con el gateway simulado, la reconciliación y la contra entrega (M6, [ADR 0007](docs/adr/0007-pagos-gateway-simulado-y-reconciliacion.md));
+- la operación del pedido: estados, el Pase, el seguimiento, el historial y los correos de estado (M7, [ADR 0008](docs/adr/0008-operacion-estados-pase-y-correos.md));
+- el admin: dashboard, carta, pesca del día, clientes, configuración, moneda y auditoría (M8, [ADR 0009](docs/adr/0009-admin-carta-configuracion-y-auditoria.md));
+- la auditoría de calidad de M9 (accesibilidad, responsive, rendimiento y seguridad), con sus pendientes humanos ([docs/m9/AUDITORIA_M9.md](docs/m9/AUDITORIA_M9.md)).
+
+Sin despliegue todavía: el sitio público, las cuentas externas y los backups son de M10.
 
 - Planificación aprobada: [docs/planificacion/Propuesta Restaurante · Fase 1.md](docs/planificacion/Propuesta%20Restaurante%20·%20Fase%201.md)
 - Auditoría de planificación: [docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md](docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md)
@@ -24,11 +30,11 @@ El carrito, el checkout y los pedidos llegan en los hitos siguientes.
 
 ```
 apps/web/         React 19 + React Router 7 (modo framework) + Vite + Tailwind 4: sistema de diseño e i18n
-apps/api/         API Express 5: identidad (M3) sobre el esquema Prisma, las migraciones y la semilla (M2)
+apps/api/         API Express 5: identidad, catálogo, pedidos, pagos, operación y admin (M3–M8) sobre el esquema Prisma, las migraciones y la semilla (M2)
 packages/shared/  Idiomas (es-CR, en), formato de dinero (CRC/USD) y contratos Zod de la API
 tools/eslint/     Regla local que prohíbe textos de interfaz literales (D2)
 docker-compose.yml  PostgreSQL 17 y Mailpit para desarrollo local
-.github/workflows/  CI: calidad, sistema de diseño y accesibilidad, base de datos, identidad, servicios
+.github/workflows/  CI (7 jobs): formato, lint, tipos y tests; sistema de diseño y accesibilidad (con la auditoría de M9); base de datos; servicios; identidad; catálogo y SEO; pedido, pagos, operación y admin
 ```
 
 `apps/edge` se crea en el hito que lo necesita (ver la propuesta, §4.1 y §12).

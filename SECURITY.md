@@ -169,4 +169,4 @@ Cada tipo de entidad tiene una lista blanca de campos. Hashes, tokens y direccio
 
 - **Secreto de origen entre el Worker y la API**, y confiar en la IP del cliente solo con ese secreto (R5, R-SEC-09): M10. Hasta entonces la API usa la IP del socket.
 - **Pruebas post-deploy** de cookies, CSRF y recuperación: M10.
-- **Revisión completa de seguridad:** M9.
+- **Revisión completa de seguridad:** hecha en M9 (`docs/m9/AUDITORIA_M9.md`, integrado en `main` con el PR #13). Lo que dejó abierto: R-M9-1 (cota teórica de la aproximación deslizante) y R-M9-2 (CSP con hashes para el prerender, M10).

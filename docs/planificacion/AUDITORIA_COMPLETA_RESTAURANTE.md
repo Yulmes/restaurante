@@ -96,7 +96,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-BKP-01 | Backups cifrados, externos, con retención, integridad y restauración probada | §10 | Restauración semanal + runbook | Planificado |
 | R-OBS-01 | Health checks sin tocar la base, logs estructurados, monitoreo | §9.5 | Post-deploy | Planificado |
 | R-PROXY-01 | Mismo origen verificado en el entorno desplegado | §5 | Suite post-deploy | Planificado |
-| R-CI-01 | CI: lint, typecheck, unitarios, integración, E2E, a11y | §11 | Actions en verde | Planificado |
+| R-CI-01 | CI: lint, typecheck, unitarios, integración, E2E, a11y | §11 | Actions en verde | **Implementado (M0–M9):** 7 jobs en `.github/workflows/ci.yml` (formato, lint, tipos y unitarios; base de datos; servicios; diseño y accesibilidad con la auditoría de M9; identidad; catálogo y SEO; pedido, pagos, operación y admin en Chromium y WebKit; 7 jobs desde M5). El CI estuvo en verde en cada PR de M0–M9 y después de cada merge. El escaneo de secretos es R-SEC-11 |
 
 ### 2.4 Experiencia y accesibilidad
 
@@ -106,7 +106,7 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-A11Y-01 | WCAG 2.2 AA: contraste, teclado, lectores de pantalla, foco no tapado, resumen de errores | axe + pruebas manuales con teclado | **Parcial (M9, integrado en `main`, PR #13; CI 7/7):** axe WCAG 2.2 AA sin violaciones en 31 pantallas reales × 2 idiomas, foco visible verificado, en CI. **Pendiente:** el recorrido real con NVDA (18 pasos, `docs/m9/PRUEBAS_HUMANAS_M9.md`) |
 | R-A11Y-02 | `prefers-reduced-motion` | Playwright con emulación | **Verificado (M9, integrado en `main`, PR #13; CI 7/7):** emulación en las 31 pantallas reales y en los dos idiomas |
 | R-RESP-01 | 375, 768, 1024, 1440 px | Capturas visuales | **Parcial (M9, integrado en `main`, PR #13; CI 7/7):** sin desbordamiento a 375, 768, 1024 y 1280 px en 31 pantallas × 2 idiomas, con capturas reales (`docs/evidencias/m9/`). 1440 px no se midió aparte. **Pendiente:** Safari de iOS real (9 escenarios) |
-| R-DESIGN-01 | Sin apariencia de plantilla ni de IA (lista de prohibidos de la propuesta §2.1 y §2.4) | Finish gate PASS por pantalla | Planificado |
+| R-DESIGN-01 | Sin apariencia de plantilla ni de IA (lista de prohibidos de la propuesta §2.1 y §2.4) | Finish gate PASS por pantalla | **Implementado (M9, integrado en `main`, PR #13):** *finish gate* PASS en las 11 pantallas revisadas, 2 después de corregir su HOLD (`docs/m9/AUDITORIA_M9.md`). Falta la revisión externa de una persona (R-M8-4) |
 
 ---
 

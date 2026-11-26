@@ -1194,7 +1194,7 @@ Se resuelven durante la implementación con evidencia; ninguna cambia lo aprobad
 ### 15.4 Restricciones de alcance vigentes
 
 - **Implementación por hitos con autorización expresa** (actualizado el 26/11/2026): M0–M9 integrados en `main`; M9 cerrado (PR #13, 26/11/2026); M10 empieza solo con autorización expresa del propietario.
-- **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** LCP móvil < 2,5 s en producción, validación externa de JSON-LD y `hreflang` y workflow de rebuild (D10) en M10; capturas a 768 y 1024 px en M9. Siguen pendientes (detalle en `docs/m4/VALIDACIONES_M4.md`). WebKit móvil (§11) sigue pendiente desde M1, sin hito asignado.
+- **Criterios de M4 aplazados con aceptación del propietario (17/11/2026):** LCP móvil < 2,5 s en producción, validación externa de JSON-LD y `hreflang` y workflow de rebuild (D10) en M10: siguen pendientes (detalle en `docs/m4/VALIDACIONES_M4.md`). Las capturas a 768 y 1024 px se hicieron en M9. WebKit móvil (§11): las suites de M5–M8 corren en WebKit en CI; las fallas heredadas de M1–M4 quedan aceptadas como riesgo abierto (R-M5-2) y Safari de iOS real sigue pendiente (M9).
 - Fuera de la v1: reservas, mesas, pedidos para consumir en el local (D4); modo oscuro y selector de apariencia (D11); dominio propio y correo de producción (D6).
 - Sin cuentas, compras ni datos de tarjeta sin la intervención del propietario (D14).
 - La identidad visual aprobada no se rediseña. Las auditorías (axe, Web Design Guidelines, finish gate) informan; los cambios a la identidad requieren aprobación.

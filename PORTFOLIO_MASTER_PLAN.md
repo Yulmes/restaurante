@@ -44,7 +44,7 @@
   - Validación externa de JSON-LD y `hreflang`: M10.
   - Workflow de rebuild cada 30 min: M10.
   - Capturas a 768 y 1024 px: **hechas en M9** (`docs/evidencias/m9/`).
-  - WebKit móvil: pendiente desde M1, sin hito asignado.
+  - WebKit móvil: las suites de M5–M8 corren en WebKit (perfil de iPhone) en CI; las fallas heredadas de M1–M4 (R-M5-2) se revisaron en M9 y quedan aceptadas como riesgo abierto. Safari de iOS real sigue pendiente del propietario (`docs/m9/PRUEBAS_HUMANAS_M9.md`).
   - En seguimiento: el error React #418, que no se pudo reproducir, y el riesgo de publicar URLs locales si falta `VITE_SITE_URL` (M10).
   - Detalle en `docs/m4/VALIDACIONES_M4.md`.
 - **Riesgos heredados aceptados temporalmente para integrar M5 (23/11/2026):** siguen pendientes; no se dan por resueltos.
@@ -72,7 +72,8 @@
   - Validaciones humanas pendientes: NVDA (18 pasos) y Safari de iOS real (9 escenarios), en `docs/m9/PRUEBAS_HUMANAS_M9.md`.
   - R-M8-4 (sin *finish gate*): mitigado con el *finish gate* de M9; queda la revisión externa de una persona.
   - Detalle en `docs/m9/AUDITORIA_M9.md`.
-- **Próximo paso:** revisión del entorno posterior a M9 (B0), con autorización propia. M10 empieza solo con autorización expresa del propietario.
+- **B0 posterior a M9:** completado el 26/11/2026 (worktree principal en `main` en `9ee7b0b`, sin cambios en ramas ni worktrees; correcciones documentales y hallazgos en `docs/m9/B0_POSTERIOR_M9.md`).
+- **Próximo paso:** M10 · Despliegue, solo con autorización expresa del propietario.
 
 ## 2 · E-commerce (futuro)
 
