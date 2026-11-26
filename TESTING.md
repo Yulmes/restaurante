@@ -227,7 +227,7 @@ La suite de operación tiene su propia API y su propia web (`playwright.operacio
 
 `admin.db.test.ts` cambia la configuración global de la base de prueba y la restaura al terminar. Detalle en `docs/m8/VALIDACIONES_M8.md`.
 
-## Qué cubre M9 (implementación local)
+## Qué cubre M9
 
 | Prueba | Archivo | Validación |
 |---|---|---|
