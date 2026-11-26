@@ -1,0 +1,34 @@
+# Respaldo manual del disparador de tareas (M10, ADR 0010 D-M10-1).
+#
+# El disparador normal es el Cron Trigger del Worker cada 30 min. Si el Worker o su cron fallan,
+# este workflow corre una vuelta de tareas a mano, directo contra Render, con el secreto de origen y
+# el de tareas (environment `production-migrations`, con aprobación del propietario). Solo imprime
+# el estado HTTP y los conteos que devuelve la API.
+name: Tareas (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Una vuelta de tareas
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: production-migrations
+    steps:
+      - name: POST /api/internal/tasks
+        env:
+          API_ORIGIN: ${{ vars.API_ORIGIN }}
+          ORIGIN_SECRET: ${{ secrets.ORIGIN_SECRET }}
+          TASKS_SECRET: ${{ secrets.TASKS_SECRET }}
+        run: |
+          status="$(curl --silent --max-time 120 --output report.json --write-out '%{http_code}' \
+            -X POST "$API_ORIGIN/api/internal/tasks" \
+            -H "X-Origin-Auth: $ORIGIN_SECRET" -H "X-Tasks-Auth: $TASKS_SECRET" -H "X-Client-IP: 0.0.0.0")"
+          echo "HTTP $status"
+          jq -c . report.json || true
+          [ "$status" = "200" ]

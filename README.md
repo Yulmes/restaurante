@@ -15,7 +15,7 @@ Aplicación web full-stack de **Marea Baja**, una cevichería nikkei **ficticia*
 - el admin: dashboard, carta, pesca del día, clientes, configuración, moneda y auditoría (M8, [ADR 0009](docs/adr/0009-admin-carta-configuracion-y-auditoria.md));
 - la auditoría de calidad de M9 (accesibilidad, responsive, rendimiento y seguridad), con sus pendientes humanos ([docs/m9/AUDITORIA_M9.md](docs/m9/AUDITORIA_M9.md)).
 
-Sin despliegue todavía: el sitio público, las cuentas externas y los backups son de M10.
+Sin despliegue todavía: el sitio público, las cuentas externas y los backups son de M10. El código y la guía del despliegue están listos en local ([DEPLOYMENT.md](DEPLOYMENT.md), M10-1).
 
 - Planificación aprobada: [docs/planificacion/Propuesta Restaurante · Fase 1.md](docs/planificacion/Propuesta%20Restaurante%20·%20Fase%201.md)
 - Auditoría de planificación: [docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md](docs/planificacion/AUDITORIA_COMPLETA_RESTAURANTE.md)
@@ -31,7 +31,9 @@ Sin despliegue todavía: el sitio público, las cuentas externas y los backups s
 ```
 apps/web/         React 19 + React Router 7 (modo framework) + Vite + Tailwind 4: sistema de diseño e i18n
 apps/api/         API Express 5: identidad, catálogo, pedidos, pagos, operación y admin (M3–M8) sobre el esquema Prisma, las migraciones y la semilla (M2)
-packages/shared/  Idiomas (es-CR, en), formato de dinero (CRC/USD) y contratos Zod de la API
+apps/edge/        Worker de Cloudflare (M10): proxy /api/* con secreto de origen e IP real, fallback SPA y cron de tareas
+packages/shared/  Idiomas (es-CR, en), formato de dinero (CRC/USD), contratos Zod de la API y cabeceras de seguridad
+ops/backup/       Backup cifrado (age) y prueba de restauración (M10)
 tools/eslint/     Regla local que prohíbe textos de interfaz literales (D2)
 docker-compose.yml  PostgreSQL 17 y Mailpit para desarrollo local
 .github/workflows/  CI (7 jobs): formato, lint, tipos y tests; sistema de diseño y accesibilidad (con la auditoría de M9); base de datos; servicios; identidad; catálogo y SEO; pedido, pagos, operación y admin

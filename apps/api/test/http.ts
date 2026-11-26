@@ -16,6 +16,8 @@ import { MemoryEmailProvider } from '../src/modules/notifications/providers.ts';
 import type { PaymentGateway } from '../src/modules/payments/gateway.ts';
 import type { OperationsService } from '../src/modules/orders/operations.ts';
 import type { PaymentService } from '../src/modules/payments/service.ts';
+import type { ActivityMonitor } from '../src/modules/tasks/activity.ts';
+import type { BackgroundTasks } from '../src/modules/tasks/background.ts';
 import { appUrl } from './db.ts';
 
 export const WEB_ORIGIN = 'http://web.test';
@@ -45,6 +47,9 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     ordersAllowOutsideHours: false,
     demoPaymentsEnabled: true,
     orderConfirmationTimeoutMs: 20 * 60_000,
+    originSecrets: [],
+    tasksSecrets: [],
+    demoEmailVerification: false,
     ...overrides,
   };
 }
@@ -56,6 +61,9 @@ export interface TestApi {
   payments: PaymentService;
   /** M7: operación (los barridos se corren a mano en las pruebas). */
   operations: OperationsService;
+  /** M10: tareas periódicas y actividad reciente (ADR 0010, D-M10-1). */
+  tasks: BackgroundTasks;
+  activity: ActivityMonitor;
   db: PrismaClient;
   clock: TestClock;
   email: MemoryEmailProvider;
@@ -79,7 +87,7 @@ export function buildApi(
   const email = sharedEmail;
   const logs: string[] = [];
   const logger = createLogger({ level: 'info' }, { write: (line: string) => logs.push(line) });
-  const { app, outbox, payments, operations } = createApp({
+  const { app, outbox, payments, operations, tasks, activity } = createApp({
     config: testConfig(options.config),
     db,
     logger,
@@ -90,7 +98,19 @@ export function buildApi(
     ...(options.extraRoutes ? { extraRoutes: options.extraRoutes } : {}),
     ...(options.paymentGateway ? { paymentGateway: options.paymentGateway } : {}),
   });
-  return { app, outbox, payments, operations, db, clock, email, logs, close: () => db.$disconnect() };
+  return {
+    app,
+    outbox,
+    payments,
+    operations,
+    tasks,
+    activity,
+    db,
+    clock,
+    email,
+    logs,
+    close: () => db.$disconnect(),
+  };
 }
 
 // M8: cada archivo de pruebas empieza en un punto aleatorio del rango. Los archivos comparten la

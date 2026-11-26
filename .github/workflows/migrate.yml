@@ -1,0 +1,109 @@
+# Migraciones de producción (M10, ADR 0010 D-M10-3; ADR 0003).
+#
+# Solo a mano y con la aprobación del propietario (environment `production-migrations`, revisor
+# obligatorio). Render nunca recibe la URL del propietario ni migra solo.
+#
+#   1. backup previo (workflow Backup, motivo pre-migration)
+#   2. prisma migrate status   3. prisma migrate deploy   4. prisma migrate status
+#   5. opcional: semilla (D-M10-P7, solo la primera vez) y rol ADMIN de la cuenta del propietario
+#   6. deploy hook de Render (la API nueva arranca sobre el esquema nuevo)
+#
+# Las migraciones tienen que ser compatibles hacia atrás mientras dura el despliegue.
+name: Migraciones de producción
+
+on:
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: Aplicar la semilla (solo la primera vez, D-M10-P7)
+        type: boolean
+        default: false
+      grant_admin:
+        description: Dar el rol ADMIN a la cuenta de ADMIN_EMAIL (secreto del environment)
+        type: boolean
+        default: false
+      deploy_api:
+        description: Disparar el deploy de la API en Render al terminar
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-migrations
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: vars.DEPLOY_ENABLED == 'true'
+    uses: ./.github/workflows/backup.yml
+    with:
+      reason: pre-migration
+    secrets: inherit
+
+  migrate:
+    name: Migrar
+    needs: backup
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production-migrations
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Cliente de Prisma para la semilla y los scripts (no se versiona, ADR 0003).
+      - run: npm run typegen -w @marea-baja/api
+
+      - name: Estado antes
+        working-directory: apps/api
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        # Sale con código distinto de 0 si hay migraciones pendientes: es lo esperado antes de migrar.
+        run: npx prisma migrate status || true
+
+      - name: Migrar
+        working-directory: apps/api
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: npx prisma migrate deploy
+
+      - name: Estado después (sin pendientes)
+        working-directory: apps/api
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: npx prisma migrate status
+
+      - name: Semilla (D-M10-P7)
+        if: inputs.seed
+        working-directory: apps/api
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: npx prisma db seed
+
+      - name: Rol ADMIN de la cuenta del propietario (D-M10-P7)
+        if: inputs.grant_admin
+        working-directory: apps/api
+        env:
+          # El script usa DATABASE_URL; aquí, la del propietario (solo dentro de este environment).
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        # El correo viene de un secreto: GitHub lo enmascara y el script solo imprime el enmascarado.
+        # La cuenta tiene que existir antes (el propietario se registra en el sitio público).
+        run: |
+          node scripts/users-set-role.ts --email "$ADMIN_EMAIL" --role CUSTOMER --role ADMIN --reason "M10: cuenta del propietario"
+
+      - name: Deploy de la API (Render)
+        if: inputs.deploy_api
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --silent --show-error --output /dev/null -X POST "$RENDER_DEPLOY_HOOK_URL"

@@ -138,6 +138,14 @@
     },
     "received": "Generated on {{date}}",
     "linkHidden": "One-time links aren’t shown in the inbox: they only arrive by email.",
-    "openOrder": "View the order"
+    "openOrder": "View the order",
+    "demoVerify": {
+      "action": "Verify (demo)",
+      "pending": "Verifying…",
+      "hint": "Demo: this email wasn’t sent. You can verify your account here to continue with your order.",
+      "done": "Done: your email is verified. You can place orders now.",
+      "error": "We couldn’t verify your account. Please try again.",
+      "rateLimited": "Too many attempts in a row. Wait a while and try again."
+    }
   }
 }

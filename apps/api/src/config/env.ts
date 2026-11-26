@@ -15,6 +15,31 @@ const httpUrl = z.url({ protocol: /^https?$/, error: 'debe ser una URL http:// o
 
 const positiveInt = (fallback: number) => z.coerce.number().int().positive().default(fallback);
 
+/**
+ * M10 (ADR 0010, D-M10-1 y D-M10-2): lista de uno o dos secretos separados por comas, para rotar
+ * sin cortar el servicio. Cada uno con al menos 32 caracteres. Vacía: la función queda apagada
+ * (desarrollo y pruebas).
+ */
+const secretList = z
+  .string()
+  .optional()
+  .transform((value) =>
+    (value ?? '')
+      .split(',')
+      .map((secret) => secret.trim())
+      .filter(Boolean),
+  )
+  .pipe(
+    z
+      .array(z.string().min(32, { error: 'cada secreto debe tener al menos 32 caracteres' }))
+      .max(2, { error: 'admite como máximo dos secretos (el actual y el siguiente)' }),
+  );
+
+const booleanFlag = z
+  .enum(['true', 'false'], { error: 'debe ser true o false' })
+  .default('false')
+  .transform((value) => value === 'true');
+
 export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -77,6 +102,17 @@ export const envSchema = z
       .default('false')
       .transform((value) => value === 'true'),
 
+    // ─── M10 · Despliegue (ADR 0010) ──────────────────────────────────────────
+    /** D-M10-2: secretos de origen que agrega el Worker en `X-Origin-Auth`. Obligatorios en producción. */
+    ORIGIN_SECRETS: secretList,
+    /** D-M10-1: secretos del endpoint interno de tareas (`X-Tasks-Auth`). Obligatorios en producción. */
+    TASKS_SECRETS: secretList,
+    /**
+     * D-M10-P1: botón "Verificar (demo)" en la bandeja demo, solo para cuentas cuyo correo de
+     * verificación quedó `DEMO_ONLY`. Desactivado por defecto.
+     */
+    DEMO_EMAIL_VERIFICATION_ENABLED: booleanFlag,
+
     // ─── M7 · Operación (§7.1) ────────────────────────────────────────────────
     /** Minutos sin confirmar tras los que un pedido se cancela y se anula su pago (20 por defecto). */
     ORDER_CONFIRMATION_TIMEOUT_MINUTES: z.coerce
@@ -114,6 +150,20 @@ export const envSchema = z
         code: 'custom',
         path: ['TURNSTILE_SECRET_KEY'],
         message: 'es obligatoria con BOT_CHECK_PROVIDER=turnstile',
+      });
+    }
+    // M10 (ADR 0010): sin secreto de origen, cualquiera llamaría a Render directo y elegiría su IP.
+    if (production && env.ORIGIN_SECRETS.length === 0) {
+      ctx.addIssue({ code: 'custom', path: ['ORIGIN_SECRETS'], message: 'es obligatoria en producción' });
+    }
+    if (production && env.TASKS_SECRETS.length === 0) {
+      ctx.addIssue({ code: 'custom', path: ['TASKS_SECRETS'], message: 'es obligatoria en producción' });
+    }
+    if (env.ORIGIN_SECRETS.some((secret) => env.TASKS_SECRETS.includes(secret))) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['TASKS_SECRETS'],
+        message: 'no puede repetir un secreto de ORIGIN_SECRETS',
       });
     }
     if (production && env.BOT_CHECK_PROVIDER !== 'turnstile') {

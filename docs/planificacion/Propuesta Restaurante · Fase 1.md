@@ -1000,6 +1000,7 @@ interface ImageStorageProvider {
   - Monitor **24/7** cada 5 min sobre `/api/health`, pasando por el proxy de Cloudflare: así mide lo que ve un visitante.
   - **Notificaciones de caída y de recuperación** al correo del propietario.
   - La configuración (URL, intervalo, contactos, palabra clave esperada) se documenta en `DEPLOYMENT.md`. La cuenta la crea el propietario (D14).
+  - ⚠️ **Corrección (26/11/2026, M10-0):** lo que sigue supone que la base se duerme, pero los temporizadores de la API (M6–M7) la consultan cada pocos segundos mientras está despierta. Ver R-M10-1 y la solución de diseño D-M10-1 en la [ADR 0010](../adr/0010-despliegue-tareas-proxy-y-roles.md).
   - ⚠️ El monitor mantiene **despierta la API** (≈744 h en un mes de 31 días) pero **no la base**. Frente al límite de 750 h/mes, el margen es de ≈6 h. Solo cabe si la API es **el único servicio gratuito del workspace de Render** (ver C8 y R3, riesgo de impacto alto). La arquitectura gratuita no garantiza disponibilidad de producción.
   - Consume unas 288 invocaciones/día del Worker, frente a 100.000/día. 🔎
 

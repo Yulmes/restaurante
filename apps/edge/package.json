@@ -1,0 +1,13 @@
+{
+  "name": "@marea-baja/edge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Worker de Cloudflare de Marea Baja (M10, ADR 0010): assets estáticos, proxy /api/* con secreto de origen e IP del cliente, fallback SPA y Cron Trigger de tareas.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@marea-baja/shared": "0.0.0"
+  }
+}

@@ -10,7 +10,7 @@ import {
   type OpeningHoursResponse,
 } from '@marea-baja/shared';
 import { useQuery } from '@tanstack/react-query';
-import { catalogApiBase } from '../site/public-paths.ts';
+import { catalogApiBase, catalogBuildHeaders } from '../site/public-paths.ts';
 import type { z } from 'zod';
 
 /**
@@ -28,7 +28,9 @@ async function buildFetch<S extends z.ZodType>(path: string, schema: S): Promise
   let lastError: unknown;
   for (let attempt = 1; attempt <= 12; attempt += 1) {
     try {
-      const response = await fetch(url, { headers: { accept: 'application/json' } });
+      const response = await fetch(url, {
+        headers: { accept: 'application/json', ...catalogBuildHeaders() },
+      });
       if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       return schema.parse(await response.json());
     } catch (error) {

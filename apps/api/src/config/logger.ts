@@ -9,6 +9,8 @@ export const REDACTED_PATHS = [
   'req.headers.authorization',
   'req.headers["x-csrf-token"]',
   'req.headers["x-origin-auth"]',
+  'req.headers["x-tasks-auth"]',
+  'req.headers["x-client-ip"]',
   'res.headers["set-cookie"]',
   '*.password',
   '*.currentPassword',

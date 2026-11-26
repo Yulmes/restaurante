@@ -100,6 +100,16 @@ export function authRouter(service: AuthService, config: AppConfig): Router {
     res.json({ user: result.user });
   });
 
+  // M10 (D-M10-P1): "Verificar (demo)" desde la bandeja demo de la propia cuenta.
+  router.post('/auth/demo-verify', requireAuth, async (req, res) => {
+    const result = await service.demoVerifyEmail(authOf(req), req.requestId);
+    if (result.session) {
+      sendSession(res, config, 200, { user: result.user }, result.session);
+      return;
+    }
+    res.json({ user: result.user });
+  });
+
   router.post('/auth/resend-verification', requireAuth, async (req, res) => {
     await service.resendVerification(authOf(req), meta(req));
     res.status(202).json({ status: 'sent' });

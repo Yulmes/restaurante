@@ -1,0 +1,26 @@
+// Worker de Marea Baja (M10, ADR 0010: D-M10-1, D-M10-2, D-M10-5).
+// No se despliega desde aquí sin autorización: lo usa el workflow `deploy-web.yml` en M10-4.
+// Secretos (con `wrangler secret put`, nunca en este archivo): ORIGIN_SECRET y TASKS_SECRET.
+// Variable no secreta: API_ORIGIN (la URL del servicio de Render, `https://….onrender.com`).
+{
+  "name": "marea-baja",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../web/build/client",
+    "binding": "ASSETS",
+    // `/carta` sirve `carta/index.html`; `/carta/` redirige a `/carta` (las canónicas no llevan barra).
+    "html_handling": "drop-trailing-slash",
+    // Sin archivo, el Worker decide: `/api/*` va a la API y el resto recibe el fallback de la SPA.
+    "not_found_handling": "none",
+    // Solo `/api/*` invoca siempre al Worker; los assets se sirven sin contar invocaciones (§5).
+    "run_worker_first": ["/api/*"],
+  },
+  // D-M10-1: una vuelta de tareas cada 30 min (UTC).
+  "triggers": { "crons": ["*/30 * * * *"] },
+  "vars": {
+    "API_ORIGIN": "",
+  },
+  "observability": { "enabled": true },
+}

@@ -143,6 +143,11 @@ export const demoInboxMessageSchema = z.object({
   body: z.array(z.string()),
   /** Enlace al pedido, si el correo es de un pedido. */
   orderId: z.uuid().nullable(),
+  /**
+   * M10 (D-M10-P1): el último correo de verificación de una cuenta sin verificar quedó `DEMO_ONLY`
+   * y la demo permite verificarla desde la bandeja (`POST /api/auth/demo-verify`).
+   */
+  demoVerifiable: z.boolean(),
   createdAt: z.iso.datetime(),
   sentAt: z.iso.datetime().nullable(),
 });

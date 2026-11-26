@@ -215,6 +215,8 @@ export class OutboxWorker {
   #running: Promise<void> | null = null;
   #again = false;
   #timer: NodeJS.Timeout | undefined;
+  /** M10: conteos de los ciclos que corrieron mientras alguien esperaba con `drain()`. */
+  readonly #collectors = new Set<OutboxResult>();
 
   constructor(run: () => Promise<OutboxResult>, logger: Logger) {
     this.#run = run;
@@ -231,7 +233,13 @@ export class OutboxWorker {
       do {
         this.#again = false;
         try {
-          await this.#run();
+          const result = await this.#run();
+          for (const total of this.#collectors) {
+            total.sent += result.sent;
+            total.retried += result.retried;
+            total.failed += result.failed;
+            total.demoOnly += result.demoOnly;
+          }
         } catch (error) {
           this.#logger.error({ err: error }, 'outbox cycle failed');
         }
@@ -240,6 +248,21 @@ export class OutboxWorker {
       this.#running = null;
     });
     return this.#running;
+  }
+
+  /**
+   * M10 (ADR 0010, D-M10-1): corre un ciclo como `kick()` y devuelve los conteos de los ciclos que
+   * terminaron mientras esperaba. Lo usa el endpoint interno de tareas.
+   */
+  async drain(): Promise<OutboxResult> {
+    const total: OutboxResult = { sent: 0, retried: 0, failed: 0, demoOnly: 0 };
+    this.#collectors.add(total);
+    try {
+      await this.kick();
+    } finally {
+      this.#collectors.delete(total);
+    }
+    return total;
   }
 
   /** `kick()` puede haber pedido otro ciclo mientras corría este. */

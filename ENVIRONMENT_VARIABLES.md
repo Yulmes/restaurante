@@ -33,6 +33,16 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `DEMO_PAYMENTS_ENABLED` | No (por defecto `false`) | `true`, `false` | M6 (§7.4, ADR 0007): con `true`, la API acepta la tarjeta demo con el selector de escenarios (procesador simulado, sin dinero real ni datos de tarjeta). Con `false`, `/authorize` responde 403 `DEMO_PAYMENTS_DISABLED` y solo se ofrece pagar al recibir o al retirar. El `.env.example` y las E2E la activan; la demo pública (M10) también deberá activarla |
 | `ORDER_CONFIRMATION_TIMEOUT_MINUTES` | No (por defecto `20`) | Entero entre 1 y 1440 | M7 (§7.1, ADR 0008): minutos sin confirmar tras los que el barrido cancela el pedido y anula su pago |
 
+### API: despliegue (M10, ADR 0010)
+
+| Variable | Obligatoria | Valores / ejemplo | Notas |
+|---|---|---|---|
+| `ORIGIN_SECRETS` | **En producción** | Uno o dos secretos de 32+ caracteres, separados por coma | D-M10-2: el Worker los manda en `X-Origin-Auth`. Con valor, todo `/api/*` salvo `/api/health` exige uno de ellos (403 si no) y la IP del cliente sale de `X-Client-IP`. Dos valores = rotación sin corte. Vacía: sin Worker delante (desarrollo y pruebas). **Secreto** |
+| `TASKS_SECRETS` | **En producción** | Uno o dos secretos de 32+ caracteres, distintos de los de origen | D-M10-1: `X-Tasks-Auth` del endpoint interno `POST /api/internal/tasks`. Vacía: el endpoint no existe (404). **Secreto** |
+| `DEMO_EMAIL_VERIFICATION_ENABLED` | No (por defecto `false`) | `true`, `false` | D-M10-P1: "Verificar (demo)" en la bandeja demo para cuentas cuyo último correo de verificación quedó `DEMO_ONLY`. En la demo pública: `true` |
+
+En Render (ver [`render.yaml`](render.yaml)): `API_PORT=10000` (D-M10-4), `NODE_ENV=production`, `EMAIL_PROVIDER=resend`, `BOT_CHECK_PROVIDER=turnstile`, `DEMO_PAYMENTS_ENABLED=true`, `ORDERS_ALLOW_OUTSIDE_HOURS=true` y `DEMO_EMAIL_VERIFICATION_ENABLED=true` (D-M10-P2 y P3). **Render nunca recibe `MIGRATION_DATABASE_URL`** (ADR 0003, D-M10-3).
+
 ### Web
 
 | Variable | Obligatoria | Notas |
@@ -40,6 +50,7 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `VITE_TURNSTILE_SITE_KEY` | En producción | Clave pública del widget de Turnstile. En desarrollo, si falta, se usa la clave de prueba de Cloudflare que siempre pasa |
 | `API_PROXY_TARGET` | No | A qué API reenvía `/api` el servidor de desarrollo de Vite y `npm run preview` (por defecto `http://127.0.0.1:3000`). Las E2E la apuntan a su propia API |
 | `CATALOG_API_URL` | Para el build (M4) | API que lee el prerender en el build y el servidor de desarrollo (que evalúa la lista de rutas). Si falta, usa `API_PROXY_TARGET` y, si tampoco está, `http://127.0.0.1:3000`. Si no responde, el build reintenta unos 50 s y falla: nunca publica una carta vacía. En M10, la API desplegada |
+| `CATALOG_ORIGIN_SECRET` | En el build de producción (M10) | Secreto de origen que el build manda a la API de Render para leer el catálogo (D-M10-2), con la API ya protegida y antes de que exista el Worker. Solo la lee el proceso de Node del build; nunca entra en el bundle. En GitHub es el secreto `ORIGIN_SECRET` |
 | `VITE_SITE_URL` | En producción (M4) | Origen público del sitio para las canónicas, `hreflang`, Open Graph, JSON-LD, el sitemap y robots. En local, `http://127.0.0.1:5173`. Se configura en M10 |
 | `DEV_CERT_DIR` | No | Carpeta del certificado TLS local de `npm run preview:h2` (solo para medir). Por defecto `%LOCALAPPDATA%\marea-baja\dev-certs` en Windows o `~/.cache/marea-baja/dev-certs`. Debe quedar fuera del repositorio |
 | `PORT` | No | Puerto de `npm run preview` (build servido como el hosting estático). Por defecto 4173 |
@@ -62,3 +73,16 @@ La API valida sus variables al arrancar con Zod (`apps/api/src/config/env.ts`). 
 | `POSTGRES_PORT` | No | `5432` | Puerto publicado en 127.0.0.1 |
 | `MAILPIT_SMTP_PORT` | No | `1025` | SMTP de captura |
 | `MAILPIT_UI_PORT` | No | `8025` | Interfaz web de Mailpit |
+
+## Worker de Cloudflare (M10, `apps/edge`)
+
+| Variable | Tipo | Notas |
+|---|---|---|
+| `API_ORIGIN` | Variable (`wrangler.jsonc` / `--var`) | `https://<servicio>.onrender.com`. Solo https (o localhost en pruebas) |
+| `ORIGIN_SECRET` | Secreto (`wrangler secret put`) | El secreto de origen actual (Render acepta además el siguiente) |
+| `TASKS_SECRET` | Secreto (`wrangler secret put`) | El del endpoint interno de tareas |
+
+## GitHub Actions (M10)
+
+Los secretos y variables de GitHub, por environment, están en [DEPLOYMENT.md](DEPLOYMENT.md), sección 6. Los de backup y restauración son los de [`ops/backup/backup.sh`](ops/backup/backup.sh) y [`restore-test.sh`](ops/backup/restore-test.sh) (`BACKUP_DATABASE_URL`, `AGE_RECIPIENT`, `AGE_IDENTITY`, `BACKUP_LOCATION`, `B2_S3_ENDPOINT` y las claves de B2).
+

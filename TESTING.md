@@ -17,6 +17,8 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run test:e2e:pedido -w @marea-baja/web` | Playwright del pedido (M5) en Chromium y `Mobile Safari` (WebKit con perfil de iPhone; no es un iPhone real). Recrea `<base>_e2e`, levanta su API (3400, con `ORDERS_ALLOW_OUTSIDE_HOURS=true`) y la web de desarrollo (5178) |
 | `npm run test:e2e:admin -w @marea-baja/web` | Playwright del admin (M8, escenarios 3 y 4) en Chromium y `Mobile Safari`, cada motor en su propia invocación. Recrea `<base>_e2e`, levanta su API (3430) y la web de desarrollo (5208); no necesita Mailpit |
+| `npm run backup:selftest` | M10: backup cifrado y restauración de punta a punta contra la base local (Docker), sin B2 ni producción |
+| `npm run csp:check -w @marea-baja/web` | M10: cada HTML del build tiene su `<meta>` de CSP al día (después de `npm run build`) |
 | `npm run test:calidad -w @marea-baja/web` | Auditoría de calidad de M9: 31 pantallas reales en es-CR y en (un proyecto por idioma), con axe WCAG 2.2 AA, desbordamiento a 375/768/1024/1280 px, foco visible, movimiento reducido, formato de fechas por idioma y capturas en `apps/web/calidad-report/` (ignorado por git). Puertos 3440 y 5218 |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
@@ -235,3 +237,28 @@ La suite de operación tiene su propia API y su propia web (`playwright.operacio
 | Límites de §8.4: incremento atómico, peso de la ventana anterior en los bordes (M9-07), un solo intento de login a la vez por cuenta+IP y la demora antes de la contraseña (M9-08) | `apps/api/test/limites.db.test.ts` | §8.4 (M3) |
 
 Detalle, hallazgos y pendientes en `docs/m9/AUDITORIA_M9.md` y `docs/m9/PRUEBAS_HUMANAS_M9.md`.
+
+## Qué cubre M10-1 (implementación local, sin desplegar)
+
+| Qué | Dónde | Decisión |
+|---|---|---|
+| Secreto de origen (dos, rotación), IP desde `X-Client-IP` (IPv4/IPv6, inválidas → 400), `X-Forwarded-For` ignorado, límites por IP con la IP real, logs sin IP ni secretos | `apps/api/test/despliegue.db.test.ts`, `apps/api/src/middleware/origin.test.ts` | D-M10-2 |
+| `/api/health` público; `/api/health/ready` detrás del secreto, 503 sin detalles | `despliegue.db.test.ts`, `apps/api/src/modules/tasks/background.test.ts` | D-M10-6 |
+| Endpoint interno: dos secretos, 404 sin configurar, 409 si ya corre, límite propio, solo conteos; pago "pendiente" resuelto, pedidos vencidos barridos, outbox reintentado; repetir no cambia nada; endpoint y temporizadores juntos sin efectos dobles | `despliegue.db.test.ts` | D-M10-1 |
+| Temporizadores según la actividad (health, catalog-version e internos no cuentan); una tarea que falla no corta las demás; un vuelo a la vez | `background.test.ts`, `despliegue.db.test.ts` | D-M10-1 |
+| "Verificar (demo)": sin bandera, sin sesión, correo real, último correo, otra cuenta, límite, AuditLog, sesión rotada, pedido después | `despliegue.db.test.ts` | D-M10-P1 |
+| Variables nuevas (obligatorias en producción, uno o dos secretos, distintos) | `apps/api/src/config/env.test.ts` | ADR 0010 |
+| Worker: proxy con IP de Cloudflare y secreto, cabeceras del cliente descartadas, 400/502/503, fallback de la SPA con cabeceras, 404 de archivos, Cron Trigger | `apps/edge/src/worker.test.ts` | D-M10-1, D-M10-2 |
+| CSP: hashes, inserción, verificación de desactualizado | `apps/web/scripts/csp.test.ts`; `npm run csp:check -w @marea-baja/web` | D-M10-5 |
+| CSP en el build servido: 57 páginas del sitemap, rutas de la SPA en los dos idiomas y flujos, 0 violaciones | `apps/web/e2e/produccion/csp.spec.ts` (`npm run test:e2e:produccion`) | D-M10-5 |
+| Turnstile: token vencido o reusado, respuestas raras, `remoteip` con la IP real | `apps/api/src/modules/bot-check/bot-check.test.ts` | D-M10-10 |
+| Backup cifrado y restauración de punta a punta contra la base local (volcado ilegible sin clave, volcado alterado rechazado, conteos, `prisma migrate status`, humo de la API) | `npm run backup:selftest` (`ops/backup/`) | D-M10-8 |
+
+**No se puede probar en local** (queda en [docs/m10/POST_DEPLOY.md](docs/m10/POST_DEPLOY.md)):
+- la falsificación de `CF-Connecting-IP` en la entrada del Worker;
+- Turnstile con las claves reales;
+- B2;
+- el Cron Trigger real;
+- la suspensión de Neon;
+- la primera restauración real.
+

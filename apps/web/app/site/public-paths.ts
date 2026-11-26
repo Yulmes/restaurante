@@ -16,7 +16,7 @@ export async function fetchCatalogForBuild(apiBase: string) {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 12; attempt += 1) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { headers: catalogBuildHeaders() });
       if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       return catalogResponseSchema.parse(await response.json());
     } catch (error) {
@@ -49,3 +49,15 @@ export function publicPaths(catalog: Awaited<ReturnType<typeof fetchCatalogForBu
  */
 export const catalogApiBase = (): string =>
   process.env['CATALOG_API_URL'] ?? process.env['API_PROXY_TARGET'] ?? 'http://127.0.0.1:3000';
+
+/**
+ * M10 (ADR 0010, D-M10-2): en producción la API exige el secreto de origen. El build lee la API de
+ * Render directamente (antes de que exista el Worker), así que, si `CATALOG_ORIGIN_SECRET` está
+ * definida, la manda como haría el Worker. Solo existe en el proceso de Node del build: el código
+ * del navegador nunca la lee (`process` no existe ahí) y no entra en ningún bundle.
+ */
+export function catalogBuildHeaders(): Record<string, string> {
+  if (typeof process === 'undefined') return {};
+  const secret = process.env['CATALOG_ORIGIN_SECRET'];
+  return secret ? { 'x-origin-auth': secret, 'x-client-ip': '0.0.0.0' } : {};
+}

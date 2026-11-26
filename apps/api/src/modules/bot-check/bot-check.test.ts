@@ -47,6 +47,27 @@ describe('Turnstile en el servidor (D8, V7)', () => {
     expect(await new TurnstileBotCheck('s', notJson.fetch).verify('tok', undefined)).toBe(false);
   });
 
+  it('M10: rechaza un token vencido o ya usado y una respuesta que no es exactamente success: true', async () => {
+    // Los tokens duran 300 s y son de un solo uso: Turnstile responde `timeout-or-duplicate`.
+    const expired = fakeFetch(() =>
+      Response.json({ success: false, 'error-codes': ['timeout-or-duplicate'] }),
+    );
+    expect(await new TurnstileBotCheck('s', expired.fetch).verify('tok', '203.0.113.9')).toBe(false);
+    for (const body of [{ success: 'true' }, { success: 1 }, {}, null, []]) {
+      const odd = fakeFetch(() => Response.json(body));
+      expect(await new TurnstileBotCheck('s', odd.fetch).verify('tok', undefined), JSON.stringify(body)).toBe(
+        false,
+      );
+    }
+  });
+
+  it('M10: detrás del Worker manda como remoteip la IP real que llega en X-Client-IP', async () => {
+    // La API toma req.clientIp de X-Client-IP (D-M10-2) y AuthService lo pasa a verify().
+    const ok = fakeFetch(() => Response.json({ success: true }));
+    await new TurnstileBotCheck('s', ok.fetch).verify('tok', '2001:db8::5');
+    expect(ok.calls[0]?.body.get('remoteip')).toBe('2001:db8::5');
+  });
+
   it('rechaza tokens vacíos o de más de 2048 caracteres sin consultar', async () => {
     const spy = fakeFetch(() => Response.json({ success: true }));
     const check = new TurnstileBotCheck('s', spy.fetch);

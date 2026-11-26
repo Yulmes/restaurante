@@ -1,0 +1,61 @@
+# Blueprint de Render para la API de Marea Baja (M10, ADR 0010: D-M10-3, D-M10-4, D-M10-1, D-M10-2).
+#
+# No crea nada por sí solo: el propietario lo usa al crear el servicio en su cuenta (D14, M10-3).
+# - Un solo servicio web gratuito (R3, C8: la API tiene que ser el único servicio gratuito del
+#   workspace para que las 750 h alcancen con el monitor 24/7).
+# - Sin deploy automático: lo dispara el workflow "Migraciones de producción" después de migrar.
+# - Render nunca recibe MIGRATION_DATABASE_URL (ADR 0003): solo el rol de la aplicación.
+# - Los secretos van con `sync: false`: Render los pide al crear el servicio; nunca en este archivo.
+services:
+  - type: web
+    name: marea-baja-api
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: false
+    # El cliente de Prisma no se versiona: se genera con la CLI (devDependency).
+    buildCommand: npm ci --include=dev && npm run typegen -w @marea-baja/api
+    startCommand: npm run start -w @marea-baja/api
+    # Público, sin base ni secreto (§9.5): Render lo usa para saber si el servicio arrancó.
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: NODE_ENV
+        value: production
+      # D-M10-4: el puerto por defecto de Render. La API lee API_PORT, no PORT.
+      - key: API_PORT
+        value: '10000'
+      - key: LOG_LEVEL
+        value: info
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: BOT_CHECK_PROVIDER
+        value: turnstile
+      # Demo pública (D-M10-P1, P2, P3; aprobadas el 26/11/2026).
+      - key: DEMO_PAYMENTS_ENABLED
+        value: 'true'
+      - key: ORDERS_ALLOW_OUTSIDE_HOURS
+        value: 'true'
+      - key: DEMO_EMAIL_VERIFICATION_ENABLED
+        value: 'true'
+      # Secretos y valores del propietario (se cargan en el panel de Render).
+      - key: DATABASE_URL # rol marea_app en Neon, con sslmode=require
+        sync: false
+      - key: PUBLIC_WEB_URL # https://<worker>.workers.dev
+        sync: false
+      - key: APP_SECRET # 32+ caracteres aleatorios, propio de producción
+        sync: false
+      - key: EMAIL_FROM # sin dominio (D6): Marea Baja <onboarding@resend.dev>
+        sync: false
+      - key: EMAIL_DELIVERABLE_TO # correo del propietario (D-M10-P8)
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+      - key: ORIGIN_SECRETS # uno o dos, separados por coma (D-M10-2)
+        sync: false
+      - key: TASKS_SECRETS # uno o dos, distintos de los de origen (D-M10-1)
+        sync: false

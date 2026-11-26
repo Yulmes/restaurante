@@ -27,6 +27,8 @@ export const AUTH_LIMITS = {
     /** Silencioso: la respuesta es idéntica, pero no sale otro correo. */
     perEmail: { max: 3, windowMs: HOUR },
   },
+  /** M10 (D-M10-P1): verificación desde la bandeja demo, por cuenta. */
+  demoVerify: { max: 5, windowMs: HOUR },
   resendVerification: {
     perIp: { max: 10, windowMs: HOUR },
     perAccountShort: { max: 1, windowMs: MINUTE },

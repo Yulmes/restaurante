@@ -1,6 +1,8 @@
 # CI: formato, lint, tipos, tests, sistema de diseño (M1), base de datos (M2), identidad (M3),
 # catálogo y SEO (M4), pedido (M5, Chromium y WebKit), idioma del documento en el build de
-# producción y servicios locales.
+# producción y servicios locales. M10: backup y restauración (local), CSP por página y Worker.
+# Los nombres de los 7 jobs son los checks obligatorios del ruleset de `main` (DEPLOYMENT.md, §6):
+# cambiar uno exige actualizar el ruleset.
 # Las acciones están fijadas a un commit exacto (con la versión en el comentario).
 # Los logs de un repositorio público son públicos: ningún paso imprime secretos ni datos.
 name: CI
@@ -161,6 +163,13 @@ jobs:
       - name: Restricciones, AuditLog, permisos, semilla e integración de identidad (PostgreSQL real)
         run: npm run test:db
 
+      # M10 (ADR 0010, D-M10-8): backup cifrado y restauración de punta a punta contra la base local,
+      # en un contenedor con el mismo pg_dump que el servidor (17.11) y age: volcado ilegible sin la
+      # clave, volcado alterado rechazado, conteos iguales, `prisma migrate status` y humo de la API.
+      # Nunca usa B2 ni producción.
+      - name: Backup y restauración (prueba local, sin B2)
+        run: npm run backup:selftest
+
       - name: Bajar servicios
         if: always()
         run: docker compose down --volumes
@@ -222,7 +231,9 @@ jobs:
         run: docker compose down --volumes
 
   order:
-    name: Pedido, pagos, operación y admin (carrito, checkout, pago demo, Pase, admin y E2E en Chromium y WebKit)
+    # M10 (ADR 0010, D-M10-7): nombre corto. GitHub truncaba el anterior ("… y ...") y un check
+    # obligatorio del ruleset tiene que coincidir exactamente con el nombre que informa.
+    name: Pedido, pagos, operación y admin (Chromium y WebKit)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -349,9 +360,15 @@ jobs:
       # propia API (3300) y web (5177), después de la suite anterior (nunca a la vez). Reutiliza las
       # variantes de imagen ya generadas. No envía correos: no necesita Mailpit. Corre aunque la
       # suite del catálogo falle, para que su resultado se vea por separado; si falla, falla el job.
-      - name: Idioma del documento en el build de producción (9 pruebas)
+      # M10 (D-M10-5): la misma suite recorre además las 57 páginas del sitemap, las rutas de la SPA
+      # y los flujos principales con la CSP por página, y falla con cualquier violación.
+      - name: Idioma del documento y CSP en el build de producción (12 pruebas)
         if: ${{ !cancelled() }}
         run: npm run test:e2e:produccion -w @marea-baja/web
+
+      - name: Cada HTML con su CSP al día (hashes por página)
+        if: ${{ !cancelled() }}
+        run: npm run csp:check -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

@@ -17,7 +17,24 @@ import { isEmailTemplate, isOrderTemplate, renderInboxEmail } from './templates/
 const INBOX_LIMIT = 50;
 const ORDER_PATH = /\/(?:cuenta\/pedidos|en\/account\/orders)\/([0-9a-f-]{36})$/;
 
-export async function demoInbox(db: PrismaClient, userId: string): Promise<DemoInboxResponse> {
+export async function demoInbox(
+  db: PrismaClient,
+  userId: string,
+  options: { demoVerification: boolean } = { demoVerification: false },
+): Promise<DemoInboxResponse> {
+  // M10 (D-M10-P1): solo el último correo de verificación, de una cuenta sin verificar, en la demo.
+  let verifiableId: string | null = null;
+  if (options.demoVerification) {
+    const user = await db.user.findUnique({ where: { id: userId }, select: { emailVerifiedAt: true } });
+    if (user && !user.emailVerifiedAt) {
+      const latest = await db.emailOutbox.findFirst({
+        where: { userId, template: 'email-verification' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: { id: true, status: true },
+      });
+      if (latest?.status === 'DEMO_ONLY') verifiableId = latest.id;
+    }
+  }
   const rows = await db.emailOutbox.findMany({
     where: { userId },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -52,6 +69,7 @@ export async function demoInbox(db: PrismaClient, userId: string): Promise<DemoI
           subject,
           body,
           orderId,
+          demoVerifiable: row.id === verifiableId,
           createdAt: row.createdAt.toISOString(),
           sentAt: row.sentAt ? row.sentAt.toISOString() : null,
         },
@@ -60,11 +78,11 @@ export async function demoInbox(db: PrismaClient, userId: string): Promise<DemoI
   };
 }
 
-export function notificationRouter(db: PrismaClient): Router {
+export function notificationRouter(db: PrismaClient, demoVerification = false): Router {
   const router = Router();
   router.get('/me/notifications', requireAuth, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(await demoInbox(db, authOf(req).userId));
+    res.json(await demoInbox(db, authOf(req).userId, { demoVerification }));
   });
   return router;
 }

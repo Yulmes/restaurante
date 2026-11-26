@@ -16,6 +16,12 @@ export interface AppConfig {
   demoPaymentsEnabled: boolean;
   /** M7: a cuánto tiempo sin confirmar se cancela un pedido y se anula su pago (§7.1, 20 min). */
   orderConfirmationTimeoutMs: number;
+  /** M10 (D-M10-2): secretos de origen aceptados. Vacío: sin Worker delante (desarrollo y pruebas). */
+  originSecrets: readonly string[];
+  /** M10 (D-M10-1): secretos del endpoint interno de tareas. Vacío: el endpoint no existe (404). */
+  tasksSecrets: readonly string[];
+  /** M10 (D-M10-P1): verificación del correo desde la bandeja demo. */
+  demoEmailVerification: boolean;
 }
 
 export function appConfigFromEnv(env: Env): AppConfig {
@@ -32,6 +38,9 @@ export function appConfigFromEnv(env: Env): AppConfig {
     ordersAllowOutsideHours: env.ORDERS_ALLOW_OUTSIDE_HOURS,
     demoPaymentsEnabled: env.DEMO_PAYMENTS_ENABLED,
     orderConfirmationTimeoutMs: env.ORDER_CONFIRMATION_TIMEOUT_MINUTES * 60_000,
+    originSecrets: env.ORIGIN_SECRETS,
+    tasksSecrets: env.TASKS_SECRETS,
+    demoEmailVerification: env.DEMO_EMAIL_VERIFICATION_ENABLED,
   };
 }
 

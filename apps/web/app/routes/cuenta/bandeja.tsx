@@ -1,10 +1,12 @@
-import { demoInboxResponseSchema, type DemoInboxMessage } from '@marea-baja/shared';
-import { useQuery } from '@tanstack/react-query';
+import { demoInboxResponseSchema, sessionResponseSchema, type DemoInboxMessage } from '@marea-baja/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router';
 import { AccountShell } from '../../account/AccountShell.tsx';
-import { ApiError, apiGet } from '../../account/api.ts';
+import { ApiError, apiGet, apiSend } from '../../account/api.ts';
 import { useLocalizedPath } from '../../account/links.ts';
 import { accountMeta } from '../../account/meta.ts';
+import { useApplySession } from '../../account/session.ts';
+import { Button } from '../../components/ui/Button.tsx';
 import { useLocale, useT } from '../../i18n/use-locale.ts';
 import type { Route } from './+types/bandeja';
 
@@ -12,6 +14,10 @@ import type { Route } from './+types/bandeja';
  * Bandeja de demostración (M7, §8.5): los correos de la cuenta con su estado honesto. Los
  * `DEMO_ONLY` llevan el rótulo "este correo no se envió"; los `SENT`, a quién se enviaron. Nunca
  * muestra enlaces de un solo uso: la API no los devuelve.
+ *
+ * M10 (ADR 0010, D-M10-P1): en la demo pública, sin dominio, el correo de verificación de un
+ * visitante no se envía. Si la API lo permite (`demoVerifiable`), el mensaje ofrece "Verificar
+ * (demo)": verifica la propia cuenta sin mostrar ningún enlace ni token.
  */
 const TOKEN_TEMPLATES = new Set(['email-verification', 'password-reset']);
 
@@ -100,6 +106,7 @@ function InboxMessage({ message }: { message: DemoInboxMessage }) {
         {TOKEN_TEMPLATES.has(message.template) ? (
           <p className="text-sm leading-5 text-text-muted">{t('inbox.linkHidden')}</p>
         ) : null}
+        {message.demoVerifiable ? <DemoVerify /> : null}
         {message.orderId ? (
           <Link
             to={to(`/cuenta/pedidos/${message.orderId}`)}
@@ -110,5 +117,43 @@ function InboxMessage({ message }: { message: DemoInboxMessage }) {
         ) : null}
       </article>
     </li>
+  );
+}
+
+/** D-M10-P1: verificación de la propia cuenta desde la bandeja demo. */
+function DemoVerify() {
+  const { t } = useT('account');
+  const client = useQueryClient();
+  const applySession = useApplySession();
+  const verify = useMutation({
+    mutationFn: () => apiSend('POST', '/api/auth/demo-verify', {}, sessionResponseSchema),
+    onSuccess: async (response) => {
+      if (response) applySession(response);
+      await client.invalidateQueries({ queryKey: ['inbox'] });
+    },
+  });
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <p className="text-sm leading-5 text-text-muted">{t('inbox.demoVerify.hint')}</p>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          verify.mutate();
+        }}
+        loading={verify.isPending}
+      >
+        {verify.isPending ? t('inbox.demoVerify.pending') : t('inbox.demoVerify.action')}
+      </Button>
+      <div aria-live="polite">
+        {verify.isSuccess ? <p className="t-body">{t('inbox.demoVerify.done')}</p> : null}
+        {verify.isError ? (
+          <p role="alert" className="t-body text-danger">
+            {verify.error instanceof ApiError && verify.error.status === 429
+              ? t('inbox.demoVerify.rateLimited')
+              : t('inbox.demoVerify.error')}
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }

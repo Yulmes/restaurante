@@ -1,7 +1,7 @@
 /**
  * Arranque de la API: `npm run dev -w @marea-baja/api` (o `node src/server.ts`).
- * Valida el entorno (si falta algo, no arranca), conecta la base, procesa el outbox cada 30 s,
- * reconcilia los pagos cada 5 s (M6) y barre los pedidos vencidos o sin confirmar cada minuto (M7).
+ * Valida el entorno (si falta algo, no arranca), conecta la base y arranca las tareas periódicas
+ * (outbox, reconciliación de pagos, barridos y purga; ver `modules/tasks/background.ts`).
  */
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -10,10 +10,8 @@ import { appConfigFromEnv } from './config/app-config.ts';
 import { EnvValidationError, loadEnv, type Env } from './config/env.ts';
 import { createLogger } from './config/logger.ts';
 import { createPrismaClient } from './db/client.ts';
-import { HOUR, systemClock } from './lib/clock.ts';
+import { systemClock } from './lib/clock.ts';
 import { FakeBotCheck, TurnstileBotCheck, type BotCheck } from './modules/bot-check/bot-check.ts';
-import { ORDER_TIMING } from './modules/orders/policies.ts';
-import { PAYMENT_TIMING } from './modules/payments/policies.ts';
 import {
   DeliverableRecipients,
   DemoInboxProvider,
@@ -68,7 +66,7 @@ const botCheck: BotCheck =
     : new FakeBotCheck();
 
 const db = createPrismaClient(env.DATABASE_URL);
-const { app, outbox, limiter, payments, operations } = createApp({
+const { app, outbox, tasks, activity } = createApp({
   config,
   db,
   logger,
@@ -77,44 +75,11 @@ const { app, outbox, limiter, payments, operations } = createApp({
   botCheck,
 });
 
-outbox.start();
-// Limpieza de ventanas de límites de más de 24 h (§8.4), una vez por hora mientras la API está despierta.
-setInterval(() => {
-  limiter.purgeOlderThan(24 * HOUR).catch((error: unknown) => {
-    logger.error({ err: error }, 'rate limit purge failed');
-  });
-}, HOUR).unref();
-
-// Reconciliación de pagos (§7.3, punto 3): resuelve los tiempos agotados, los pendientes de la demo
-// (unos 20 s) y las operaciones interrumpidas. Una vuelta a la vez, mientras la API está despierta.
-let reconciling = false;
-setInterval(() => {
-  if (reconciling) return;
-  reconciling = true;
-  payments
-    .reconcile(logger)
-    .catch((error: unknown) => {
-      logger.error({ err: error }, 'payment reconciliation failed');
-    })
-    .finally(() => {
-      reconciling = false;
-    });
-}, PAYMENT_TIMING.reconcileEveryMs).unref();
-
-// Barridos de pedidos (§7.1, M7): vencidos sin pagar (30 min) y sin confirmar a tiempo (20 min).
-let sweeping = false;
-setInterval(() => {
-  if (sweeping) return;
-  sweeping = true;
-  operations
-    .sweep(logger)
-    .catch((error: unknown) => {
-      logger.error({ err: error }, 'order sweep failed');
-    })
-    .finally(() => {
-      sweeping = false;
-    });
-}, ORDER_TIMING.sweepEveryMs).unref();
+// Tareas periódicas (ADR 0010, D-M10-1): reconciliación de pagos cada 5 s (M6), barridos de pedidos
+// cada minuto (M7), reintentos del outbox cada 30 s y purga de límites cada hora. En producción solo
+// corren con actividad reciente (5 min), para que Neon pueda suspenderse; el resto lo cubre el
+// endpoint interno que dispara el Cron Trigger del Worker cada 30 min.
+tasks.startTimers(production ? () => activity.isActive() : () => true);
 
 const server = app.listen(env.API_PORT, () => {
   logger.info(
@@ -123,6 +88,10 @@ const server = app.listen(env.API_PORT, () => {
       emailProvider: env.EMAIL_PROVIDER,
       botCheck: env.BOT_CHECK_PROVIDER,
       demoPayments: env.DEMO_PAYMENTS_ENABLED,
+      ordersOutsideHours: env.ORDERS_ALLOW_OUTSIDE_HOURS,
+      demoEmailVerification: env.DEMO_EMAIL_VERIFICATION_ENABLED,
+      originProtected: env.ORIGIN_SECRETS.length > 0,
+      tasksEndpoint: env.TASKS_SECRETS.length > 0,
     },
     'API lista',
   );
@@ -130,8 +99,10 @@ const server = app.listen(env.API_PORT, () => {
 
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'apagando');
+  tasks.stopTimers();
   outbox.stop();
   server.close();
+  await tasks.idle();
   await outbox.idle();
   await db.$disconnect();
   process.exit(0);
