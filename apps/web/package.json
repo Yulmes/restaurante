@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "npm run images && react-router dev",
-    "build": "npm run images && react-router build && node scripts/seo-files.ts",
+    "build": "npm run images && react-router build && node scripts/seo-files.ts && node scripts/csp.ts",
+    "csp:check": "node scripts/csp.ts --check",
     "typegen": "react-router typegen",
     "typecheck": "npm run typegen && tsc -p tsconfig.json",
     "test:e2e": "playwright test",

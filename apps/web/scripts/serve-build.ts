@@ -10,7 +10,7 @@
  * compresión, el mismo fallback y el mismo proxy: solo cambia el transporte. El modo HTTP/2 no
  * acepta HTTP/1.1 (sin respaldo silencioso) y usa el certificado local de `dev-cert.ts`.
  */
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer, request, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createSecureServer, type Http2ServerRequest } from 'node:http2';
 import { extname, join, normalize, sep } from 'node:path';
@@ -24,6 +24,29 @@ const ROOT = fileURLToPath(new URL('../build/client/', import.meta.url));
 const PORT = Number(process.env['PORT'] ?? 4173);
 const API = new URL(process.env['API_PROXY_TARGET'] ?? 'http://127.0.0.1:3000');
 const HTTP2 = process.argv.includes('--http2');
+
+/**
+ * M10 (D-M10-5): como los assets de Cloudflare, aplica la regla `/*` de `_headers` a lo que sirve
+ * (la CSP de cabecera con `frame-ancestors` y el resto de las cabeceras de seguridad). La CSP con
+ * los hashes de cada página viaja en el `<meta>` del propio HTML.
+ */
+function siteHeaders(): Record<string, string> {
+  const file = join(ROOT, '_headers');
+  if (!existsSync(file)) return {};
+  const headers: Record<string, string> = {};
+  let inRule = false;
+  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    if (!/^\s/.test(line)) {
+      inRule = line.trim() === '/*';
+      continue;
+    }
+    const at = line.indexOf(':');
+    if (inRule && at > 0) headers[line.slice(0, at).trim().toLowerCase()] = line.slice(at + 1).trim();
+  }
+  return headers;
+}
+const SITE_HEADERS = siteHeaders();
 
 // Encabezados propios de la conexión: HTTP/2 los prohíbe, así que en ese modo no se reenvían.
 const CONNECTION_HEADERS = new Set([
@@ -113,6 +136,7 @@ function handler(req: Req, res: Res): void {
         : null
     : null;
   res.writeHead(200, {
+    ...SITE_HEADERS,
     'content-type': type,
     vary: 'accept-encoding',
     ...(encoding ? { 'content-encoding': encoding } : {}),
