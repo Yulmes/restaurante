@@ -8,6 +8,7 @@
 #   BACKUP_KEY           opcional: un <ts>/manifest.json concreto (si no, latest.json)
 #   SKIP_APP_CHECKS      opcional (1): omite `prisma migrate status` y el humo (solo en pruebas sin repo)
 #   KEEP_RESTORED_DB     opcional (1): no borra la base restaurada (solo pruebas locales)
+#   ALLOW_REMOTE_RESTORE opcional (1): permite un servidor que no es local (incidentes; nunca en CI)
 #
 # Pasos: manifiesto → antigüedad → descarga → SHA-256 → descifra → pg_restore --list → base nueva →
 # restaura con --exit-on-error → conteos iguales al manifiesto → `prisma migrate status` sin
@@ -19,7 +20,17 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 . "$HERE/lib.sh"
 
 need BACKUP_LOCATION AGE_IDENTITY RESTORE_ADMIN_URL
-need_cmd pg_restore psql age sha256sum node
+need_cmd node
+
+# Aislamiento: por defecto solo restaura en un PostgreSQL local o del runner (localhost, 127.0.0.1,
+# ::1, o el servicio `postgres` de Docker Compose). Restaurar en otro servidor (por ejemplo, una base
+# nueva de Neon durante un incidente) exige ALLOW_REMOTE_RESTORE=1 explícito (RECUPERACION_ANTE_INCIDENTES.md).
+RESTORE_HOST="$(node -e 'console.log(new URL(process.argv[1]).hostname)' "$RESTORE_ADMIN_URL")"
+case "$RESTORE_HOST" in
+  localhost | 127.0.0.1 | '[::1]' | ::1 | postgres) ;;
+  *) [ "${ALLOW_REMOTE_RESTORE:-0}" = "1" ] || fail "RESTORE_ADMIN_URL no es local; para restaurar en otro servidor, ALLOW_REMOTE_RESTORE=1" ;;
+esac
+need_cmd pg_restore psql age sha256sum
 
 WORK="$(mktemp -d)"
 DB="restore_test_$(date -u +%Y%m%d%H%M%S)_$$"

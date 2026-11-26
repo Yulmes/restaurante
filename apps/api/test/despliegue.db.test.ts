@@ -521,6 +521,21 @@ describe('verificación demo del correo (D-M10-P1)', () => {
     expect(order.status).toBe('PENDING_PAYMENT');
   });
 
+  it('dos verificaciones simultáneas: una entra, la otra 409, un solo AuditLog', async () => {
+    const { browser, userId } = await unverified();
+    await markLatestVerificationDemoOnly(userId);
+    await browser.refreshCsrf();
+    const statuses = (
+      await Promise.all([browser.post('/api/auth/demo-verify'), browser.post('/api/auth/demo-verify')])
+    )
+      .map((res) => res.status)
+      .sort();
+    expect(statuses).toEqual([200, 409]);
+    expect(
+      await api.db.auditLog.count({ where: { entityId: userId, action: 'user.email_verified_demo' } }),
+    ).toBe(1);
+  });
+
   it('una cuenta no puede verificar a otra', async () => {
     const victim = await unverified();
     await markLatestVerificationDemoOnly(victim.userId);

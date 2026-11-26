@@ -59,6 +59,12 @@ jobs:
           AGE_RECIPIENT: ${{ vars.AGE_RECIPIENT }}
           BACKUP_LOCATION: ${{ vars.BACKUP_LOCATION }}
           B2_S3_ENDPOINT: ${{ vars.B2_S3_ENDPOINT }}
+          # La CLI de AWS exige una región; en B2 es la del endpoint (p. ej. us-west-004). Las sumas
+          # de verificación nuevas por defecto de la CLI no las aceptan todos los S3 compatibles:
+          # solo cuando la operación las requiere (el SHA-256 propio va en el manifiesto).
+          AWS_DEFAULT_REGION: ${{ vars.B2_REGION }}
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
           AWS_ACCESS_KEY_ID: ${{ secrets.B2_WRITE_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_WRITE_KEY }}
           BACKUP_REASON: ${{ inputs.reason || 'weekly' }}
@@ -108,6 +114,9 @@ jobs:
         env:
           BACKUP_LOCATION: ${{ vars.BACKUP_LOCATION }}
           B2_S3_ENDPOINT: ${{ vars.B2_S3_ENDPOINT }}
+          AWS_DEFAULT_REGION: ${{ vars.B2_REGION }}
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
           AWS_ACCESS_KEY_ID: ${{ secrets.B2_READ_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_READ_KEY }}
           AGE_IDENTITY: ${{ secrets.AGE_IDENTITY }}

@@ -23,13 +23,29 @@ trap 'rm -rf "$WORK"' EXIT
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 REASON="${BACKUP_REASON:-manual}"
 
+# Volcado y conteos sobre la MISMA foto de la base: una sesión abre una transacción REPEATABLE READ,
+# exporta su snapshot, pg_dump lo usa (--snapshot) y los conteos se toman en esa misma transacción.
+# Así, aunque haya pedidos entrando durante el backup, el manifiesto describe exactamente el volcado.
+# (En Neon, BACKUP_DATABASE_URL tiene que ser la conexión directa, no la del pooler.)
+log "foto consistente de la base"
+coproc SNAP { psql "$BACKUP_DATABASE_URL" -X -q -At -v ON_ERROR_STOP=1; }
+SNAP_IN="${SNAP[1]}"
+SNAP_OUT="${SNAP[0]}"
+printf '%s\n' "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;" "SELECT pg_export_snapshot();" >&"$SNAP_IN"
+read -r -t 60 SNAPSHOT <&"$SNAP_OUT" || fail "no se pudo exportar el snapshot"
+[[ "$SNAPSHOT" =~ ^[0-9A-F-]+$ ]] || fail "snapshot inválido"
+
 log "volcado (pg_dump -Fc, sin dueños)"
-pg_dump --format=custom --no-owner --dbname="$BACKUP_DATABASE_URL" --file="$WORK/dump.pgc"
+pg_dump --format=custom --no-owner --snapshot="$SNAPSHOT" --dbname="$BACKUP_DATABASE_URL" --file="$WORK/dump.pgc"
+printf '%s\n' "\\i $HERE/count-rows.sql" >&"$SNAP_IN"
+read -r -t 120 COUNTS <&"$SNAP_OUT" || fail "no se pudieron contar las tablas"
+printf '%s\n' "COMMIT;" '\q' >&"$SNAP_IN"
+wait "$SNAP_PID" 2>/dev/null || true
+[ -n "$COUNTS" ] || fail "no se pudieron contar las tablas"
+
 pg_restore --list "$WORK/dump.pgc" >"$WORK/list.txt" || fail "pg_restore no puede leer el volcado"
 ENTRIES="$(grep -cv '^;' "$WORK/list.txt" || true)"
 [ "$ENTRIES" -gt 0 ] || fail "el volcado no tiene entradas"
-COUNTS="$(count_rows "$BACKUP_DATABASE_URL")"
-[ -n "$COUNTS" ] || fail "no se pudieron contar las tablas"
 
 log "cifrado (age) y SHA-256"
 age --encrypt --recipient "$AGE_RECIPIENT" --output "$WORK/dump.age" "$WORK/dump.pgc"

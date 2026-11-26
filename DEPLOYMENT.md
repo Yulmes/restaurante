@@ -118,8 +118,8 @@ Cloudinary queda pospuesto (D-M10-P4).
 |---|---|---|
 | Repositorio | `ORIGIN_SECRET`, `CLOUDFLARE_API_TOKEN` | `DEPLOY_ENABLED` (`true` activa los workflows), `SITE_URL`, `API_ORIGIN`, `TURNSTILE_SITE_KEY`, `CLOUDFLARE_ACCOUNT_ID` |
 | `production-migrations` (revisor obligatorio: propietario) | `MIGRATION_DATABASE_URL`, `RENDER_DEPLOY_HOOK_URL`, `ADMIN_EMAIL`, `ORIGIN_SECRET`, `TASKS_SECRET` | — |
-| `backup` | `BACKUP_DATABASE_URL`, `B2_WRITE_KEY_ID`, `B2_WRITE_KEY` | `AGE_RECIPIENT`, `BACKUP_LOCATION`, `B2_S3_ENDPOINT` |
-| `restore-test` | `AGE_IDENTITY`, `B2_READ_KEY_ID`, `B2_READ_KEY` | `BACKUP_LOCATION`, `B2_S3_ENDPOINT` |
+| `backup` | `BACKUP_DATABASE_URL` (conexión **directa** de Neon, no la del pooler: el backup exporta un snapshot), `B2_WRITE_KEY_ID`, `B2_WRITE_KEY` | `AGE_RECIPIENT`, `BACKUP_LOCATION`, `B2_S3_ENDPOINT`, `B2_REGION` |
+| `restore-test` | `AGE_IDENTITY`, `B2_READ_KEY_ID`, `B2_READ_KEY` | `BACKUP_LOCATION`, `B2_S3_ENDPOINT`, `B2_REGION` |
 
 > **Pendiente de confirmar por el propietario:** el workflow **Web y Worker** usa secretos del repositorio (`ORIGIN_SECRET`, `CLOUDFLARE_API_TOKEN`) para poder correr solo cada 30 min (D10). Un environment con revisor lo frenaría en cada ejecución. La alternativa es un environment `production-web` sin revisor, que la ADR 0010 no incluye.
 

@@ -41,7 +41,7 @@ El manifiesto tiene el SHA-256 del archivo cifrado, la versión de `pg_dump` y e
    BACKUP_LOCATION=s3://<bucket>/marea-baja B2_S3_ENDPOINT=<endpoint> \
    AWS_ACCESS_KEY_ID=<lectura> AWS_SECRET_ACCESS_KEY=<lectura> \
    AGE_IDENTITY="$(cat marea-baja-backup.key)" \
-   RESTORE_ADMIN_URL=<url del propietario de la base nueva, base postgres> KEEP_RESTORED_DB=1 \
+   RESTORE_ADMIN_URL=<url del propietario de la base nueva, base postgres> KEEP_RESTORED_DB=1 ALLOW_REMOTE_RESTORE=1 \
    bash ops/backup/restore-test.sh
    ```
    - El script verifica el SHA-256, descifra, restaura con `--exit-on-error`, compara los conteos con el manifiesto, corre `prisma migrate status` y el humo de la API.

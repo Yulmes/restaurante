@@ -361,15 +361,19 @@ export class AuthService {
       if (latest?.status !== 'DEMO_ONLY') {
         throw new AppError(403, 'DEMO_VERIFICATION_UNAVAILABLE', 'Demo verification unavailable');
       }
+      // Condicional: si dos pedidos llegan a la vez, solo uno verifica (y deja un solo AuditLog).
+      const marked = await tx.user.updateMany({
+        where: { id: user.id, emailVerifiedAt: null },
+        data: { emailVerifiedAt: now },
+      });
+      if (marked.count === 0) {
+        throw new AppError(409, 'EMAIL_ALREADY_VERIFIED', 'Email already verified');
+      }
       await tx.emailVerificationToken.updateMany({
         where: { userId: user.id, usedAt: null },
         data: { usedAt: now },
       });
-      const updated = await tx.user.update({
-        where: { id: user.id },
-        data: { emailVerifiedAt: now },
-        select: userSelect,
-      });
+      const updated = await tx.user.findUniqueOrThrow({ where: { id: user.id }, select: userSelect });
       await recordAudit(tx, {
         actor: { userId: user.id, role: auth.roles[0] ?? 'CUSTOMER' },
         action: 'user.email_verified_demo',
