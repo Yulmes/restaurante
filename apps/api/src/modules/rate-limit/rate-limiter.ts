@@ -73,7 +73,9 @@ export class RateLimiter {
     // M9-07 (R-M9-1, alternativa 1): el peso de la ventana anterior se calcula en enteros y se
     // redondea hacia arriba. Con `Math.floor` sobre coma flotante, 10 × 0,1 daba 0,999… → 0 y el
     // limitador aceptaba el doble del límite en un intervalo real. El modelo (ventana fija con
-    // aproximación deslizante, §8.4) no cambia.
+    // aproximación deslizante, §8.4) no cambia. `restante` está en (0, ventana]: el peso va de casi 0
+    // a la ventana anterior entera. El producto es exacto mientras no pase de 2^53 (con la ventana
+    // más larga, 1 día, hasta ~10^8 intentos en la ventana anterior; el freno de ráfagas lo impide).
     const remainingMs = start.getTime() + windowMs - now.getTime();
     const weighted = Math.ceil(((previous?.count ?? 0) * remainingMs) / windowMs);
     return { count: current + weighted, resetInMs: remainingMs };

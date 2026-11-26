@@ -213,7 +213,7 @@ Autorización del propietario (25/11/2026): corregir M9-07 con la alternativa 1 
 - Antes: la demora y el bloqueo se consultaban antes de evaluar la contraseña, pero el fallo se registraba después. Varios intentos simultáneos leían "sin demora" a la vez.
 - Ahora: `before()` reserva el intento de cuenta+IP con una sola consulta atómica (`INSERT … ON CONFLICT DO UPDATE … WHERE "lockedUntil" <= ahora`) sobre `LoginLock`, con la clave `inflight:<cuenta>:<IP>`. Recién con la reserva tomada consulta la demora y el bloqueo. La reserva se libera después de registrar el fallo (que escribe la demora) o el éxito.
 - Un intento simultáneo de la misma cuenta+IP recibe **429 sin evaluar la contraseña**. Otras IP de la misma cuenta no se ven afectadas.
-- Sin migración: reutiliza `LoginLock`. La reserva vence sola a los 30 s si el proceso cae antes de liberarla.
+- Sin migración: reutiliza `LoginLock`. La reserva vence sola a los 30 s si el proceso cae antes de liberarla. Cada intento libera solo su reserva (la identifica su vencimiento): si una reserva vencida vuelve tarde, no borra la del intento que la tomó después (revisión del Nivel 3).
 - Se descartó un candado de PostgreSQL retenido durante Argon2: las peticiones en espera ocuparían conexiones del pool y podrían agotarlo.
 
 **Evidencia antes y después** (`limites.db.test.ts`, 12 pruebas; la misma suite corrida sobre el código anterior y sobre el corregido):

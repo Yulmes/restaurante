@@ -49,7 +49,7 @@ Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación 
 - la ventana de fallos de cuenta+IP es de 15 min;
 - el escalamiento del bloqueo vuelve al primer nivel tras 24 h sin bloqueos;
 - un login exitoso borra los contadores, la demora y el bloqueo de esa cuenta+IP;
-- **un solo intento de login a la vez por cuenta+IP (M9-08):** el intento se reserva antes de consultar la demora y el bloqueo, y se libera después de registrar el fallo o el éxito. Un intento simultáneo recibe 429 sin evaluar la contraseña. La reserva es una fila de `LoginLock` (`inflight:…`) que vence sola a los 30 s si el proceso cae; no retiene transacciones ni conexiones mientras se evalúa la contraseña. Otras IP de la misma cuenta no se ven afectadas.
+- **un solo intento de login a la vez por cuenta+IP (M9-08):** el intento se reserva antes de consultar la demora y el bloqueo, y se libera después de registrar el fallo o el éxito. Un intento simultáneo recibe 429 sin evaluar la contraseña. La reserva es una fila de `LoginLock` (`inflight:…`) que vence sola a los 30 s si el proceso cae (cada intento libera solo su propia reserva); no retiene transacciones ni conexiones mientras se evalúa la contraseña. Otras IP de la misma cuenta no se ven afectadas.
 
 **Riesgo técnico registrado: aproximación deslizante.**
 

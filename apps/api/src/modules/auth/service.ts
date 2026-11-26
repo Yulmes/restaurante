@@ -238,9 +238,9 @@ export class AuthService {
     // M9-08: `before` reserva el intento de cuenta+IP; la reserva se libera recién después de
     // registrar el fallo o el éxito, así un intento simultáneo no evalúa la contraseña sin ver la
     // demora que deja este.
-    const { challengeRequired } = await this.#login.before(subject);
+    const { challengeRequired, reservation } = await this.#login.before(subject);
     const user = await this.#checkCredentials(input, meta, subject, challengeRequired).finally(() =>
-      this.#login.release(subject),
+      this.#login.release(subject, reservation),
     );
 
     const now = this.#d.clock.now();

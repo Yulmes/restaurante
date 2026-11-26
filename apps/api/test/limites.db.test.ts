@@ -188,22 +188,29 @@ describe('reserva del intento de login (M9-08)', () => {
   it('un segundo intento con la reserva tomada recibe 429; al liberarla, entra', async () => {
     const login = protection();
     const subject = newSubject(login);
-    await login.before(subject);
+    const first = await login.before(subject);
     await expect(login.before(subject)).rejects.toMatchObject({ status: 429 });
-    await login.release(subject);
-    await expect(login.before(subject)).resolves.toEqual({ challengeRequired: false });
-    await login.release(subject);
+    await login.release(subject, first.reservation);
+    const second = await login.before(subject);
+    expect(second.challengeRequired).toBe(false);
+    await login.release(subject, second.reservation);
+    expect(await api.db.loginLock.count({ where: { subjectKey: subject.inflightKey } })).toBe(0);
   });
 
   it('una reserva abandonada (proceso caído) vence sola a los 30 s', async () => {
     const login = protection();
     const subject = newSubject(login);
-    await login.before(subject);
+    const stale = await login.before(subject);
     api.clock.advance(29_000);
     await expect(login.before(subject)).rejects.toMatchObject({ status: 429 });
     api.clock.advance(1_000);
-    await expect(login.before(subject)).resolves.toEqual({ challengeRequired: false });
-    await login.release(subject);
+    const fresh = await login.before(subject);
+    expect(fresh.challengeRequired).toBe(false);
+    // El intento abandonado vuelve tarde y libera: no borra la reserva del intento nuevo.
+    await login.release(subject, stale.reservation);
+    await expect(login.before(subject)).rejects.toMatchObject({ status: 429 });
+    await login.release(subject, fresh.reservation);
+    expect(await api.db.loginLock.count({ where: { subjectKey: subject.inflightKey } })).toBe(0);
   });
 
   it('si la demora corta el intento, la reserva queda liberada', async () => {
