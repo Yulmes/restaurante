@@ -9,7 +9,7 @@ import { hmac, randomToken, sha256 } from '../../lib/crypto.ts';
 import type { BotCheck } from '../bot-check/bot-check.ts';
 import { enqueueEmail } from '../notifications/outbox.ts';
 import type { RateLimiter } from '../rate-limit/rate-limiter.ts';
-import { LoginProtection } from './login-protection.ts';
+import { LoginProtection, type LoginSubject } from './login-protection.ts';
 import { dummyPasswordHash, hashPassword, isCommonPassword, verifyPassword } from './passwords.ts';
 import { AUTH_LIMITS, TOKEN_TTL } from './policies.ts';
 import {
@@ -200,15 +200,13 @@ export class AuthService {
     }
   }
 
-  async login(
+  /** Desafío (D8) y contraseña; el fallo o el éxito se registran antes de liberar la reserva. */
+  async #checkCredentials(
     input: { email: string; password: string; turnstileToken?: string | undefined },
     meta: RequestMeta,
-    previousSessionId: string | undefined,
-  ): Promise<{ user: PublicUser; session: IssuedSession }> {
-    const ipHash = this.ipHash(meta.ip);
-    const subject = this.#login.subject(input.email, ipHash);
-    const { challengeRequired } = await this.#login.before(subject);
-
+    subject: LoginSubject,
+    challengeRequired: boolean,
+  ) {
     if (challengeRequired) {
       // D8: sin token válido → 403 sin evaluar la contraseña.
       if (!input.turnstileToken) {
@@ -226,8 +224,25 @@ export class AuthService {
     );
     if (!user || !passwordOk) return this.#login.failure(subject);
     if (user.blockedAt) throw new AppError(403, 'ACCOUNT_BLOCKED', 'Account blocked');
-
     await this.#login.success(subject);
+    return user;
+  }
+
+  async login(
+    input: { email: string; password: string; turnstileToken?: string | undefined },
+    meta: RequestMeta,
+    previousSessionId: string | undefined,
+  ): Promise<{ user: PublicUser; session: IssuedSession }> {
+    const ipHash = this.ipHash(meta.ip);
+    const subject = this.#login.subject(input.email, ipHash);
+    // M9-08: `before` reserva el intento de cuenta+IP; la reserva se libera recién después de
+    // registrar el fallo o el éxito, así un intento simultáneo no evalúa la contraseña sin ver la
+    // demora que deja este.
+    const { challengeRequired, reservation } = await this.#login.before(subject);
+    const user = await this.#checkCredentials(input, meta, subject, challengeRequired).finally(() =>
+      this.#login.release(subject, reservation),
+    );
+
     const now = this.#d.clock.now();
     const roles = rolesOf(user);
     const session = await this.#d.db.$transaction(async (tx) => {

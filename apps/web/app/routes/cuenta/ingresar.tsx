@@ -97,6 +97,7 @@ export default function Ingresar() {
           label={t('fields.email')}
           type="email"
           autoComplete="email"
+          spellCheck={false}
           inputMode="email"
           error={errors.email?.message ? fieldMessage(t, errors.email.message) : undefined}
           {...form.register('email')}

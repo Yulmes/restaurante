@@ -208,7 +208,7 @@ test.describe('admin de M8', () => {
     await page.getByRole('button', { name: 'Filter' }).click();
     await expect(page.getByText('settings.turnstile_threshold_changed').first()).toBeVisible();
     await page
-      .getByText(/See the \d+ fields that changed/)
+      .getByText(/See the changes \(\d+\)/)
       .first()
       .click();
     await expect(page.getByText(`${before} → 40`)).toBeVisible();
@@ -316,7 +316,7 @@ test.describe('admin de M8', () => {
     // Con un pedido activo, el asistente de moneda no se habilita.
     const toCancel = await placePaidOrder(browser);
     await page.goto('/admin/configuracion');
-    await expect(page.getByText(/Hay \d+ pedidos activos/)).toBeVisible();
+    await expect(page.getByText(/Pedidos activos: \d+/)).toBeVisible();
 
     // Cancelar antes de confirmar: anula la tarjeta demo.
     await page.goto('/admin/pedidos');

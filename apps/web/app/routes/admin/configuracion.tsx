@@ -246,7 +246,7 @@ function GeneralForm({ settings }: { settings: AdminSettings }) {
           return (
             <div
               key={h.day}
-              className="grid items-end gap-3 border-b border-border pb-3 sm:grid-cols-[10rem_8rem_8rem]"
+              className="grid items-end gap-3 border-b border-border pb-3 sm:grid-cols-[10rem_11rem_11rem]"
             >
               <CheckField
                 id={`hours-${String(h.day)}-open`}

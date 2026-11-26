@@ -20,7 +20,12 @@ export interface LoginSubject {
   accountIpKey: string;
   lockKey: string;
   delayKey: string;
+  /** Reserva del intento en curso (M9-08): un solo intento a la vez por cuenta+IP. */
+  inflightKey: string;
 }
+
+/** Vida máxima de la reserva si el proceso cae antes de liberarla. */
+const INFLIGHT_TTL_MS = 30_000;
 
 export class LoginProtection {
   readonly #db: PrismaClient;
@@ -43,6 +48,7 @@ export class LoginProtection {
       accountIpKey: `login:acct-ip:${account}:${ipHash}`,
       lockKey: `lock:${account}:${ipHash}`,
       delayKey: `delay:${account}:${ipHash}`,
+      inflightKey: `inflight:${account}:${ipHash}`,
     };
   }
 
@@ -58,24 +64,65 @@ export class LoginProtection {
   }
 
   /**
-   * Antes de evaluar la contraseña: límite por IP, bloqueo y demora de cuenta+IP.
-   * Devuelve si la cuenta exige el desafío.
+   * Antes de evaluar la contraseña: límite por IP, reserva del intento y bloqueo y demora de
+   * cuenta+IP. Devuelve si la cuenta exige el desafío.
+   *
+   * M9-08 (R-M9-1, alternativa 2): el intento reserva cuenta+IP **antes** de consultar la demora y
+   * el bloqueo, y la reserva se libera (`release`) después de registrar el fallo o el éxito. Así
+   * un intento simultáneo no puede leer "sin demora" mientras otro todavía está evaluando: recibe
+   * 429. Si `before` lanza, la reserva ya quedó liberada; si devuelve, quien llama debe liberarla
+   * con `release(subject, reservation)`.
    */
-  async before(subject: LoginSubject): Promise<{ challengeRequired: boolean }> {
+  async before(subject: LoginSubject): Promise<{ challengeRequired: boolean; reservation: Date }> {
     const perIp = await this.#limiter.hit(subject.ipKey, AUTH_LIMITS.login.perIp.windowMs);
     if (perIp.count > AUTH_LIMITS.login.perIp.max) throw rateLimited(perIp.resetInMs / 1000);
 
-    const now = this.#clock.now();
-    const locks = await this.#db.loginLock.findMany({
-      where: { subjectKey: { in: [subject.lockKey, subject.delayKey] }, lockedUntil: { gt: now } },
-      select: { lockedUntil: true },
-    });
-    const until = Math.max(0, ...locks.map((lock) => lock.lockedUntil.getTime()));
-    if (until > now.getTime()) throw rateLimited((until - now.getTime()) / 1000);
+    const reservation = await this.#claim(subject);
+    if (!reservation) throw rateLimited(1);
+    try {
+      const now = this.#clock.now();
+      const locks = await this.#db.loginLock.findMany({
+        where: { subjectKey: { in: [subject.lockKey, subject.delayKey] }, lockedUntil: { gt: now } },
+        select: { lockedUntil: true },
+      });
+      const until = Math.max(0, ...locks.map((lock) => lock.lockedUntil.getTime()));
+      if (until > now.getTime()) throw rateLimited((until - now.getTime()) / 1000);
 
-    const policy = await this.challengePolicy();
-    const global = await this.#limiter.peek(subject.accountKey, policy.windowMs);
-    return { challengeRequired: global.count >= policy.threshold };
+      const policy = await this.challengePolicy();
+      const global = await this.#limiter.peek(subject.accountKey, policy.windowMs);
+      return { challengeRequired: global.count >= policy.threshold, reservation };
+    } catch (error) {
+      await this.release(subject, reservation);
+      throw error;
+    }
+  }
+
+  /**
+   * Libera la reserva del intento (después de `failure` o `success`, o si el intento se corta).
+   * Solo borra la reserva propia: si venció y otro intento la tomó, la de ese intento queda.
+   */
+  async release(subject: LoginSubject, reservation: Date): Promise<void> {
+    await this.#db.loginLock.deleteMany({
+      where: { subjectKey: subject.inflightKey, lockedUntil: reservation },
+    });
+  }
+
+  /**
+   * Reserva atómica en una sola consulta: inserta la fila o la toma solo si la reserva anterior
+   * venció. No retiene conexiones ni transacciones mientras se evalúa la contraseña. Devuelve el
+   * vencimiento de la reserva, que la identifica al liberarla, o `null` si otro intento la tiene.
+   */
+  async #claim(subject: LoginSubject): Promise<Date | null> {
+    const now = this.#clock.now();
+    const until = new Date(now.getTime() + INFLIGHT_TTL_MS);
+    const rows = await this.#db.$queryRaw<{ ok: number }[]>`
+      INSERT INTO "LoginLock"("subjectKey", "lockedUntil", "level", "updatedAt")
+      VALUES (${subject.inflightKey}, ${until}, 1, ${now})
+      ON CONFLICT ("subjectKey") DO UPDATE
+        SET "lockedUntil" = EXCLUDED."lockedUntil", "updatedAt" = EXCLUDED."updatedAt"
+        WHERE "LoginLock"."lockedUntil" <= ${now}
+      RETURNING 1 AS ok`;
+    return rows.length > 0 ? until : null;
   }
 
   /** Registra un fallo y lanza la respuesta que corresponde. */

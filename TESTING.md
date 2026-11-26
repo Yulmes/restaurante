@@ -17,6 +17,7 @@ Este documento crece con cada hito. Solo describe pruebas que ya existen.
 | `npm run test:e2e:produccion -w @marea-baja/web` | Playwright del idioma del documento contra el **build de producción prerenderizado** servido con `npm run preview` (`serve-build.ts`, con el fallback real). Levanta su propia API y una base `<base>_e2e`. Ver "E2E de producción" |
 | `npm run test:e2e:pedido -w @marea-baja/web` | Playwright del pedido (M5) en Chromium y `Mobile Safari` (WebKit con perfil de iPhone; no es un iPhone real). Recrea `<base>_e2e`, levanta su API (3400, con `ORDERS_ALLOW_OUTSIDE_HOURS=true`) y la web de desarrollo (5178) |
 | `npm run test:e2e:admin -w @marea-baja/web` | Playwright del admin (M8, escenarios 3 y 4) en Chromium y `Mobile Safari`, cada motor en su propia invocación. Recrea `<base>_e2e`, levanta su API (3430) y la web de desarrollo (5208); no necesita Mailpit |
+| `npm run test:calidad -w @marea-baja/web` | Auditoría de calidad de M9: 31 pantallas reales en es-CR y en (un proyecto por idioma), con axe WCAG 2.2 AA, desbordamiento a 375/768/1024/1280 px, foco visible, movimiento reducido, formato de fechas por idioma y capturas en `apps/web/calidad-report/` (ignorado por git). Puertos 3440 y 5218 |
 | `npm run db:drift -w @marea-baja/api` | Falla si el esquema de Prisma y la base migrada difieren |
 | `npm run test:e2e -w @marea-baja/web` | Playwright: navegador real contra el servidor de desarrollo y la API (desde M4 la portada lee el catálogo; requiere `npm run db:setup`) |
 | `npm run capturas -w @marea-baja/web` (con `CAPTURAS=1`) | Regenera las capturas de evidencia en `docs/evidencias/m1/` |
@@ -225,3 +226,12 @@ La suite de operación tiene su propia API y su propia web (`playwright.operacio
 | E2E escenarios 3 y 4 en Chromium y `Mobile Safari`: carta y editor con vista previa reflejados en la carta pública; pesca del día, umbral de Turnstile y auditoría en inglés; staff y cliente sin acceso, bloqueo que corta la sesión; conflicto de edición, validaciones, moneda bloqueada, cancelación y reembolso; axe | `apps/web/e2e/admin/admin.spec.ts` (`npm run test:e2e:admin -w @marea-baja/web`) | §11, §12, §3.6 |
 
 `admin.db.test.ts` cambia la configuración global de la base de prueba y la restaura al terminar. Detalle en `docs/m8/VALIDACIONES_M8.md`.
+
+## Qué cubre M9 (implementación local)
+
+| Prueba | Archivo | Validación |
+|---|---|---|
+| Auditoría de pantallas reales: axe, desbordamiento en 4 anchos, foco, movimiento reducido, fechas por idioma y capturas | `apps/web/e2e/calidad/calidad.spec.ts` (`npm run test:calidad -w @marea-baja/web`) | §11, D1, R-A11Y-01/02, R-RESP-01 |
+| Límites de §8.4: incremento atómico, peso de la ventana anterior en los bordes (M9-07), un solo intento de login a la vez por cuenta+IP y la demora antes de la contraseña (M9-08) | `apps/api/test/limites.db.test.ts` | §8.4 (M3) |
+
+Detalle, hallazgos y pendientes en `docs/m9/AUDITORIA_M9.md` y `docs/m9/PRUEBAS_HUMANAS_M9.md`.

@@ -26,7 +26,7 @@ export function ProductSheet({ product, onClose }: { product: CatalogProduct | n
       ref={dialog}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-y-auto border-t border-border bg-surface p-0 text-text backdrop:bg-tinta/40 md:mt-0 md:ml-auto md:h-dvh md:max-h-none md:w-[30rem] md:border-t-0 md:border-l"
+      className="m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-y-auto overscroll-contain border-t border-border bg-surface p-0 text-text backdrop:bg-tinta/40 md:mt-0 md:ml-auto md:h-dvh md:max-h-none md:w-[30rem] md:border-t-0 md:border-l"
     >
       {product ? (
         <div className="flex flex-col gap-6 px-4 pt-4 pb-8 md:px-6">

@@ -29,7 +29,7 @@ Modelo de seguridad de identidad implementado en **M3** (propuesta §8). Lo que 
 
 ## Límites y bloqueos (§8.4)
 
-Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación deslizante (ventana actual + la fracción que queda de la anterior). Las claves llevan hashes, nunca correos ni IP en claro. Además hay un freno de ráfagas en memoria: 300 peticiones cada 5 min por IP.
+Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación deslizante (ventana actual + la fracción que queda de la anterior, redondeada hacia arriba desde M9). Las claves llevan hashes, nunca correos ni IP en claro. Además hay un freno de ráfagas en memoria: 300 peticiones cada 5 min por IP.
 
 | Operación | Límite | Respuesta |
 |---|---|---|
@@ -48,14 +48,16 @@ Se guardan en PostgreSQL (`RateLimitCounter`), con ventana fija y aproximación 
 **Parámetros de implementación** (la propuesta no los fija):
 - la ventana de fallos de cuenta+IP es de 15 min;
 - el escalamiento del bloqueo vuelve al primer nivel tras 24 h sin bloqueos;
-- un login exitoso borra los contadores, la demora y el bloqueo de esa cuenta+IP.
+- un login exitoso borra los contadores, la demora y el bloqueo de esa cuenta+IP;
+- **un solo intento de login a la vez por cuenta+IP (M9-08):** el intento se reserva antes de consultar la demora y el bloqueo, y se libera después de registrar el fallo o el éxito. Un intento simultáneo recibe 429 sin evaluar la contraseña. La reserva es una fila de `LoginLock` (`inflight:…`) que vence sola a los 30 s si el proceso cae (cada intento libera solo su propia reserva); no retiene transacciones ni conexiones mientras se evalúa la contraseña. Otras IP de la misma cuenta no se ven afectadas.
 
 **Riesgo técnico registrado: aproximación deslizante.**
 
-- Si los intentos caen repartidos entre dos ventanas, el conteo estimado puede quedar por debajo del real. Por ejemplo, 6 fallos al final de una ventana y 4 al principio de la siguiente pueden contar como 8.
-- Es el algoritmo que eligió la propuesta (§8.4), a cambio de una sola escritura por petición, y **se conserva sin cambios**.
-- Impacto: un atacante puede hacer algunos intentos más antes de la demora o del bloqueo. Las demás defensas no cambian (demora progresiva, límite por IP y Turnstile global).
-- Queda para una revisión posterior (M9, revisión de seguridad completa). Por ejemplo, contar la ventana anterior sin redondear hacia abajo o usar ventanas más cortas.
+- Si los intentos caen repartidos entre dos ventanas, el conteo estimado puede quedar por debajo del real. Por ejemplo, 6 fallos al final de una ventana y 4 a la mitad de la siguiente cuentan como 4 + 6 × 0,5 = 7, aunque los 10 caben en una ventana.
+- En el peor caso, la aproximación acepta hasta ~2 × N en un intervalo real más corto que la ventana. Es el algoritmo que eligió la propuesta (§8.4), a cambio de una sola escritura por petición, y **se conserva sin cambios**.
+- **M9-07 (corregido):** el peso de la ventana anterior se calcula en enteros y se redondea hacia arriba. Antes, `Math.floor` sobre coma flotante dejaba 10 × 0,1 en 0 y se aceptaba el doble exacto del límite en 0,9 ventanas (20 con un límite de 10; ahora 19). Los límites no cambiaron.
+- **Lo que sigue abierto (R-M9-1, parcial):** la cota teórica de la aproximación. Cerrarla exige una ventana deslizante exacta (alternativa 3 de la auditoría de M9), que cambia el modelo de §8.4 y no está autorizada.
+- Impacto: un atacante puede hacer algunos intentos más antes de la demora o del bloqueo. Las demás defensas no cambian (demora progresiva, límite por IP, reserva del intento y Turnstile global).
 - La prueba del bloqueo de 10 fallos se alinea al inicio de una ventana para medir el umbral exacto.
 
 Los mensajes de error nunca revelan si un correo tiene cuenta. **El registro con un correo que ya existe** devuelve la misma respuesta genérica y no envía ningún correo que permita identificar cuentas (decisión del propietario, 13/11/2026). El login con un correo inexistente verifica contra un hash ficticio, para igualar el tiempo de respuesta.

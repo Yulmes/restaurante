@@ -22,6 +22,7 @@
     "test:e2e:pagos": "playwright test -c playwright.pagos.config.ts",
     "test:e2e:operacion": "playwright test -c playwright.operacion.config.ts --project=chromium && playwright test -c playwright.operacion.config.ts --project=\"Mobile Safari\"",
     "test:e2e:admin": "playwright test -c playwright.admin.config.ts --project=chromium && playwright test -c playwright.admin.config.ts --project=\"Mobile Safari\"",
+    "test:calidad": "playwright test -c playwright.calidad.config.ts --project=es-CR && playwright test -c playwright.calidad.config.ts --project=en",
     "lighthouse": "node scripts/lighthouse.ts",
     "lighthouse:h2": "node scripts/lighthouse.ts --http2",
     "fonts:colon": "node scripts/subset-colon-font.ts",

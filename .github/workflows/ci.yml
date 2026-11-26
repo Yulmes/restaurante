@@ -46,7 +46,7 @@ jobs:
   design:
     name: Sistema de diseño y accesibilidad (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -95,6 +95,13 @@ jobs:
       # La configuración levanta la API y el servidor de desarrollo de la web.
       - name: axe, teclado, idiomas, responsive y movimiento reducido
         run: npm run test:e2e -w @marea-baja/web
+
+      # M9 (§12): auditoría de calidad sobre las pantallas reales de M1–M8 (visitante, cliente y
+      # admin), en es-CR y en: axe WCAG 2.2 AA a 375 y 1280 px, desbordamiento a 4 anchos, foco
+      # visible, movimiento reducido y formato de fechas por idioma. Su propia API y su propia web
+      # (3440 y 5218) sobre <base>_e2e; un idioma por invocación por el freno de ráfagas.
+      - name: Auditoría de calidad de M9 (31 pantallas × 2 idiomas × 4 anchos)
+        run: npm run test:calidad -w @marea-baja/web
 
       - name: Bajar servicios
         if: always()

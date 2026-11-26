@@ -18,6 +18,7 @@ export default defineConfig({
     'pagos/**',
     'operacion/**',
     'admin/**',
+    'calidad/**',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
