@@ -2,7 +2,7 @@
 
 > **Tipo:** auditoría de planificación (previa a la implementación).
 > **Fecha:** 9 de noviembre de 2026.
-> **Estado del código (actualizado el 24/11/2026):** M0–M8 integrados en `main`; M8 cerrado (PR #11, merge `ca21fcb`, 24/11/2026); M9–M11 sin implementar. *Al escribir esta auditoría (9/11) el código no existía.*
+> **Estado del código (actualizado el 26/11/2026):** M0–M9 integrados en `main`; M9 cerrado con riesgos aceptados y pendientes humanos (PR #13, merge `adb772f`, 26/11/2026); M10 y M11 sin implementar. *Al escribir esta auditoría (9/11) el código no existía.*
 > **Estado de las decisiones:** las decisiones de planificación están aprobadas (D1–D14, 10/11/2026). Ver la propuesta v3, sección 15.
 > **Estados de los requisitos:** cada requisito pasa de "Planificado" a "Implementado" (o "Parcial") y luego a "Verificado", con su evidencia. Las filas se actualizan al cerrar cada hito; las que siguen en "Planificado" corresponden a hitos no iniciados o no revisados todavía.
 > Propuesta de referencia: [Propuesta Restaurante · Fase 1.md](Propuesta%20Restaurante%20·%20Fase%201.md)
@@ -79,10 +79,10 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 | R-SEC-02 | Cookie `__Host-`, HttpOnly, Secure, SameSite=Lax | §8.2 | Integración + post-deploy | **Parcial (M3):** banderas verificadas en integración (también `__Host-` y `Secure` con configuración de producción). Post-deploy: M10 |
 | R-SEC-03 | Expiración, rotación y revocación de sesiones | §8.2 | Integración | **Cumplido (M3):** expiración por rol, rotación y revocación con pruebas de integración y reloj simulado |
 | R-SEC-04 | CSRF: Origin + token sincronizador | §8.3 | Integración + post-deploy | **Parcial (M3):** Origin/Sec-Fetch-Site y token sincronizador con pruebas de integración. Post-deploy: M10 |
-| R-SEC-05 | Rate limiting persistente por IP, cuenta y cuenta+IP; bloqueos temporales no permanentes | §8.4 | Integración con relojes simulados | **Cumplido (M3):** límites por IP, cuenta y cuenta+IP; bloqueos temporales y escalados; integración con reloj simulado |
+| R-SEC-05 | Rate limiting persistente por IP, cuenta y cuenta+IP; bloqueos temporales no permanentes | §8.4 | Integración con relojes simulados | **Cumplido (M3):** límites por IP, cuenta y cuenta+IP; bloqueos temporales y escalados; integración con reloj simulado. **M9 (integrado en `main`, PR #13, merge `adb772f`; CI 7/7):** peso de la ventana anterior sin redondeo hacia abajo (M9-07) y un solo intento de login a la vez por cuenta+IP (M9-08), con pruebas contra PostgreSQL real. Riesgo residual R-M9-1: la cota teórica de la aproximación deslizante |
 | R-SEC-06 | RBAC + propiedad (IDOR → 404) | §8.7 | Matriz de roles | **Parcial (M3):** RBAC con matriz de roles. **M5 (integrado en `main`, PR #6):** propiedad e IDOR → 404 en pedidos y direcciones, con pruebas de integración |
 | R-SEC-07 | Montos y estados decididos por el servidor | §7 | E2E escenario 3 | **Parcial (M5 y M6, integrados en `main`, PR #6 y #7):** montos recalculados en el servidor y `PRICE_CHANGED`, con pruebas de integración y E2E. En los pagos (M6), el monto sale del pedido en la base y ningún endpoint recibe un estado. **M7 (integrado en `main`, PR #9):** los estados del pedido los decide el servidor con la versión optimista; el Pase solo envía el destino |
-| R-SEC-08 | CSP, Helmet, sin `dangerouslySetInnerHTML` | §8.7 | Revisión + test de encabezados | **Parcial (M3):** Helmet en la API y prueba de encabezados. CSP de la web (con Turnstile en el login): M10 |
+| R-SEC-08 | CSP, Helmet, sin `dangerouslySetInnerHTML` | §8.7 | Revisión + test de encabezados | **Parcial (M3):** Helmet en la API y prueba de encabezados. CSP de la web (con Turnstile en el login): M10. **M9:** la CSP estricta necesitará hashes para los 9 scripts en línea por página del prerender (R-M9-2, M10) |
 | R-SEC-09 | Secreto de origen entre el Worker y la API | §5 | Post-deploy (llamada directa → 403) | Planificado |
 | R-SEC-10 | Logs sin datos sensibles | §8.7 | Test de redacción | **Cumplido (M3):** redacción probada (unitaria e integración) |
 | R-SEC-11 | Secretos validados al arrancar; ninguno en el repo | §8.7 | CI con escaneo de secretos (gitleaks) | Planificado |
@@ -102,10 +102,10 @@ Estado posible: **Planificado** → **Implementado** → **Verificado**. Al cier
 
 | ID | Requisito | Verificación prevista | Estado |
 |---|---|---|---|
-| R-UX-01 | Estados de carga, vacíos y de error en cada vista de datos | Revisión del finish gate | Planificado |
-| R-A11Y-01 | WCAG 2.2 AA: contraste, teclado, lectores de pantalla, foco no tapado, resumen de errores | axe + pruebas manuales con teclado | Planificado |
-| R-A11Y-02 | `prefers-reduced-motion` | Playwright con emulación | Planificado |
-| R-RESP-01 | 375, 768, 1024, 1440 px | Capturas visuales | Planificado |
+| R-UX-01 | Estados de carga, vacíos y de error en cada vista de datos | Revisión del finish gate | **Implementado (M9, integrado en `main`, PR #13):** *finish gate* sobre las capturas reales de M1–M8 con los contratos de §2.4; 2 HOLD corregidos. Falta la revisión externa de una persona (R-M8-4) |
+| R-A11Y-01 | WCAG 2.2 AA: contraste, teclado, lectores de pantalla, foco no tapado, resumen de errores | axe + pruebas manuales con teclado | **Parcial (M9, integrado en `main`, PR #13; CI 7/7):** axe WCAG 2.2 AA sin violaciones en 31 pantallas reales × 2 idiomas, foco visible verificado, en CI. **Pendiente:** el recorrido real con NVDA (18 pasos, `docs/m9/PRUEBAS_HUMANAS_M9.md`) |
+| R-A11Y-02 | `prefers-reduced-motion` | Playwright con emulación | **Verificado (M9, integrado en `main`, PR #13; CI 7/7):** emulación en las 31 pantallas reales y en los dos idiomas |
+| R-RESP-01 | 375, 768, 1024, 1440 px | Capturas visuales | **Parcial (M9, integrado en `main`, PR #13; CI 7/7):** sin desbordamiento a 375, 768, 1024 y 1280 px en 31 pantallas × 2 idiomas, con capturas reales (`docs/evidencias/m9/`). 1440 px no se midió aparte. **Pendiente:** Safari de iOS real (9 escenarios) |
 | R-DESIGN-01 | Sin apariencia de plantilla ni de IA (lista de prohibidos de la propuesta §2.1 y §2.4) | Finish gate PASS por pantalla | Planificado |
 
 ---
@@ -121,7 +121,7 @@ El registro completo está en la propuesta, §14 (R1–R16). Resumen de los que 
 | R10 Carreras en pagos | M6, con tests de concurrencia |
 | R5 Bypass del proxy | M10, con la suite post-deploy |
 | R2/R3 Cuotas de Neon y Render | M10, con alertas. P09 se resolvió como D9 (monitoreo 24/7). R3 tiene impacto alto: ≈744 h de 750 h en un mes de 31 días (ver la propuesta, §14) |
-| Límites por ventanas: la aproximación deslizante puede contar de menos los intentos repartidos entre dos ventanas (M3, ver `SECURITY.md`) | Se conserva el algoritmo de §8.4; revisión en M9 |
+| Límites por ventanas: la aproximación deslizante puede contar de menos los intentos repartidos entre dos ventanas (M3, ver `SECURITY.md`) | **Revisado en M9 (R-M9-1, mitigado en parte):** M9-07 y M9-08 corregidos; la cota teórica sigue abierta y aceptada al cerrar M9. Una ventana deslizante exacta requiere autorización aparte |
 | R21 Cantidades totales mayores que 20 (fusión o edición) | M5, con la regla definitiva de C5: límite de 20 solo por línea interna, edición del total sin tope de 20, reorganización automática y presentación como un único producto |
 
 ---
