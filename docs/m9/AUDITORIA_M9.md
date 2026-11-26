@@ -1,6 +1,6 @@
-# Auditoría de M9 · Calidad (implementación local)
+# Auditoría de M9 · Calidad
 
-> **Estado (25/11/2026):** **auditoría y correcciones locales en la rama `m9-calidad`, pendientes de la revisión del propietario.** M9 **no está integrado ni cerrado**: sin push, sin PR, sin CI remoto y sin despliegue. Iniciado con la autorización de Nivel 2 del propietario (25/11/2026), sobre `main` en `d3d1a27` (M8 cerrado, B0 posterior a M8 completado).
+> **Estado (25/11/2026):** **en integración por PR, sin merge:** [PR #13](https://github.com/Yulmes/restaurante/pull/13), `m9-calidad` → `main`, con CI 7/7 (ver "Integración por PR"). M9 **no está integrado ni cerrado**: falta la autorización de Nivel 4 (merge), y NVDA y Safari de iOS real siguen pendientes. Sin despliegue. Implementado con la autorización de Nivel 2 del propietario (25/11/2026) sobre `main` en `d3d1a27` (M8 cerrado, B0 posterior a M8 completado); R-M9-1 corregido con la autorización de las alternativas 1 y 2; integración con la de Nivel 3.
 >
 > Este documento es el **informe de auditoría** que §12 fija como evidencia de M9. Las pruebas que requieren al propietario (NVDA y Safari de iOS real) están en `PRUEBAS_HUMANAS_M9.md` y siguen **pendientes**.
 
@@ -290,11 +290,36 @@ Sobre el código anterior fallan 7 de las 12 pruebas; sobre el corregido pasan l
 | Regresión | 10 | 6 | Todas las suites de M1–M8 en verde; WebKit de M1–M4 con fallas de pruebas sin adaptar |
 | **Total** | **100** | **87** | |
 
+## Integración por PR (25/11/2026)
+
+- **PR:** [#13](https://github.com/Yulmes/restaurante/pull/13), `m9-calidad` → `main`, sobre `d3d1a27` (sin cambios en `main` desde entonces; GitHub lo marca sin conflictos). Commits:
+  - `652f099`: correcciones de la auditoría;
+  - `5a3c06e`: suite de calidad y diagnóstico de los límites;
+  - `6165e86`: informe, pruebas humanas y evidencia;
+  - `8cf919f`: R-M9-1, alternativas 1 y 2;
+  - `acb45d3`: correcciones de la revisión previa a la integración;
+  - y este registro del estado de integración.
+- **Revisión previa a la integración:** diff completo contra `d3d1a27` (40 archivos). Sin secretos, `.env`, artefactos de prueba ni archivos generados; sin migraciones ni cambios de dependencias (`package-lock.json` intacto; en `apps/web/package.json` solo el script `test:calidad`). Se revisaron a fondo M9-07 y M9-08:
+  - **M9-07:** `restante` está en (0, ventana]; el cálculo es entero y exacto mientras el producto no pase de 2^53 (más de 10^8 intentos en la ventana anterior con la ventana más larga, de 1 día). El modelo de §8.4 no cambia.
+  - **M9-08:** la reserva es una sola consulta atómica, se toma antes de leer la demora y el bloqueo, se libera en `finally` (y en `before` si la demora corta el intento), vence a los 30 s y no retiene transacciones. Lo que bloquea a un intento simultáneo es la propia reserva: el desafío, la contraseña y el registro del fallo o del éxito corren con ella tomada.
+  - **Corregido en `acb45d3`:** un intento cuya reserva vencía y era tomada por otro borraba, al terminar tarde, la reserva del otro. Ahora `release` borra solo la reserva propia (la identifica su vencimiento). Prueba agregada; las 12 de `limites.db.test.ts` pasan.
+  - **Corregido en `acb45d3`:** el CI no corría la auditoría de calidad. El job "Sistema de diseño y accesibilidad" ejecuta `npm run test:calidad` (límite del job: de 15 a 30 min).
+- **Regresión local después de las correcciones:** `check` 849, `test:db` 278, `db:drift` y `env:check` OK, E2E de identidad 14, catálogo 19, producción 9, pedido 12, pagos 6, operación 5 + 5, admin 4 + 4, calidad 1 + 1, M1 41 + 1 omitida, build con prerender 57 HTML (con la API del catálogo levantada).
+- **Push** normal de `m9-calidad`, sin force; la rama remota es nueva y quedó igual a la local.
+- **CI del PR sobre `acb45d3`** ([run](https://github.com/Yulmes/restaurante/actions/runs/45757341983)): **7/7 jobs aprobados en el primer intento, sin reintentos.**
+  - **Sistema de diseño y accesibilidad:** la suite de M1 (41 + 1 omitida) y la **auditoría de calidad**: es-CR 1/1 y en 1/1, sin reintentos (las 31 pantallas × 4 anchos de cada idioma).
+  - **Pedido, pagos, operación y admin:** 12, 6, 5 + 5 y 4 + 4, sin reintentos.
+  - Los otros cinco jobs: formato, lint, tipos y tests; base de datos (incluye `limites.db.test.ts`); servicios locales; identidad; catálogo y SEO.
+- **Comentarios del PR:** ninguno (ni revisiones ni bots).
+- **Sin cambios por la integración en:** el modelo de §8.4, los límites, las reglas de negocio y las pruebas heredadas de WebKit (R-M5-2 sigue como está documentado en M9-13).
+
 ## Dictamen de preparación
 
-**Listo para el Nivel 3, con condiciones:**
+**Nivel 2 → Nivel 3:** listo con condiciones (cumplido: PR #13 con CI 7/7).
+
+**Nivel 3 → Nivel 4 (merge): listo, con condiciones** que no bloquean el merge pero sí el cierre de M9:
 1. **NVDA y Safari de iOS real** quedan pendientes y no se pueden marcar como hechos.
 2. **R-M9-1:** M9-07 y M9-08 están corregidos. La cota teórica de la aproximación deslizante necesita tu decisión (aceptarla o autorizar la alternativa 3) antes del cierre de M9.
 3. **R-M5-2:** adaptar o aceptar las pruebas heredadas de WebKit.
 
-Ninguna de estas condiciones bloquea el push ni el PR: el código corregido está verificado y no cambia reglas aprobadas.
+Ninguna bloquea el merge: el código está verificado en local y en CI, y no cambia reglas aprobadas. Pero M9 no puede declararse cerrado mientras NVDA y Safari de iOS real sigan pendientes, y R-M9-1 queda mitigado en parte (no resuelto).
